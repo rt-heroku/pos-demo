@@ -1,6 +1,6 @@
 // public/app.js - Complete React frontend with API integration
 const { useState, useEffect } = React;
-const { ShoppingCart, Plus, Minus, X, Search, CreditCard, DollarSign, Users, Package, BarChart3, Receipt, Trash2, Edit, Save } = lucide;
+const { ShoppingCart, Plus, Minus, X, Search, CreditCard, DollarSign, Users, Package, BarChart3, Receipt, Trash2, Edit, Save } = window.lucide || {};
 
 const API_BASE_URL = '/api';
 
