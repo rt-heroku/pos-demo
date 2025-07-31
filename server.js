@@ -346,7 +346,7 @@ app.post('/api/loyalty/create', async (req, res) => {
     if (existingResult.rows.length > 0) {
       return res.status(400).json({ error: 'Loyalty number already exists' });
     }
-    
+     
     const result = await pool.query(
       'INSERT INTO customers (loyalty_number, name, email, phone) VALUES ($1, $2, $3, $4) RETURNING *',
       [loyaltyNumber.toUpperCase(), name, email || null, phone || null]
