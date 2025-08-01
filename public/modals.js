@@ -433,38 +433,42 @@ window.Modals = {
             }));
         };
 
-        const handleSubmit = (e) => {
-            e.preventDefault();
-            
-            // Validation
-            if (!formData.name.trim()) {
-                alert('Product name is required');
-                return;
-            }
-            if (!formData.price || parseFloat(formData.price) < 0) {
-                alert('Valid price is required');
-                return;
-            }
-            if (!formData.category.trim()) {
-                alert('Category is required');
-                return;
-            }
-            if (!formData.stock || parseInt(formData.stock) < 0) {
-                alert('Valid stock quantity is required');
-                return;
-            }
+ const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    console.log('Form submitted with data:', formData); // Debug log
+    
+    // Validation
+    if (!formData.name.trim()) {
+        alert('Product name is required');
+        return;
+    }
+    if (!formData.price || parseFloat(formData.price) < 0) {
+        alert('Valid price is required');
+        return;
+    }
+    if (!formData.category.trim()) {
+        alert('Category is required');
+        return;
+    }
+    if (!formData.stock || parseInt(formData.stock) < 0) {
+        alert('Valid stock quantity is required');
+        return;
+    }
 
-            // Prepare data for submission
-            const submitData = {
-                ...formData,
-                price: parseFloat(formData.price),
-                stock: parseInt(formData.stock),
-                weight: formData.weight ? parseFloat(formData.weight) : null
-            };
+    console.log('Validation passed, calling onSave...'); // Debug log
 
-            onSave(submitData);
-        };
+    // Prepare data for submission
+    const submitData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        weight: formData.weight ? parseFloat(formData.weight) : null
+    };
 
+    console.log('Calling onSave with:', submitData); // Debug log
+    onSave(submitData);
+};
         const TabButton = ({ tab, label, active }) => (
             React.createElement('button', {
                 type: 'button',
@@ -528,7 +532,10 @@ window.Modals = {
                 // Form Content
                 React.createElement('form', { 
                     key: 'form',
-                    onSubmit: handleSubmit,
+                    onSubmit: (e) => {
+                        console.log('Form onSubmit triggered'); // Debug log
+                        handleSubmit(e);
+                    },
                     className: 'flex-1 overflow-y-auto'
                 }, [
                     React.createElement('div', { className: 'p-6' }, [
@@ -965,6 +972,10 @@ window.Modals = {
                     React.createElement('button', {
                         type: 'submit',
                         disabled: loading,
+                        onClick: (e) => {
+                            console.log('Submit button clicked'); // Debug log
+                            // Don't prevent default here, let the form handle it
+                        },
                         className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
                     }, [
                         loading && React.createElement('div', { 
