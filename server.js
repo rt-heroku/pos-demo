@@ -414,7 +414,7 @@ app.get('/api/products/detailed', async (req, res) => {
             'alt', pi.alt_text,
             'isPrimary', pi.is_primary,
             'sortOrder', pi.sort_order
-          ) ORDER BY pi.sort_order
+          )
         ) FILTER (WHERE pi.id IS NOT NULL) as images,
         json_agg(
           DISTINCT jsonb_build_object(
@@ -450,7 +450,7 @@ app.get('/api/products/:id/detailed', async (req, res) => {
             'alt', pi.alt_text,
             'isPrimary', pi.is_primary,
             'sortOrder', pi.sort_order
-          ) ORDER BY pi.sort_order
+          )
         ) FILTER (WHERE pi.id IS NOT NULL) as images,
         json_agg(
           DISTINCT jsonb_build_object(
@@ -659,7 +659,7 @@ app.get('/api/products/search', async (req, res) => {
             'alt', pi.alt_text,
             'isPrimary', pi.is_primary,
             'sortOrder', pi.sort_order
-          ) ORDER BY pi.sort_order
+          )
         ) FILTER (WHERE pi.id IS NOT NULL) as images,
         json_agg(
           DISTINCT jsonb_build_object(
@@ -864,7 +864,7 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
     }
     
     const original = originalResult.rows[0];
-    
+      
     // Generate new SKU
     const skuResult = await client.query('SELECT generate_sku($1, $2) as sku', [original.brand, original.product_type]);
     const newSku = skuResult.rows[0].sku;
