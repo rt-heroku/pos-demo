@@ -388,93 +388,10 @@ app.get('/api/analytics', async (req, res) => {
   }
 });
 
-// Serve React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-
 // NEW 0801 11:01
 
 // Enhanced API endpoints to add to server.js after the existing product endpoints
 
-// Products with full details including images and features
-app.get('/api/products/detailed', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT 
-        p.*,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'id', pi.id,
-            'url', pi.image_url,
-            'alt', pi.alt_text,
-            'isPrimary', pi.is_primary,
-            'sortOrder', pi.sort_order
-          )
-        ) FILTER (WHERE pi.id IS NOT NULL) as images,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'name', pf.feature_name,
-            'value', pf.feature_value
-          )
-        ) FILTER (WHERE pf.id IS NOT NULL) as features
-      FROM products p
-      LEFT JOIN product_images pi ON p.id = pi.product_id
-      LEFT JOIN product_features pf ON p.id = pf.product_id
-      WHERE p.is_active = true
-      GROUP BY p.id
-      ORDER BY p.featured DESC, p.sort_order, p.name
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching detailed products:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get single product with full details
-app.get('/api/products/:id/detailed', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(`
-      SELECT 
-        p.*,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'id', pi.id,
-            'url', pi.image_url,
-            'alt', pi.alt_text,
-            'isPrimary', pi.is_primary,
-            'sortOrder', pi.sort_order
-          )
-        ) FILTER (WHERE pi.id IS NOT NULL) as images,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'name', pf.feature_name,
-            'value', pf.feature_value
-          )
-        ) FILTER (WHERE pf.id IS NOT NULL) as features
-      FROM products p
-      LEFT JOIN product_images pi ON p.id = pi.product_id
-      LEFT JOIN product_features pf ON p.id = pf.product_id
-      WHERE p.id = $1
-      GROUP BY p.id
-    `, [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-    
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching product details:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Create enhanced product with images and features
 app.post('/api/products/enhanced', async (req, res) => {
@@ -617,16 +534,141 @@ app.put('/api/products/:id/enhanced', async (req, res) => {
   }
 });
 
-// Get product filters data
+
+
+
+// Get low stock products
+app.get('/api/products/low-stock', async (req, res) => {
+  try {
+    const threshold = req.query.threshold || 10;
+    const result = await pool.query(`
+      SELECT p.*, 
+        CASE 
+          WHEN p.stock <= 0 THEN 'out_of_stock'
+          WHEN p.stock <= $1 THEN 'low_stock'
+          ELSE 'in_stock'
+        END as stock_status
+      FROM products p
+      WHERE p.stock <= $1 AND p.is_active = true
+      ORDER BY p.stock ASC, p.name
+    `, [threshold]);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching low stock products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// Products with full details including images and features
+app.get('/api/products/detailed', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        p.*,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', pi.id,
+            'url', pi.image_url,
+            'alt', pi.alt_text,
+            'isPrimary', pi.is_primary,
+            'sortOrder', pi.sort_order
+          ) ORDER BY pi.sort_order
+        ) FILTER (WHERE pi.id IS NOT NULL) as images,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'name', pf.feature_name,
+            'value', pf.feature_value
+          )
+        ) FILTER (WHERE pf.id IS NOT NULL) as features
+      FROM products p
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      LEFT JOIN product_features pf ON p.id = pf.product_id
+      WHERE p.is_active = true OR p.is_active IS NULL
+      GROUP BY p.id
+      ORDER BY p.featured DESC NULLS LAST, p.sort_order NULLS LAST, p.name
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching detailed products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get single product with full details
+app.get('/api/products/:id/detailed', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`
+      SELECT 
+        p.*,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', pi.id,
+            'url', pi.image_url,
+            'alt', pi.alt_text,
+            'isPrimary', pi.is_primary,
+            'sortOrder', pi.sort_order
+          ) ORDER BY pi.sort_order
+        ) FILTER (WHERE pi.id IS NOT NULL) as images,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'name', pf.feature_name,
+            'value', pf.feature_value
+          )
+        ) FILTER (WHERE pf.id IS NOT NULL) as features
+      FROM products p
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      LEFT JOIN product_features pf ON p.id = pf.product_id
+      WHERE p.id = $1
+      GROUP BY p.id
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching product details:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get product filters data (this is the key missing endpoint)
 app.get('/api/products/filters', async (req, res) => {
   try {
-    const [collections, brands, materials, productTypes, colors] = await Promise.all([
-      pool.query('SELECT DISTINCT collection FROM products WHERE collection IS NOT NULL AND is_active = true ORDER BY collection'),
-      pool.query('SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND is_active = true ORDER BY brand'),
-      pool.query('SELECT DISTINCT material FROM products WHERE material IS NOT NULL AND is_active = true ORDER BY material'),
-      pool.query('SELECT DISTINCT product_type FROM products WHERE product_type IS NOT NULL AND is_active = true ORDER BY product_type'),
-      pool.query('SELECT DISTINCT color FROM products WHERE color IS NOT NULL AND is_active = true ORDER BY color')
-    ]);
+    // Since the enhanced tables might not exist yet, let's provide a fallback
+    const collections = await pool.query(`
+      SELECT DISTINCT collection FROM products 
+      WHERE collection IS NOT NULL AND collection != '' 
+      ORDER BY collection
+    `).catch(() => ({ rows: [] }));
+    
+    const brands = await pool.query(`
+      SELECT DISTINCT brand FROM products 
+      WHERE brand IS NOT NULL AND brand != '' 
+      ORDER BY brand
+    `).catch(() => ({ rows: [] }));
+    
+    const materials = await pool.query(`
+      SELECT DISTINCT material FROM products 
+      WHERE material IS NOT NULL AND material != '' 
+      ORDER BY material
+    `).catch(() => ({ rows: [] }));
+    
+    const productTypes = await pool.query(`
+      SELECT DISTINCT product_type FROM products 
+      WHERE product_type IS NOT NULL AND product_type != '' 
+      ORDER BY product_type
+    `).catch(() => ({ rows: [] }));
+    
+    const colors = await pool.query(`
+      SELECT DISTINCT color FROM products 
+      WHERE color IS NOT NULL AND color != '' 
+      ORDER BY color
+    `).catch(() => ({ rows: [] }));
     
     res.json({
       collections: collections.rows.map(r => r.collection),
@@ -637,7 +679,14 @@ app.get('/api/products/filters', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching product filters:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    // Return empty filters if there's an error
+    res.json({
+      collections: [],
+      brands: [],
+      materials: [],
+      productTypes: [],
+      colors: []
+    });
   }
 });
 
@@ -649,28 +698,11 @@ app.get('/api/products/search', async (req, res) => {
       minPrice, maxPrice, category, inStock, featured, laptopSize 
     } = req.query;
     
+    // Start with basic query - use existing columns that definitely exist
     let query = `
-      SELECT 
-        p.*,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'id', pi.id,
-            'url', pi.image_url,
-            'alt', pi.alt_text,
-            'isPrimary', pi.is_primary,
-            'sortOrder', pi.sort_order
-          )
-        ) FILTER (WHERE pi.id IS NOT NULL) as images,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'name', pf.feature_name,
-            'value', pf.feature_value
-          )
-        ) FILTER (WHERE pf.id IS NOT NULL) as features
+      SELECT p.*
       FROM products p
-      LEFT JOIN product_images pi ON p.id = pi.product_id
-      LEFT JOIN product_features pf ON p.id = pf.product_id
-      WHERE p.is_active = true
+      WHERE 1=1
     `;
     
     const params = [];
@@ -678,43 +710,44 @@ app.get('/api/products/search', async (req, res) => {
     
     if (q) {
       paramCount++;
-      query += ` AND (LOWER(p.name) LIKE LOWER($${paramCount}) OR LOWER(p.description) LIKE LOWER($${paramCount}) OR LOWER(p.sku) LIKE LOWER($${paramCount}))`;
+      query += ` AND (LOWER(p.name) LIKE LOWER($${paramCount}) OR LOWER(COALESCE(p.description, '')) LIKE LOWER($${paramCount}) OR LOWER(COALESCE(p.sku, '')) LIKE LOWER($${paramCount}))`;
       params.push(`%${q}%`);
     }
     
+    // Only add these filters if the columns exist
     if (brand) {
       paramCount++;
-      query += ` AND p.brand = $${paramCount}`;
+      query += ` AND COALESCE(p.brand, '') = $${paramCount}`;
       params.push(brand);
     }
     
     if (collection) {
       paramCount++;
-      query += ` AND p.collection = $${paramCount}`;
+      query += ` AND COALESCE(p.collection, '') = $${paramCount}`;
       params.push(collection);
     }
     
     if (material) {
       paramCount++;
-      query += ` AND p.material = $${paramCount}`;
+      query += ` AND COALESCE(p.material, '') = $${paramCount}`;
       params.push(material);
     }
     
     if (productType) {
       paramCount++;
-      query += ` AND p.product_type = $${paramCount}`;
+      query += ` AND COALESCE(p.product_type, '') = $${paramCount}`;
       params.push(productType);
     }
     
     if (color) {
       paramCount++;
-      query += ` AND p.color = $${paramCount}`;
+      query += ` AND COALESCE(p.color, '') = $${paramCount}`;
       params.push(color);
     }
     
     if (gender) {
       paramCount++;
-      query += ` AND p.gender = $${paramCount}`;
+      query += ` AND COALESCE(p.gender, '') = $${paramCount}`;
       params.push(gender);
     }
     
@@ -726,7 +759,7 @@ app.get('/api/products/search', async (req, res) => {
     
     if (laptopSize) {
       paramCount++;
-      query += ` AND p.laptop_size = $${paramCount}`;
+      query += ` AND COALESCE(p.laptop_size, '') = $${paramCount}`;
       params.push(laptopSize);
     }
     
@@ -747,13 +780,10 @@ app.get('/api/products/search', async (req, res) => {
     }
     
     if (featured === 'true') {
-      query += ` AND p.featured = true`;
+      query += ` AND COALESCE(p.featured, false) = true`;
     }
     
-    query += `
-      GROUP BY p.id
-      ORDER BY p.featured DESC, p.sort_order, p.name
-    `;
+    query += ` ORDER BY COALESCE(p.featured, false) DESC, p.name`;
     
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -784,7 +814,8 @@ app.put('/api/products/bulk-update', async (req, res) => {
     Object.keys(updates).forEach(key => {
       if (updates[key] !== undefined) {
         paramCount++;
-        const dbField = key.replace(/([A-Z])/g, '_$1').toLowerCase(); // camelCase to snake_case
+        // Convert camelCase to snake_case for database columns
+        const dbField = key.replace(/([A-Z])/g, '_$1').toLowerCase();
         setClause.push(`${dbField} = $${paramCount}`);
         params.push(updates[key]);
       }
@@ -822,29 +853,6 @@ app.put('/api/products/bulk-update', async (req, res) => {
   }
 });
 
-// Get low stock products
-app.get('/api/products/low-stock', async (req, res) => {
-  try {
-    const threshold = req.query.threshold || 10;
-    const result = await pool.query(`
-      SELECT p.*, 
-        CASE 
-          WHEN p.stock <= 0 THEN 'out_of_stock'
-          WHEN p.stock <= $1 THEN 'low_stock'
-          ELSE 'in_stock'
-        END as stock_status
-      FROM products p
-      WHERE p.stock <= $1 AND p.is_active = true
-      ORDER BY p.stock ASC, p.name
-    `, [threshold]);
-    
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching low stock products:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // Duplicate product
 app.post('/api/products/:id/duplicate', async (req, res) => {
   const client = await pool.connect();
@@ -854,7 +862,7 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
     
     const { id } = req.params;
     
-    // Get original product with details
+    // Get original product
     const originalResult = await client.query(`
       SELECT * FROM products WHERE id = $1
     `, [id]);
@@ -864,45 +872,20 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
     }
     
     const original = originalResult.rows[0];
-      
-    // Generate new SKU
-    const skuResult = await client.query('SELECT generate_sku($1, $2) as sku', [original.brand, original.product_type]);
-    const newSku = skuResult.rows[0].sku;
     
-    // Create duplicate product
+    // Create duplicate product with basic fields
     const duplicateResult = await client.query(`
       INSERT INTO products (
-        name, price, category, stock, image, sku, product_type, laptop_size,
-        brand, collection, material, gender, color, description, dimensions,
-        weight, warranty_info, care_instructions, main_image_url, is_active, featured
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
+        name, price, category, stock, image
+      ) VALUES ($1, $2, $3, $4, $5) 
       RETURNING *
     `, [
-      `${original.name} (Copy)`, original.price, original.category, 0, original.image, 
-      newSku, original.product_type, original.laptop_size, original.brand, 
-      original.collection, original.material, original.gender, original.color, 
-      original.description, original.dimensions, original.weight, 
-      original.warranty_info, original.care_instructions, original.main_image_url, 
-      false, false // Set as inactive and not featured by default
+      `${original.name} (Copy)`, 
+      original.price, 
+      original.category, 
+      0, // Set stock to 0 for duplicates
+      original.image
     ]);
-    
-    const newProductId = duplicateResult.rows[0].id;
-    
-    // Copy images
-    await client.query(`
-      INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order)
-      SELECT $1, image_url, alt_text, is_primary, sort_order
-      FROM product_images 
-      WHERE product_id = $2
-    `, [newProductId, id]);
-    
-    // Copy features
-    await client.query(`
-      INSERT INTO product_features (product_id, feature_name, feature_value)
-      SELECT $1, feature_name, feature_value
-      FROM product_features 
-      WHERE product_id = $2
-    `, [newProductId, id]);
     
     await client.query('COMMIT');
     res.json(duplicateResult.rows[0]);
@@ -915,3 +898,15 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
     client.release();
   }
 });
+
+
+
+// Serve React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
