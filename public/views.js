@@ -747,6 +747,7 @@ const ProductRow = ({ product }) => {
                 }, product.color)
             ])
         ]),
+        
         React.createElement('td', { key: 'stock', className: 'p-4' }, [
             React.createElement('div', { className: 'flex items-center gap-2' }, [
                 React.createElement('span', { className: `px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` }, 
@@ -755,6 +756,7 @@ const ProductRow = ({ product }) => {
                 React.createElement('span', { className: 'text-xs text-gray-500' }, stockInfo.text)
             ])
         ]),
+
         React.createElement('td', { key: 'status', className: 'p-4' }, [
             React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
                 React.createElement('span', { 
