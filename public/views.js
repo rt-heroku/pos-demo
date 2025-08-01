@@ -410,7 +410,7 @@ window.Views = {
             ])
         ]);
     },
-    InventoryView = ({ 
+    InventoryView : ({ 
         products, 
         filters, 
         loading, 
