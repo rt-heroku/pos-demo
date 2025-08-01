@@ -567,29 +567,47 @@ app.get('/api/products/detailed', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         p.*,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'id', pi.id,
-            'url', pi.image_url,
-            'alt', pi.alt_text,
-            'isPrimary', pi.is_primary,
-            'sortOrder', pi.sort_order
-          ) ORDER BY pi.sort_order
-        ) FILTER (WHERE pi.id IS NOT NULL) as images,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'name', pf.feature_name,
-            'value', pf.feature_value
-          )
-        ) FILTER (WHERE pf.id IS NOT NULL) as features
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pi.id,
+              'url', pi.image_url,
+              'alt', pi.alt_text,
+              'isPrimary', pi.is_primary,
+              'sortOrder', pi.sort_order
+            )
+          ) FILTER (WHERE pi.id IS NOT NULL), 
+          '[]'::json
+        ) as images,
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'name', pf.feature_name,
+              'value', pf.feature_value
+            )
+          ) FILTER (WHERE pf.id IS NOT NULL),
+          '[]'::json
+        ) as features
       FROM products p
       LEFT JOIN product_images pi ON p.id = pi.product_id
       LEFT JOIN product_features pf ON p.id = pf.product_id
-      WHERE p.is_active = true OR p.is_active IS NULL
+      WHERE (p.is_active = true OR p.is_active IS NULL)
       GROUP BY p.id
-      ORDER BY p.featured DESC NULLS LAST, p.sort_order NULLS LAST, p.name
+      ORDER BY 
+        COALESCE(p.featured, false) DESC, 
+        COALESCE(p.sort_order, 999999), 
+        p.name
     `);
-    res.json(result.rows);
+
+    // Sort images by sortOrder after fetching
+    const processedRows = result.rows.map(row => ({
+      ...row,
+      images: Array.isArray(row.images) ? 
+        row.images.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)) : 
+        []
+    }));
+
+    res.json(processedRows);
   } catch (err) {
     console.error('Error fetching detailed products:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -603,21 +621,27 @@ app.get('/api/products/:id/detailed', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         p.*,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'id', pi.id,
-            'url', pi.image_url,
-            'alt', pi.alt_text,
-            'isPrimary', pi.is_primary,
-            'sortOrder', pi.sort_order
-          ) ORDER BY pi.sort_order
-        ) FILTER (WHERE pi.id IS NOT NULL) as images,
-        json_agg(
-          DISTINCT jsonb_build_object(
-            'name', pf.feature_name,
-            'value', pf.feature_value
-          )
-        ) FILTER (WHERE pf.id IS NOT NULL) as features
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pi.id,
+              'url', pi.image_url,
+              'alt', pi.alt_text,
+              'isPrimary', pi.is_primary,
+              'sortOrder', pi.sort_order
+            )
+          ) FILTER (WHERE pi.id IS NOT NULL),
+          '[]'::json
+        ) as images,
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'name', pf.feature_name,
+              'value', pf.feature_value
+            )
+          ) FILTER (WHERE pf.id IS NOT NULL),
+          '[]'::json
+        ) as features
       FROM products p
       LEFT JOIN product_images pi ON p.id = pi.product_id
       LEFT JOIN product_features pf ON p.id = pf.product_id
@@ -629,7 +653,13 @@ app.get('/api/products/:id/detailed', async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    res.json(result.rows[0]);
+    // Sort images by sortOrder
+    const product = result.rows[0];
+    if (Array.isArray(product.images)) {
+      product.images = product.images.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    }
+    
+    res.json(product);
   } catch (err) {
     console.error('Error fetching product details:', err);
     res.status(500).json({ error: 'Internal server error' });
