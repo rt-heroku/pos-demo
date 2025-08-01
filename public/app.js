@@ -368,7 +368,25 @@ const loadProductFilters = async () => {
         setCurrentProduct(product);
         setShowProductModal(true);
     };
-
+const handleDeleteProduct = async (productId) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    try {
+        setLoading(true);
+        await window.API.products.delete(productId);
+        await Promise.all([
+            loadDetailedProducts(),
+            loadProducts(),
+            loadProductFilters()
+        ]);
+        alert('Product deleted successfully!');
+    } catch (error) {
+        console.error('Failed to delete product:', error);
+        alert('Failed to delete product. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+};
 // Enhanced save product function with fallback
 const handleSaveProduct = async (productData) => {
     try {
