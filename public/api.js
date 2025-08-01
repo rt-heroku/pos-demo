@@ -26,6 +26,7 @@ window.API = {
 
     // Products
     products: {
+        // Existing functions
         getAll: () => window.API.call('/products'),
         create: (product) => window.API.call('/products', {
             method: 'POST',
@@ -37,9 +38,35 @@ window.API = {
         }),
         delete: (id) => window.API.call(`/products/${id}`, {
             method: 'DELETE'
+        }),
+
+        // Enhanced functions
+        getDetailed: () => window.API.call('/products/detailed'),
+        getById: (id) => window.API.call(`/products/${id}/detailed`),
+        createEnhanced: (product) => window.API.call('/products/enhanced', {
+            method: 'POST',
+            body: JSON.stringify(product)
+        }),
+        updateEnhanced: (id, product) => window.API.call(`/products/${id}/enhanced`, {
+            method: 'PUT',
+            body: JSON.stringify(product)
+        }),
+        getFilters: () => window.API.call('/products/filters'),
+        search: (params) => {
+            const queryString = new URLSearchParams(
+                Object.entries(params).filter(([_, value]) => value !== undefined && value !== '')
+            ).toString();
+            return window.API.call(`/products/search?${queryString}`);
+        },
+        bulkUpdate: (productIds, updates) => window.API.call('/products/bulk-update', {
+            method: 'PUT',
+            body: JSON.stringify({ productIds, updates })
+        }),
+        getLowStock: (threshold = 10) => window.API.call(`/products/low-stock?threshold=${threshold}`),
+        duplicate: (id) => window.API.call(`/products/${id}/duplicate`, {
+            method: 'POST'
         })
     },
-
     // Customers
     customers: {
         getAll: () => window.API.call('/customers'),

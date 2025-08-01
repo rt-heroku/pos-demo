@@ -396,3 +396,522 @@ app.get('*', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+// NEW 0801 11:01
+
+// Enhanced API endpoints to add to server.js after the existing product endpoints
+
+// Products with full details including images and features
+app.get('/api/products/detailed', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        p.*,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', pi.id,
+            'url', pi.image_url,
+            'alt', pi.alt_text,
+            'isPrimary', pi.is_primary,
+            'sortOrder', pi.sort_order
+          ) ORDER BY pi.sort_order
+        ) FILTER (WHERE pi.id IS NOT NULL) as images,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'name', pf.feature_name,
+            'value', pf.feature_value
+          )
+        ) FILTER (WHERE pf.id IS NOT NULL) as features
+      FROM products p
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      LEFT JOIN product_features pf ON p.id = pf.product_id
+      WHERE p.is_active = true
+      GROUP BY p.id
+      ORDER BY p.featured DESC, p.sort_order, p.name
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching detailed products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get single product with full details
+app.get('/api/products/:id/detailed', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`
+      SELECT 
+        p.*,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', pi.id,
+            'url', pi.image_url,
+            'alt', pi.alt_text,
+            'isPrimary', pi.is_primary,
+            'sortOrder', pi.sort_order
+          ) ORDER BY pi.sort_order
+        ) FILTER (WHERE pi.id IS NOT NULL) as images,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'name', pf.feature_name,
+            'value', pf.feature_value
+          )
+        ) FILTER (WHERE pf.id IS NOT NULL) as features
+      FROM products p
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      LEFT JOIN product_features pf ON p.id = pf.product_id
+      WHERE p.id = $1
+      GROUP BY p.id
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching product details:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create enhanced product with images and features
+app.post('/api/products/enhanced', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { 
+      name, price, category, stock, image, sku, productType, laptopSize, 
+      brand, collection, material, gender, color, description, dimensions, 
+      weight, warrantyInfo, careInstructions, mainImageUrl, isActive, 
+      featured, images, features 
+    } = req.body;
+    
+    // Generate SKU if not provided
+    let finalSku = sku;
+    if (!finalSku) {
+      const skuResult = await client.query('SELECT generate_sku($1, $2) as sku', [brand, productType]);
+      finalSku = skuResult.rows[0].sku;
+    }
+    
+    // Create product
+    const productResult = await client.query(`
+      INSERT INTO products (
+        name, price, category, stock, image, sku, product_type, laptop_size,
+        brand, collection, material, gender, color, description, dimensions,
+        weight, warranty_info, care_instructions, main_image_url, is_active, featured
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
+      RETURNING *
+    `, [
+      name, price, category, stock, image || '📦', finalSku, productType, laptopSize,
+      brand, collection, material, gender, color, description, dimensions,
+      weight, warrantyInfo, careInstructions, mainImageUrl, isActive !== false, featured || false
+    ]);
+    
+    const productId = productResult.rows[0].id;
+    
+    // Add images if provided
+    if (images && images.length > 0) {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        await client.query(
+          'INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order) VALUES ($1, $2, $3, $4, $5)',
+          [productId, img.url, img.alt || '', img.isPrimary || false, img.sortOrder || i]
+        );
+      }
+    }
+    
+    // Add features if provided
+    if (features && features.length > 0) {
+      for (const feature of features) {
+        await client.query(
+          'INSERT INTO product_features (product_id, feature_name, feature_value) VALUES ($1, $2, $3)',
+          [productId, feature.name, feature.value]
+        );
+      }
+    }
+    
+    await client.query('COMMIT');
+    res.json(productResult.rows[0]);
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error creating enhanced product:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Update enhanced product
+app.put('/api/products/:id/enhanced', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    const { 
+      name, price, category, stock, image, sku, productType, laptopSize, 
+      brand, collection, material, gender, color, description, dimensions, 
+      weight, warrantyInfo, careInstructions, mainImageUrl, isActive, 
+      featured, images, features 
+    } = req.body;
+    
+    // Update product
+    const productResult = await client.query(`
+      UPDATE products SET 
+        name = $1, price = $2, category = $3, stock = $4, image = $5, sku = $6, 
+        product_type = $7, laptop_size = $8, brand = $9, collection = $10, 
+        material = $11, gender = $12, color = $13, description = $14, 
+        dimensions = $15, weight = $16, warranty_info = $17, care_instructions = $18, 
+        main_image_url = $19, is_active = $20, featured = $21, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $22 RETURNING *
+    `, [
+      name, price, category, stock, image, sku, productType, laptopSize,
+      brand, collection, material, gender, color, description, dimensions,
+      weight, warrantyInfo, careInstructions, mainImageUrl, isActive, featured, id
+    ]);
+    
+    // Update images - delete existing and add new ones
+    if (images !== undefined) {
+      await client.query('DELETE FROM product_images WHERE product_id = $1', [id]);
+      
+      if (images && images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+          const img = images[i];
+          await client.query(
+            'INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order) VALUES ($1, $2, $3, $4, $5)',
+            [id, img.url, img.alt || '', img.isPrimary || false, img.sortOrder || i]
+          );
+        }
+      }
+    }
+    
+    // Update features - delete existing and add new ones
+    if (features !== undefined) {
+      await client.query('DELETE FROM product_features WHERE product_id = $1', [id]);
+      
+      if (features && features.length > 0) {
+        for (const feature of features) {
+          await client.query(
+            'INSERT INTO product_features (product_id, feature_name, feature_value) VALUES ($1, $2, $3)',
+            [id, feature.name, feature.value]
+          );
+        }
+      }
+    }
+    
+    await client.query('COMMIT');
+    res.json(productResult.rows[0]);
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error updating enhanced product:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get product filters data
+app.get('/api/products/filters', async (req, res) => {
+  try {
+    const [collections, brands, materials, productTypes, colors] = await Promise.all([
+      pool.query('SELECT DISTINCT collection FROM products WHERE collection IS NOT NULL AND is_active = true ORDER BY collection'),
+      pool.query('SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND is_active = true ORDER BY brand'),
+      pool.query('SELECT DISTINCT material FROM products WHERE material IS NOT NULL AND is_active = true ORDER BY material'),
+      pool.query('SELECT DISTINCT product_type FROM products WHERE product_type IS NOT NULL AND is_active = true ORDER BY product_type'),
+      pool.query('SELECT DISTINCT color FROM products WHERE color IS NOT NULL AND is_active = true ORDER BY color')
+    ]);
+    
+    res.json({
+      collections: collections.rows.map(r => r.collection),
+      brands: brands.rows.map(r => r.brand),
+      materials: materials.rows.map(r => r.material),
+      productTypes: productTypes.rows.map(r => r.product_type),
+      colors: colors.rows.map(r => r.color)
+    });
+  } catch (err) {
+    console.error('Error fetching product filters:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Advanced product search with filters
+app.get('/api/products/search', async (req, res) => {
+  try {
+    const { 
+      q, brand, collection, material, productType, color, gender, 
+      minPrice, maxPrice, category, inStock, featured, laptopSize 
+    } = req.query;
+    
+    let query = `
+      SELECT 
+        p.*,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', pi.id,
+            'url', pi.image_url,
+            'alt', pi.alt_text,
+            'isPrimary', pi.is_primary,
+            'sortOrder', pi.sort_order
+          ) ORDER BY pi.sort_order
+        ) FILTER (WHERE pi.id IS NOT NULL) as images,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'name', pf.feature_name,
+            'value', pf.feature_value
+          )
+        ) FILTER (WHERE pf.id IS NOT NULL) as features
+      FROM products p
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      LEFT JOIN product_features pf ON p.id = pf.product_id
+      WHERE p.is_active = true
+    `;
+    
+    const params = [];
+    let paramCount = 0;
+    
+    if (q) {
+      paramCount++;
+      query += ` AND (LOWER(p.name) LIKE LOWER($${paramCount}) OR LOWER(p.description) LIKE LOWER($${paramCount}) OR LOWER(p.sku) LIKE LOWER($${paramCount}))`;
+      params.push(`%${q}%`);
+    }
+    
+    if (brand) {
+      paramCount++;
+      query += ` AND p.brand = $${paramCount}`;
+      params.push(brand);
+    }
+    
+    if (collection) {
+      paramCount++;
+      query += ` AND p.collection = $${paramCount}`;
+      params.push(collection);
+    }
+    
+    if (material) {
+      paramCount++;
+      query += ` AND p.material = $${paramCount}`;
+      params.push(material);
+    }
+    
+    if (productType) {
+      paramCount++;
+      query += ` AND p.product_type = $${paramCount}`;
+      params.push(productType);
+    }
+    
+    if (color) {
+      paramCount++;
+      query += ` AND p.color = $${paramCount}`;
+      params.push(color);
+    }
+    
+    if (gender) {
+      paramCount++;
+      query += ` AND p.gender = $${paramCount}`;
+      params.push(gender);
+    }
+    
+    if (category) {
+      paramCount++;
+      query += ` AND p.category = $${paramCount}`;
+      params.push(category);
+    }
+    
+    if (laptopSize) {
+      paramCount++;
+      query += ` AND p.laptop_size = $${paramCount}`;
+      params.push(laptopSize);
+    }
+    
+    if (minPrice) {
+      paramCount++;
+      query += ` AND p.price >= $${paramCount}`;
+      params.push(parseFloat(minPrice));
+    }
+    
+    if (maxPrice) {
+      paramCount++;
+      query += ` AND p.price <= $${paramCount}`;
+      params.push(parseFloat(maxPrice));
+    }
+    
+    if (inStock === 'true') {
+      query += ` AND p.stock > 0`;
+    }
+    
+    if (featured === 'true') {
+      query += ` AND p.featured = true`;
+    }
+    
+    query += `
+      GROUP BY p.id
+      ORDER BY p.featured DESC, p.sort_order, p.name
+    `;
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error searching products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Bulk update products
+app.put('/api/products/bulk-update', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { productIds, updates } = req.body;
+    
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ error: 'Product IDs are required' });
+    }
+    
+    const setClause = [];
+    const params = [];
+    let paramCount = 0;
+    
+    // Build dynamic update query based on provided updates
+    Object.keys(updates).forEach(key => {
+      if (updates[key] !== undefined) {
+        paramCount++;
+        const dbField = key.replace(/([A-Z])/g, '_$1').toLowerCase(); // camelCase to snake_case
+        setClause.push(`${dbField} = $${paramCount}`);
+        params.push(updates[key]);
+      }
+    });
+    
+    if (setClause.length === 0) {
+      return res.status(400).json({ error: 'No valid updates provided' });
+    }
+    
+    setClause.push('updated_at = CURRENT_TIMESTAMP');
+    
+    paramCount++;
+    const query = `
+      UPDATE products 
+      SET ${setClause.join(', ')} 
+      WHERE id = ANY($${paramCount}) 
+      RETURNING id, name
+    `;
+    params.push(productIds);
+    
+    const result = await client.query(query, params);
+    
+    await client.query('COMMIT');
+    res.json({ 
+      message: `${result.rows.length} products updated successfully`,
+      updatedProducts: result.rows 
+    });
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error bulk updating products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get low stock products
+app.get('/api/products/low-stock', async (req, res) => {
+  try {
+    const threshold = req.query.threshold || 10;
+    const result = await pool.query(`
+      SELECT p.*, 
+        CASE 
+          WHEN p.stock <= 0 THEN 'out_of_stock'
+          WHEN p.stock <= $1 THEN 'low_stock'
+          ELSE 'in_stock'
+        END as stock_status
+      FROM products p
+      WHERE p.stock <= $1 AND p.is_active = true
+      ORDER BY p.stock ASC, p.name
+    `, [threshold]);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching low stock products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Duplicate product
+app.post('/api/products/:id/duplicate', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    
+    // Get original product with details
+    const originalResult = await client.query(`
+      SELECT * FROM products WHERE id = $1
+    `, [id]);
+    
+    if (originalResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    const original = originalResult.rows[0];
+    
+    // Generate new SKU
+    const skuResult = await client.query('SELECT generate_sku($1, $2) as sku', [original.brand, original.product_type]);
+    const newSku = skuResult.rows[0].sku;
+    
+    // Create duplicate product
+    const duplicateResult = await client.query(`
+      INSERT INTO products (
+        name, price, category, stock, image, sku, product_type, laptop_size,
+        brand, collection, material, gender, color, description, dimensions,
+        weight, warranty_info, care_instructions, main_image_url, is_active, featured
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
+      RETURNING *
+    `, [
+      `${original.name} (Copy)`, original.price, original.category, 0, original.image, 
+      newSku, original.product_type, original.laptop_size, original.brand, 
+      original.collection, original.material, original.gender, original.color, 
+      original.description, original.dimensions, original.weight, 
+      original.warranty_info, original.care_instructions, original.main_image_url, 
+      false, false // Set as inactive and not featured by default
+    ]);
+    
+    const newProductId = duplicateResult.rows[0].id;
+    
+    // Copy images
+    await client.query(`
+      INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order)
+      SELECT $1, image_url, alt_text, is_primary, sort_order
+      FROM product_images 
+      WHERE product_id = $2
+    `, [newProductId, id]);
+    
+    // Copy features
+    await client.query(`
+      INSERT INTO product_features (product_id, feature_name, feature_value)
+      SELECT $1, feature_name, feature_value
+      FROM product_features 
+      WHERE product_id = $2
+    `, [newProductId, id]);
+    
+    await client.query('COMMIT');
+    res.json(duplicateResult.rows[0]);
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error duplicating product:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});

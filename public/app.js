@@ -40,12 +40,23 @@ const POSApp = () => {
     });
     const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
 
+    // Inventory/Products states
+    const [detailedProducts, setDetailedProducts] = useState([]);
+    const [productFilters, setProductFilters] = useState({});
+    const [searchFilters, setSearchFilters] = useState({});
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [currentProduct, setCurrentProduct] = useState(null);
+    const [productViewMode, setProductViewMode] = useState('grid');
+
     // Load initial data
     useEffect(() => {
         loadProducts();
         loadCustomers();
         loadTransactions();
         loadAnalytics();
+        loadDetailedProducts();
+        loadProductFilters();
     }, []);
 
     // Data loading functions
@@ -284,6 +295,157 @@ const POSApp = () => {
         searchCustomers(query);
     };
 
+    const loadDetailedProducts = async () => {
+        try {
+            setLoading(true);
+            const data = await window.API.products.getDetailed();
+            setDetailedProducts(data);
+        } catch (error) {
+            console.error('Failed to load detailed products:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadProductFilters = async () => {
+        try {
+            const filters = await window.API.products.getFilters();
+            setProductFilters(filters);
+        } catch (error) {
+            console.error('Failed to load product filters:', error);
+        }
+    };
+
+    const searchProducts = async (filters) => {
+        try {
+            setLoading(true);
+            const data = await window.API.products.search(filters);
+            setDetailedProducts(data);
+        } catch (error) {
+            console.error('Failed to search products:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Product management functions
+    const handleAddProduct = () => {
+        setCurrentProduct(null);
+        setShowProductModal(true);
+    };
+
+    const handleEditProduct = (product) => {
+        setCurrentProduct(product);
+        setShowProductModal(true);
+    };
+
+    const handleSaveProduct = async (productData) => {
+        try {
+            setLoading(true);
+            
+            if (currentProduct) {
+                // Update existing product
+                await window.API.products.updateEnhanced(currentProduct.id, productData);
+            } else {
+                // Create new product
+                await window.API.products.createEnhanced(productData);
+            }
+            
+            setShowProductModal(false);
+            setCurrentProduct(null);
+            await Promise.all([
+                loadDetailedProducts(),
+                loadProducts(), // Refresh simple products for POS
+                loadProductFilters()
+            ]);
+            
+            alert(currentProduct ? 'Product updated successfully!' : 'Product created successfully!');
+        } catch (error) {
+            console.error('Failed to save product:', error);
+            alert('Failed to save product. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteProduct = async (productId) => {
+        if (!confirm('Are you sure you want to delete this product?')) return;
+        
+        try {
+            setLoading(true);
+            await window.API.products.delete(productId);
+            await Promise.all([
+                loadDetailedProducts(),
+                loadProducts(),
+                loadProductFilters()
+            ]);
+            alert('Product deleted successfully!');
+        } catch (error) {
+            console.error('Failed to delete product:', error);
+            alert('Failed to delete product. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBulkUpdate = async (productIds, updates) => {
+        try {
+            setLoading(true);
+            await window.API.products.bulkUpdate(productIds, updates);
+            setSelectedProducts([]); // Clear selection
+            await Promise.all([
+                loadDetailedProducts(),
+                loadProducts(),
+                loadProductFilters()
+            ]);
+            alert(`${productIds.length} products updated successfully!`);
+        } catch (error) {
+            console.error('Failed to bulk update products:', error);
+            alert('Failed to update products. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDuplicateProduct = async (productId) => {
+        try {
+            setLoading(true);
+            await window.API.products.duplicate(productId);
+            await Promise.all([
+                loadDetailedProducts(),
+                loadProducts(),
+                loadProductFilters()
+            ]);
+            alert('Product duplicated successfully!');
+        } catch (error) {
+            console.error('Failed to duplicate product:', error);
+            alert('Failed to duplicate product. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleProductSelect = (productId, selected) => {
+        setSelectedProducts(prev => 
+            selected 
+                ? [...prev, productId]
+                : prev.filter(id => id !== productId)
+        );
+    };
+
+    const handleSelectAllProducts = (selected) => {
+        setSelectedProducts(selected ? detailedProducts.map(p => p.id) : []);
+    };
+
+    const handleFilterChange = (newFilters) => {
+        setSearchFilters(newFilters);
+        searchProducts(newFilters);
+    };
+
+    const handleViewModeChange = (mode) => {
+        setProductViewMode(mode);
+    };
+
     // Navigation Component
     const NavButton = ({ view, icon: Icon, label, active }) => (
         React.createElement('button', {
@@ -386,14 +548,29 @@ const POSApp = () => {
                 loading
             }),
             
-            currentView === 'inventory' && React.createElement('div', { 
+            currentView === 'inventory' && React.createElement(window.Views.InventoryView, { 
                 key: 'inventory-view',
-                className: 'bg-white rounded-xl shadow-sm border p-8 text-center' 
-            }, [
-                React.createElement('h2', { key: 'title', className: 'text-2xl font-bold mb-4' }, 'Inventory Management'),
-                React.createElement('p', { key: 'message', className: 'text-gray-600' }, 'Inventory features available when connected to database.')
-            ]),
-            
+                products: detailedProducts,
+                filters: productFilters,
+                loading,
+                onAddProduct: handleAddProduct,
+                onEditProduct: handleEditProduct,
+                onDeleteProduct: handleDeleteProduct,
+                onBulkUpdate: handleBulkUpdate,
+                onDuplicateProduct: handleDuplicateProduct,
+                searchFilters,
+                onFilterChange: handleFilterChange,
+                selectedProducts,
+                onProductSelect: handleProductSelect,
+                onSelectAll: handleSelectAllProducts,
+                showProductModal,
+                onShowProductModal: handleAddProduct,
+                onCloseProductModal: () => setShowProductModal(false),
+                currentProduct,
+                viewMode: productViewMode,
+                onViewModeChange: handleViewModeChange
+            }),
+
             currentView === 'sales' && React.createElement(window.Views.SalesView, { 
                 key: 'sales-view',
                 analytics,
@@ -449,6 +626,19 @@ const POSApp = () => {
             change
         }),
 
+        React.createElement(window.Modals.ProductModal, {
+            key: 'product-modal',
+            show: showProductModal,
+            onClose: () => {
+                setShowProductModal(false);
+                setCurrentProduct(null);
+            },
+            product: currentProduct,
+            onSave: handleSaveProduct,
+            loading,
+            filters: productFilters
+        }),
+        
         // Loading Overlay
         loading && React.createElement('div', {
             key: 'loading-overlay',
