@@ -530,7 +530,7 @@ const ProductCard = ({ product }) => {
     }, [
         // Product Image
         React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-100' }, [
-            // Show actual image if available
+            // Show actual image if available centered
             productImage.type === 'url' ? (
                 React.createElement('img', {
                     key: 'product-img',
