@@ -163,7 +163,7 @@ window.Views = {
                 ]),
                 React.createElement('div', { 
                     key: 'products-grid',
-                    className: 'p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto' 
+                    className: 'p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto' 
                 }, products.map(product =>
                     React.createElement(ProductCard, { key: product.id, product })
                 ))
