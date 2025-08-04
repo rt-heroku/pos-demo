@@ -74,7 +74,7 @@ window.Views = {
                                 : 'border-gray-200 hover:border-blue-300 hover:shadow-md active:scale-95'
                         }`
                     }, [
-                        React.createElement('div', { key: 'image', className: 'text-3xl mb-2' }, product.image),
+                        React.createElement('div', { key: 'image', className: 'text-3xl mb-2' }, product.main_image_url),
                         React.createElement('div', { key: 'name', className: 'font-medium text-sm mb-1' }, product.name),
                         React.createElement('div', { key: 'price', className: 'text-blue-600 font-bold' }, `${parseFloat(product.price).toFixed(2)}`),
                         React.createElement('div', { key: 'stock', className: 'text-xs text-gray-500 mt-1' }, `Stock: ${product.stock}`)
