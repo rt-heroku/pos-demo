@@ -536,7 +536,7 @@ const ProductCard = ({ product }) => {
                     key: 'product-img',
                     src: productImage.src,
                     alt: productImage.alt,
-                    className: 'w-full h-full object-cover',
+                    className: 'h-full items-center justify-center object-cover',
                     onError: (e) => {
                         // If image fails to load, show emoji fallback
                         e.target.style.display = 'none';
@@ -747,7 +747,7 @@ const ProductRow = ({ product }) => {
                 }, product.color)
             ])
         ]),
-        
+
         React.createElement('td', { key: 'stock', className: 'p-4' }, [
             React.createElement('div', { className: 'flex items-center gap-2' }, [
                 React.createElement('span', { className: `px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` }, 
