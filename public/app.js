@@ -48,9 +48,6 @@ const POSApp = () => {
         try {
             setAppLoading(true);
             
-            // Load basic data
-            await loadLocations();
-            await loadUserSettings();
             // Check if setup is required
             try {
                 const response = await fetch('/api/setup/status');
@@ -118,8 +115,8 @@ const POSApp = () => {
             const response = await fetch(`/api/settings/${userId}`);
             if (response.ok) {
                 const data = await response.json();
-                setUserSettings(data || { theme_mode: 'light' });
-                setSelectedLocation(await getLocation(data.selected_location_id));
+                setUserSettings(data || { theme_mode: 'light' }).then(
+                    selectedLocation => getLocation(data.selected_location_id));
                 console.log('Loaded user settings:', data);
                 return data || { theme_mode: 'light' };
             }
