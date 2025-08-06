@@ -20,6 +20,11 @@ window.Views = {
         subtotal,
         tax,
         total,
+        discount,
+        discountAmount,
+        setDiscountAmount,
+        discountType,
+        setDiscountType,
         paymentMethod,
         setPaymentMethod,
         amountReceived,
@@ -28,26 +33,191 @@ window.Views = {
         onProcessPayment,
         loading
     }) => {
-        const { ShoppingCart, Search, Users, Plus, Minus, X } = window.Icons;
+        const { ShoppingCart, Search, Users, Plus, Minus, X, CreditCard, DollarSign, Percent } = window.Icons;
+
+        // Credit card validation state
+        const [creditCardForm, setCreditCardForm] = React.useState({
+            cardNumber: '',
+            expiryDate: '',
+            cvv: '',
+            cardholderName: ''
+        });
+        const [cardValidation, setCardValidation] = React.useState({
+            isValid: false,
+            cardType: null,
+            errors: {}
+        });
+
+        // Credit card validation functions
+        const validateCreditCard = (cardNumber) => {
+            // Remove spaces and non-digits
+            const cleanNumber = cardNumber.replace(/\D/g, '');
+            
+            // Check if empty
+            if (!cleanNumber) {
+                return { isValid: false, cardType: null, error: 'Card number is required' };
+            }
+
+            // Luhn algorithm for credit card validation
+            const luhnCheck = (num) => {
+                let sum = 0;
+                let isEven = false;
+                
+                for (let i = num.length - 1; i >= 0; i--) {
+                    let digit = parseInt(num[i]);
+                    
+                    if (isEven) {
+                        digit *= 2;
+                        if (digit > 9) {
+                            digit = digit.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+                        }
+                    }
+                    
+                    sum += digit;
+                    isEven = !isEven;
+                }
+                
+                return sum % 10 === 0;
+            };
+
+            // Determine card type
+            const getCardType = (number) => {
+                const patterns = {
+                    'Visa': /^4[0-9]{12}(?:[0-9]{3})?$/,
+                    'MasterCard': /^5[1-5][0-9]{14}$/,
+                    'American Express': /^3[47][0-9]{13}$/,
+                    'Discover': /^6(?:011|5[0-9]{2})[0-9]{12}$/
+                };
+
+                for (const [type, pattern] of Object.entries(patterns)) {
+                    if (pattern.test(number)) {
+                        return type;
+                    }
+                }
+                return null;
+            };
+
+            // Check length (13-19 digits for most cards)
+            if (cleanNumber.length < 13 || cleanNumber.length > 19) {
+                return { isValid: false, cardType: null, error: 'Invalid card number length' };
+            }
+
+            // Get card type
+            const cardType = getCardType(cleanNumber);
+            if (!cardType) {
+                return { isValid: false, cardType: null, error: 'Unsupported card type' };
+            }
+
+            // Luhn check
+            const isValid = luhnCheck(cleanNumber);
+            if (!isValid) {
+                return { isValid: false, cardType, error: 'Invalid card number' };
+            }
+
+            return { isValid: true, cardType, error: null };
+        };
+
+        const validateExpiryDate = (expiry) => {
+            if (!expiry) return { isValid: false, error: 'Expiry date is required' };
+            
+            const match = expiry.match(/^(\d{2})\/(\d{2})$/);
+            if (!match) return { isValid: false, error: 'Format: MM/YY' };
+            
+            const month = parseInt(match[1]);
+            const year = 2000 + parseInt(match[2]);
+            
+            if (month < 1 || month > 12) {
+                return { isValid: false, error: 'Invalid month' };
+            }
+            
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            const currentYear = now.getFullYear();
+            
+            if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                return { isValid: false, error: 'Card expired' };
+            }
+            
+            return { isValid: true, error: null };
+        };
+
+        const validateCVV = (cvv, cardType) => {
+            if (!cvv) return { isValid: false, error: 'CVV is required' };
+            
+            const expectedLength = cardType === 'American Express' ? 4 : 3;
+            if (cvv.length !== expectedLength) {
+                return { isValid: false, error: `CVV must be ${expectedLength} digits` };
+            }
+            
+            if (!/^\d+$/.test(cvv)) {
+                return { isValid: false, error: 'CVV must be numeric' };
+            }
+            
+            return { isValid: true, error: null };
+        };
+
+        // Handle credit card input changes
+        const handleCreditCardChange = (field, value) => {
+            let formattedValue = value;
+            
+            // Format card number with spaces
+            if (field === 'cardNumber') {
+                formattedValue = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+                if (formattedValue.length > 19) return; // Max length with spaces
+            }
+            
+            // Format expiry date
+            if (field === 'expiryDate') {
+                formattedValue = value.replace(/\D/g, '');
+                if (formattedValue.length >= 2) {
+                    formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2, 4);
+                }
+                if (formattedValue.length > 5) return;
+            }
+            
+            // CVV - only numbers
+            if (field === 'cvv') {
+                formattedValue = value.replace(/\D/g, '');
+                if (formattedValue.length > 4) return;
+            }
+
+            setCreditCardForm(prev => ({
+                ...prev,
+                [field]: formattedValue
+            }));
+
+            // Real-time validation
+            if (field === 'cardNumber') {
+                const validation = validateCreditCard(formattedValue);
+                setCardValidation(prev => ({
+                    ...prev,
+                    isValid: validation.isValid,
+                    cardType: validation.cardType,
+                    errors: { ...prev.errors, cardNumber: validation.error }
+                }));
+            }
+        };
+
+        // Format card number for display (show only last 4 digits)
+        const formatCardNumberForDisplay = (cardNumber) => {
+            const cleanNumber = cardNumber.replace(/\D/g, '');
+            if (cleanNumber.length < 4) return '';
+            return '**** **** **** ' + cleanNumber.slice(-4);
+        };
 
         // Helper function to get product image with priority order
         const getProductImage = (product) => {
-            // 1st Priority: Primary image from images array
             const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
             if (primaryImage?.url) {
                 return { type: 'url', src: primaryImage.url, alt: primaryImage.alt || product.name };
             }
-            
-            // 2nd Priority: main_image_url field
             if (product.main_image_url) {
                 return { type: 'url', src: product.main_image_url, alt: product.name };
             }
-            
-            // 3rd Priority: Emoji fallback
             return { type: 'emoji', src: product.image || '📦', alt: product.name };
         };
 
-        // Enhanced ProductCard component for POS
+        // Enhanced ProductCard component
         const ProductCard = ({ product }) => {
             const productImage = getProductImage(product);
             const isOutOfStock = product.stock <= 0;
@@ -57,14 +227,12 @@ window.Views = {
                 disabled: isOutOfStock,
                 className: `p-4 rounded-lg border-2 transition-all duration-200 ${
                     isOutOfStock
-                        ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-                        : 'border-gray-200 hover:border-blue-300 hover:shadow-md active:scale-95 hover:bg-blue-50'
+                        ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:shadow-md active:scale-95 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                 }`
             }, [
-                // Product Image
                 React.createElement('div', { key: 'image-container', className: 'relative mb-3' }, [
-                    React.createElement('div', { className: 'w-full h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center' }, [
-                        // Show actual image if available
+                    React.createElement('div', { className: 'w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
                         productImage.type === 'url' ? (
                             React.createElement('img', {
                                 key: 'product-img',
@@ -72,14 +240,12 @@ window.Views = {
                                 alt: productImage.alt,
                                 className: 'w-full h-full object-cover',
                                 onError: (e) => {
-                                    // If image fails to load, show emoji fallback
                                     e.target.style.display = 'none';
                                     e.target.nextSibling.style.display = 'flex';
                                 }
                             })
                         ) : null,
                         
-                        // Emoji fallback
                         React.createElement('div', { 
                             key: 'fallback',
                             className: 'w-full h-full flex items-center justify-center text-4xl',
@@ -87,40 +253,36 @@ window.Views = {
                         }, productImage.src)
                     ]),
                     
-                    // Stock indicator
                     React.createElement('div', { 
                         key: 'stock-indicator',
                         className: `absolute top-1 right-1 px-2 py-1 rounded-full text-xs font-medium ${
                             isOutOfStock 
-                                ? 'bg-red-100 text-red-800' 
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
                                 : product.stock <= 5 
-                                    ? 'bg-yellow-100 text-yellow-800' 
-                                    : 'bg-green-100 text-green-800'
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                         }`
                     }, isOutOfStock ? 'Out' : product.stock <= 5 ? 'Low' : 'In Stock'),
                     
-                    // Brand/Collection badge
                     (product.brand || product.collection) && React.createElement('div', { 
                         key: 'brand-badge',
-                        className: 'absolute bottom-1 left-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 max-w-full truncate'
+                        className: 'absolute bottom-1 left-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 max-w-full truncate'
                     }, product.brand || product.collection)
                 ]),
                 
-                // Product Info
                 React.createElement('div', { key: 'info', className: 'text-center' }, [
-                    React.createElement('div', { key: 'name', className: 'font-medium text-sm mb-1 line-clamp-2' }, product.name),
-                    React.createElement('div', { key: 'price', className: 'text-blue-600 font-bold text-lg' }, `$${parseFloat(product.price).toFixed(2)}`),
-                    React.createElement('div', { key: 'stock', className: 'text-xs text-gray-500 mt-1' }, `Stock: ${product.stock}`),
+                    React.createElement('div', { key: 'name', className: 'font-medium text-sm mb-1 line-clamp-2 dark:text-white' }, product.name),
+                    React.createElement('div', { key: 'price', className: 'text-blue-600 dark:text-blue-400 font-bold text-lg' }, `$${parseFloat(product.price).toFixed(2)}`),
+                    React.createElement('div', { key: 'stock', className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, `Stock: ${product.stock}`),
                     
-                    // Additional product details
                     React.createElement('div', { key: 'details', className: 'flex flex-wrap gap-1 justify-center mt-2' }, [
                         product.material && React.createElement('span', { 
                             key: 'material',
-                            className: 'px-1 py-0.5 bg-gray-100 text-gray-600 text-xs rounded' 
+                            className: 'px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded' 
                         }, product.material),
                         product.laptop_size && React.createElement('span', { 
                             key: 'laptop',
-                            className: 'px-1 py-0.5 bg-blue-100 text-blue-600 text-xs rounded' 
+                            className: 'px-1 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs rounded' 
                         }, product.laptop_size)
                     ])
                 ])
@@ -129,11 +291,11 @@ window.Views = {
 
         return React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-6 h-full' }, [
             // Products Section
-            React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white rounded-xl shadow-sm border' }, [
-                React.createElement('div', { key: 'header', className: 'p-6 border-b' }, [
+            React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700' }, [
+                React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
                     React.createElement('div', { key: 'title', className: 'mb-4' }, [
-                        React.createElement('h2', { className: 'text-xl font-bold' }, 'Products'),
-                        React.createElement('p', { className: 'text-gray-600 text-sm' }, `${products.length} products available`)
+                        React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 'Products'),
+                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm' }, `${products.length} products available`)
                     ]),
                     React.createElement('div', { key: 'controls', className: 'flex flex-col sm:flex-row gap-4' }, [
                         React.createElement('div', { key: 'search', className: 'relative flex-1' }, [
@@ -148,14 +310,14 @@ window.Views = {
                                 placeholder: 'Search products...',
                                 value: searchTerm,
                                 onChange: (e) => setSearchTerm(e.target.value),
-                                className: 'w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className: 'w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
                             })
                         ]),
                         React.createElement('select', {
                             key: 'category-select',
                             value: selectedCategory,
                             onChange: (e) => setSelectedCategory(e.target.value),
-                            className: 'px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className: 'px-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
                         }, categories.map(cat => 
                             React.createElement('option', { key: cat, value: cat }, cat)
                         ))
@@ -169,10 +331,10 @@ window.Views = {
                 ))
             ]),
 
-            // Cart Section (same as before but with enhanced customer display)
-            React.createElement('div', { key: 'cart', className: 'bg-white rounded-xl shadow-sm border flex flex-col' }, [
-                React.createElement('div', { key: 'cart-header', className: 'p-6 border-b' }, [
-                    React.createElement('h2', { className: 'text-xl font-bold flex items-center gap-2' }, [
+            // Enhanced Cart Section with Discount System
+            React.createElement('div', { key: 'cart', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
+                React.createElement('div', { key: 'cart-header', className: 'p-6 border-b dark:border-gray-700' }, [
+                    React.createElement('h2', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
                         React.createElement(ShoppingCart, { key: 'cart-icon', size: 24 }),
                         `Cart (${cart.length})`
                     ])
@@ -180,12 +342,12 @@ window.Views = {
                 React.createElement('div', { key: 'cart-content', className: 'flex-1 p-6' }, [
                     // Enhanced customer info section
                     selectedCustomer ? (
-                        React.createElement('div', { key: 'customer-info', className: 'mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg' }, [
+                        React.createElement('div', { key: 'customer-info', className: 'mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg' }, [
                             React.createElement('div', { className: 'flex justify-between items-start' }, [
                                 React.createElement('div', { key: 'customer-details' }, [
-                                    React.createElement('div', { className: 'font-semibold text-green-800 text-lg' }, selectedCustomer.name),
-                                    React.createElement('div', { className: 'text-sm text-green-700 font-mono' }, selectedCustomer.loyalty_number),
-                                    React.createElement('div', { className: 'text-sm text-green-600 flex items-center gap-1' }, [
+                                    React.createElement('div', { className: 'font-semibold text-green-800 dark:text-green-200 text-lg' }, selectedCustomer.name),
+                                    React.createElement('div', { className: 'text-sm text-green-700 dark:text-green-300 font-mono' }, selectedCustomer.loyalty_number),
+                                    React.createElement('div', { className: 'text-sm text-green-600 dark:text-green-400 flex items-center gap-1' }, [
                                         React.createElement('span', { key: 'points-icon' }, '⭐'),
                                         React.createElement('span', { key: 'points-text' }, `${selectedCustomer.points} points available`)
                                     ])
@@ -193,11 +355,11 @@ window.Views = {
                                 React.createElement('div', { key: 'customer-actions', className: 'flex gap-2' }, [
                                     React.createElement('button', {
                                         onClick: () => onLoadCustomerHistory(selectedCustomer.id),
-                                        className: 'text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors'
+                                        className: 'text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors'
                                     }, 'History'),
                                     React.createElement('button', {
                                         onClick: onRemoveCustomer,
-                                        className: 'text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200 transition-colors'
+                                        className: 'text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-3 py-1 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors'
                                     }, 'Remove')
                                 ])
                             ])
@@ -206,7 +368,7 @@ window.Views = {
                         React.createElement('button', {
                             key: 'add-customer-btn',
                             onClick: onShowLoyaltyModal,
-                            className: 'mb-4 w-full p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2'
+                            className: 'mb-4 w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center gap-2'
                         }, [
                             React.createElement(Users, { key: 'users-icon', size: 20 }),
                             'Add Loyalty Customer'
@@ -225,10 +387,9 @@ window.Views = {
                             const itemImage = getProductImage(item);
                             return React.createElement('div', { 
                                 key: item.id,
-                                className: 'flex items-center gap-3 p-3 bg-gray-50 rounded-lg border' 
+                                className: 'flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600' 
                             }, [
-                                // Item image
-                                React.createElement('div', { key: 'item-image', className: 'w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0' }, [
+                                React.createElement('div', { key: 'item-image', className: 'w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0' }, [
                                     itemImage.type === 'url' ? (
                                         React.createElement('img', {
                                             key: 'img',
@@ -248,63 +409,110 @@ window.Views = {
                                     }, itemImage.src)
                                 ]),
                                 
-                                // Item info
                                 React.createElement('div', { key: 'item-info', className: 'flex-1 min-w-0' }, [
-                                    React.createElement('div', { className: 'font-medium truncate' }, item.name),
-                                    React.createElement('div', { className: 'text-sm text-gray-600' }, `$${parseFloat(item.price).toFixed(2)} each`),
-                                    (item.brand || item.material) && React.createElement('div', { className: 'text-xs text-gray-500' }, 
+                                    React.createElement('div', { className: 'font-medium truncate dark:text-white' }, item.name),
+                                    React.createElement('div', { className: 'text-sm text-gray-600 dark:text-gray-400' }, `$${parseFloat(item.price).toFixed(2)} each`),
+                                    (item.brand || item.material) && React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400' }, 
                                         [item.brand, item.material].filter(Boolean).join(' • ')
                                     )
                                 ]),
                                 
-                                // Quantity controls
                                 React.createElement('div', { key: 'item-controls', className: 'flex items-center gap-2' }, [
                                     React.createElement('button', {
                                         onClick: () => onUpdateQuantity(item.id, item.quantity - 1),
-                                        className: 'w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition-colors'
+                                        className: 'w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors'
                                     }, React.createElement(Minus, { size: 16 })),
-                                    React.createElement('span', { className: 'w-8 text-center font-medium' }, item.quantity),
+                                    React.createElement('span', { className: 'w-8 text-center font-medium dark:text-white' }, item.quantity),
                                     React.createElement('button', {
                                         onClick: () => onUpdateQuantity(item.id, item.quantity + 1),
-                                        className: 'w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition-colors'
+                                        className: 'w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors'
                                     }, React.createElement(Plus, { size: 16 })),
                                     React.createElement('button', {
                                         onClick: () => onRemoveFromCart(item.id),
-                                        className: 'w-8 h-8 flex items-center justify-center bg-red-100 text-red-600 rounded-full hover:bg-red-200 ml-2 transition-colors'
+                                        className: 'w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-800 ml-2 transition-colors'
                                     }, React.createElement(X, { size: 16 }))
                                 ])
                             ]);
                         }))
                     ),
 
-                    // Rest of the cart section (totals, payment, etc.) remains the same
                     cart.length > 0 && [
-                        React.createElement('div', { key: 'totals', className: 'border-t pt-4 space-y-2 mb-6' }, [
-                            React.createElement('div', { className: 'flex justify-between' }, [
+                        // Discount Section
+                        React.createElement('div', { key: 'discount', className: 'border-t dark:border-gray-600 pt-4 mb-4' }, [
+                            React.createElement('h4', { className: 'font-medium mb-3 dark:text-white flex items-center gap-2' }, [
+                                React.createElement(Percent, { size: 18 }),
+                                'Discount'
+                            ]),
+                            React.createElement('div', { className: 'grid grid-cols-3 gap-2 mb-2' }, [
+                                React.createElement('select', {
+                                    key: 'discount-type',
+                                    value: discountType,
+                                    onChange: (e) => setDiscountType(e.target.value),
+                                    className: 'px-3 py-2 text-sm border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                                }, [
+                                    React.createElement('option', { key: 'fixed', value: 'fixed' }, '$'),
+                                    React.createElement('option', { key: 'percentage', value: 'percentage' }, '%')
+                                ]),
+                                React.createElement('input', {
+                                    key: 'discount-amount',
+                                    type: 'number',
+                                    step: discountType === 'percentage' ? '1' : '0.01',
+                                    min: '0',
+                                    max: discountType === 'percentage' ? '100' : undefined,
+                                    value: discountAmount,
+                                    onChange: (e) => setDiscountAmount(e.target.value),
+                                    placeholder: discountType === 'percentage' ? '10' : '5.00',
+                                    className: 'col-span-2 px-3 py-2 text-sm border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                                })
+                            ]),
+                            discount > 0 && React.createElement('div', { className: 'text-sm text-green-600 dark:text-green-400 font-medium' }, 
+                                `Discount Applied: -$${discount.toFixed(2)}`
+                            )
+                        ]),
+
+                        // Totals Section
+                        React.createElement('div', { key: 'totals', className: 'border-t dark:border-gray-600 pt-4 space-y-2 mb-6' }, [
+                            React.createElement('div', { className: 'flex justify-between dark:text-white' }, [
                                 React.createElement('span', { key: 'subtotal-label' }, 'Subtotal:'),
-                                React.createElement('span', { key: 'subtotal-value' }, `$${subtotal.toFixed(2)}`)
+                                React.createElement('span', { key: 'subtotal-value' }, `$${(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2)}`)
                             ]),
-                            React.createElement('div', { className: 'flex justify-between' }, [
-                                React.createElement('span', { key: 'tax-label' }, 'Tax (8%):'),
-                                React.createElement('span', { key: 'tax-value' }, `$${tax.toFixed(2)}`)
+                            discount > 0 && React.createElement('div', { className: 'flex justify-between text-green-600 dark:text-green-400' }, [
+                                React.createElement('span', { key: 'discount-label' }, 'Discount:'),
+                                React.createElement('span', { key: 'discount-value' }, `-${discount.toFixed(2)}`)
                             ]),
-                            React.createElement('div', { className: 'flex justify-between font-bold text-lg border-t pt-2' }, [
+                            React.createElement('div', { className: 'flex justify-between dark:text-white' }, [
+                                React.createElement('span', { key: 'tax-label' }, 'Tax:'),
+                                React.createElement('span', { key: 'tax-value' }, `${tax.toFixed(2)}`)
+                            ]),
+                            React.createElement('div', { className: 'flex justify-between font-bold text-lg border-t dark:border-gray-600 pt-2 dark:text-white' }, [
                                 React.createElement('span', { key: 'total-label' }, 'Total:'),
-                                React.createElement('span', { key: 'total-value' }, `$${total.toFixed(2)}`)
+                                React.createElement('span', { key: 'total-value' }, `${total.toFixed(2)}`)
                             ]),
-                            selectedCustomer && React.createElement('div', { className: 'flex justify-between text-green-600 text-sm' }, [
+                            selectedCustomer && React.createElement('div', { className: 'flex justify-between text-green-600 dark:text-green-400 text-sm' }, [
                                 React.createElement('span', { key: 'points-label' }, 'Points to earn:'),
                                 React.createElement('span', { key: 'points-value' }, `+${Math.floor(total)} points`)
                             ])
                         ]),
 
+                        // Enhanced Payment Section
                         React.createElement('div', { key: 'payment', className: 'space-y-4' }, [
                             React.createElement('div', { key: 'payment-method' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Payment Method'),
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Payment Method'),
                                 React.createElement('select', {
                                     value: paymentMethod,
-                                    onChange: (e) => setPaymentMethod(e.target.value),
-                                    className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    onChange: (e) => {
+                                        setPaymentMethod(e.target.value);
+                                        // Reset credit card form when switching away from card
+                                        if (e.target.value !== 'card') {
+                                            setCreditCardForm({
+                                                cardNumber: '', expiryDate: '', cvv: '', cardholderName: ''
+                                            });
+                                            setCardValidation({
+                                                isValid: false, cardType: null, errors: {}
+                                            });
+                                        }
+                                    },
+                                    className: 'w-full p-3 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
                                 }, [
                                     React.createElement('option', { key: 'cash', value: 'cash' }, 'Cash'),
                                     React.createElement('option', { key: 'card', value: 'card' }, 'Credit/Debit Card'),
@@ -312,31 +520,142 @@ window.Views = {
                                 ])
                             ]),
 
+                            // Cash Payment
                             paymentMethod === 'cash' && React.createElement('div', { key: 'cash-payment' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Amount Received'),
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Amount Received'),
                                 React.createElement('input', {
                                     type: 'number',
                                     step: '0.01',
+                                    min: total.toFixed(2),
                                     value: amountReceived,
                                     onChange: (e) => setAmountReceived(e.target.value),
-                                    placeholder: '0.00',
-                                    className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    placeholder: total.toFixed(2),
+                                    className: 'w-full p-3 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
                                 }),
                                 amountReceived && parseFloat(amountReceived) >= total && React.createElement('div', {
-                                    className: 'mt-2 text-green-600 font-medium'
-                                }, `Change: $${change.toFixed(2)}`)
+                                    className: 'mt-2 text-green-600 dark:text-green-400 font-medium'
+                                }, `Change: ${change.toFixed(2)}`)
                             ]),
 
-                            React.createElement('div', { key: 'action-buttons', className: 'flex gap-2' }, [
+                            // Credit Card Payment
+                            paymentMethod === 'card' && React.createElement('div', { key: 'card-payment', className: 'space-y-4' }, [
+                                React.createElement('div', { className: 'grid grid-cols-1 gap-4' }, [
+                                    // Cardholder Name
+                                    React.createElement('div', { key: 'cardholder' }, [
+                                        React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Cardholder Name'),
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            value: creditCardForm.cardholderName,
+                                            onChange: (e) => handleCreditCardChange('cardholderName', e.target.value),
+                                            placeholder: 'John Doe',
+                                            className: 'w-full p-3 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                                        })
+                                    ]),
+
+                                    // Card Number
+                                    React.createElement('div', { key: 'card-number' }, [
+                                        React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Card Number'),
+                                        React.createElement('div', { className: 'relative' }, [
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: creditCardForm.cardNumber,
+                                                onChange: (e) => handleCreditCardChange('cardNumber', e.target.value),
+                                                placeholder: '1234 5678 9012 3456',
+                                                className: `w-full p-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-white ${
+                                                    cardValidation.errors.cardNumber 
+                                                        ? 'border-red-500 focus:ring-red-500' 
+                                                        : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                                                }`
+                                            }),
+                                            // Card type indicator
+                                            cardValidation.cardType && React.createElement('div', {
+                                                className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-sm font-medium text-blue-600 dark:text-blue-400'
+                                            }, cardValidation.cardType),
+                                            React.createElement(CreditCard, {
+                                                className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400',
+                                                size: 20
+                                            })
+                                        ]),
+                                        cardValidation.errors.cardNumber && React.createElement('p', {
+                                            className: 'text-sm text-red-500 mt-1'
+                                        }, cardValidation.errors.cardNumber)
+                                    ]),
+
+                                    // Expiry and CVV
+                                    React.createElement('div', { key: 'expiry-cvv', className: 'grid grid-cols-2 gap-4' }, [
+                                        React.createElement('div', { key: 'expiry' }, [
+                                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Expiry Date'),
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: creditCardForm.expiryDate,
+                                                onChange: (e) => handleCreditCardChange('expiryDate', e.target.value),
+                                                placeholder: 'MM/YY',
+                                                className: 'w-full p-3 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                                            })
+                                        ]),
+                                        React.createElement('div', { key: 'cvv' }, [
+                                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'CVV'),
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: creditCardForm.cvv,
+                                                onChange: (e) => handleCreditCardChange('cvv', e.target.value),
+                                                placeholder: '123',
+                                                className: 'w-full p-3 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                                            })
+                                        ])
+                                    ])
+                                ]),
+
+                                // Card validation status
+                                creditCardForm.cardNumber && React.createElement('div', { 
+                                    className: `p-3 rounded-lg border ${
+                                        cardValidation.isValid 
+                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200' 
+                                            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                                    }`
+                                }, [
+                                    React.createElement('div', { className: 'flex items-center gap-2' }, [
+                                        React.createElement('span', { className: 'font-medium' }, 
+                                            cardValidation.isValid ? '✓ Card Valid' : '✗ Card Invalid'
+                                        ),
+                                        cardValidation.cardType && React.createElement('span', { className: 'text-sm' }, 
+                                            `(${cardValidation.cardType})`
+                                        )
+                                    ]),
+                                    creditCardForm.cardNumber && React.createElement('div', { className: 'text-sm mt-1' }, 
+                                        formatCardNumberForDisplay(creditCardForm.cardNumber)
+                                    )
+                                ])
+                            ]),
+
+                            // Mobile Payment
+                            paymentMethod === 'mobile' && React.createElement('div', { key: 'mobile-payment', className: 'p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
+                                React.createElement('p', { className: 'text-blue-800 dark:text-blue-200 text-sm' }, 
+                                    'Customer will pay using mobile payment (Apple Pay, Google Pay, etc.)'
+                                )
+                            ]),
+
+                            // Action Buttons
+                            React.createElement('div', { key: 'action-buttons', className: 'flex gap-2 pt-4' }, [
                                 React.createElement('button', {
                                     onClick: onClearCart,
                                     className: 'flex-1 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors'
                                 }, 'Clear Cart'),
                                 React.createElement('button', {
                                     onClick: onProcessPayment,
-                                    disabled: loading || (paymentMethod === 'cash' && parseFloat(amountReceived) < total),
-                                    className: 'flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium'
-                                }, loading ? 'Processing...' : 'Process Payment')
+                                    disabled: loading || (
+                                        paymentMethod === 'cash' && parseFloat(amountReceived) < total
+                                    ) || (
+                                        paymentMethod === 'card' && (!cardValidation.isValid || !creditCardForm.cardholderName.trim() || !creditCardForm.expiryDate || !creditCardForm.cvv)
+                                    ),
+                                    className: 'flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2'
+                                }, [
+                                    loading && React.createElement('div', { 
+                                        className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                                    }),
+                                    React.createElement(paymentMethod === 'card' ? CreditCard : DollarSign, { size: 18 }),
+                                    loading ? 'Processing...' : `Pay ${total.toFixed(2)}`
+                                ])
                             ])
                         ])
                     ]
@@ -1287,130 +1606,28 @@ const ProductRow = ({ product }) => {
                 )
             ])
         ]);
-    }
-};
+    },
 
-// Settings View Component for Multi-Location POS System
-// window.Views = window.Views || {};
-
-window.Views.SettingsView = ({ 
-    locations,
-    selectedLocation,
-    userSettings,
-    onLocationChange,
-    onCreateLocation,
-    onUpdateLocation,
-    onThemeToggle,
-    onLogoUpload,
-    loading
-}) => {
-    const { Settings, Plus, Upload, Moon, Sun, MapPin, Edit, Save, X, Image } = window.Icons;
-    
-    const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
-    const [editingLocation, setEditingLocation] = React.useState(null);
-    const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
-    const [logoPreview, setLogoPreview] = React.useState(null);
-    
-    const [newLocationForm, setNewLocationForm] = React.useState({
-        store_code: '',
-        store_name: '',
-        brand: '',
-        address_line1: '',
-        address_line2: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        phone: '',
-        email: '',
-        tax_rate: '0.08',
-        manager_name: '',
-        logo_base64: null
-    });
-
-    // Handle dark mode toggle
-    const handleThemeToggle = () => {
-        const newMode = !isDarkMode;
-        setIsDarkMode(newMode);
-        onThemeToggle(newMode ? 'dark' : 'light');
+    // Settings View Component for Multi-Location POS System
+    SettingsView = ({ 
+        locations,
+        selectedLocation,
+        userSettings,
+        onLocationChange,
+        onCreateLocation,
+        onUpdateLocation,
+        onThemeToggle,
+        onLogoUpload,
+        loading
+    }) => {
+        const { Settings, Plus, Upload, Moon, Sun, MapPin, Edit, Save, X, Image } = window.Icons;
         
-        // Apply theme to document
-        if (newMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    };
-
-    // Handle logo upload
-    const handleLogoUpload = (event, isForLocation = false) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file');
-            return;
-        }
-
-        // Validate file size (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Image size should be less than 2MB');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const base64 = e.target.result;
-            
-            if (isForLocation) {
-                setNewLocationForm(prev => ({
-                    ...prev,
-                    logo_base64: base64
-                }));
-                setLogoPreview(base64);
-            } else {
-                // Update current location logo
-                onLogoUpload(selectedLocation.id, base64);
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    // Handle form input changes
-    const handleInputChange = (field, value) => {
-        setNewLocationForm(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    // Handle create new location
-    const handleCreateLocation = () => {
-        // Validate required fields
-        const required = ['store_code', 'store_name', 'brand', 'address_line1', 'city', 'state', 'zip_code'];
-        const missing = required.filter(field => !newLocationForm[field].trim());
+        const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
+        const [editingLocation, setEditingLocation] = React.useState(null);
+        const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
+        const [logoPreview, setLogoPreview] = React.useState(null);
         
-        if (missing.length > 0) {
-            alert(`Please fill in required fields: ${missing.join(', ')}`);
-            return;
-        }
-
-        // Validate store code format
-        if (!/^[A-Z0-9]{3,10}$/.test(newLocationForm.store_code)) {
-            alert('Store code must be 3-10 uppercase letters and numbers');
-            return;
-        }
-
-        // Validate tax rate
-        const taxRate = parseFloat(newLocationForm.tax_rate);
-        if (isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
-            alert('Tax rate must be a decimal between 0 and 1 (e.g., 0.08 for 8%)');
-            return;
-        }
-
-        onCreateLocation(newLocationForm);
-        setShowNewLocationModal(false);
-        setNewLocationForm({
+        const [newLocationForm, setNewLocationForm] = React.useState({
             store_code: '',
             store_name: '',
             brand: '',
@@ -1425,430 +1642,530 @@ window.Views.SettingsView = ({
             manager_name: '',
             logo_base64: null
         });
-        setLogoPreview(null);
-    };
 
-    const LocationCard = ({ location, isSelected }) => (
-        React.createElement('div', {
-            className: `border rounded-lg p-4 cursor-pointer transition-all ${
-                isSelected 
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
-            }`
-        }, [
-            React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
-                React.createElement('div', { key: 'info', className: 'flex-1' }, [
-                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' }, [
-                        location.logo_base64 && React.createElement('img', {
-                            key: 'logo',
-                            src: location.logo_base64,
-                            alt: `${location.store_name} logo`,
-                            className: 'w-8 h-8 object-contain rounded'
-                        }),
-                        React.createElement('h3', { key: 'name', className: 'font-bold text-lg dark:text-white' }, 
-                            location.store_name
+        // Handle dark mode toggle
+        const handleThemeToggle = () => {
+            const newMode = !isDarkMode;
+            setIsDarkMode(newMode);
+            onThemeToggle(newMode ? 'dark' : 'light');
+            
+            // Apply theme to document
+            if (newMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        };
+
+        // Handle logo upload
+        const handleLogoUpload = (event, isForLocation = false) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                return;
+            }
+
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image size should be less than 2MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result;
+                
+                if (isForLocation) {
+                    setNewLocationForm(prev => ({
+                        ...prev,
+                        logo_base64: base64
+                    }));
+                    setLogoPreview(base64);
+                } else {
+                    // Update current location logo
+                    onLogoUpload(selectedLocation.id, base64);
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Handle form input changes
+        const handleInputChange = (field, value) => {
+            setNewLocationForm(prev => ({
+                ...prev,
+                [field]: value
+            }));
+        };
+
+        // Handle create new location
+        const handleCreateLocation = () => {
+            // Validate required fields
+            const required = ['store_code', 'store_name', 'brand', 'address_line1', 'city', 'state', 'zip_code'];
+            const missing = required.filter(field => !newLocationForm[field].trim());
+            
+            if (missing.length > 0) {
+                alert(`Please fill in required fields: ${missing.join(', ')}`);
+                return;
+            }
+
+            // Validate store code format
+            if (!/^[A-Z0-9]{3,10}$/.test(newLocationForm.store_code)) {
+                alert('Store code must be 3-10 uppercase letters and numbers');
+                return;
+            }
+
+            // Validate tax rate
+            const taxRate = parseFloat(newLocationForm.tax_rate);
+            if (isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
+                alert('Tax rate must be a decimal between 0 and 1 (e.g., 0.08 for 8%)');
+                return;
+            }
+
+            onCreateLocation(newLocationForm);
+            setShowNewLocationModal(false);
+            setNewLocationForm({
+                store_code: '',
+                store_name: '',
+                brand: '',
+                address_line1: '',
+                address_line2: '',
+                city: '',
+                state: '',
+                zip_code: '',
+                phone: '',
+                email: '',
+                tax_rate: '0.08',
+                manager_name: '',
+                logo_base64: null
+            });
+            setLogoPreview(null);
+        };
+
+        const LocationCard = ({ location, isSelected }) => (
+            React.createElement('div', {
+                className: `border rounded-lg p-4 cursor-pointer transition-all ${
+                    isSelected 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
+                }`
+            }, [
+                React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
+                    React.createElement('div', { key: 'info', className: 'flex-1' }, [
+                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' }, [
+                            location.logo_base64 && React.createElement('img', {
+                                key: 'logo',
+                                src: location.logo_base64,
+                                alt: `${location.store_name} logo`,
+                                className: 'w-8 h-8 object-contain rounded'
+                            }),
+                            React.createElement('h3', { key: 'name', className: 'font-bold text-lg dark:text-white' }, 
+                                location.store_name
+                            ),
+                            isSelected && React.createElement('span', {
+                                key: 'selected-badge',
+                                className: 'px-2 py-1 bg-blue-600 text-white text-xs rounded-full'
+                            }, 'Selected')
+                        ]),
+                        React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                            `${location.brand} • ${location.store_code}`
                         ),
-                        isSelected && React.createElement('span', {
-                            key: 'selected-badge',
-                            className: 'px-2 py-1 bg-blue-600 text-white text-xs rounded-full'
-                        }, 'Selected')
+                        React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                            `${location.address_line1}, ${location.city}, ${location.state}`
+                        )
                     ]),
-                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
-                        `${location.brand} • ${location.store_code}`
-                    ),
-                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
-                        `${location.address_line1}, ${location.city}, ${location.state}`
-                    )
+                    React.createElement('button', {
+                        key: 'edit-btn',
+                        onClick: (e) => {
+                            e.stopPropagation();
+                            setEditingLocation(location);
+                        },
+                        className: 'p-2 text-gray-400 hover:text-blue-600 rounded transition-colors'
+                    }, React.createElement(Edit, { size: 16 }))
                 ]),
-                React.createElement('button', {
-                    key: 'edit-btn',
-                    onClick: (e) => {
-                        e.stopPropagation();
-                        setEditingLocation(location);
-                    },
-                    className: 'p-2 text-gray-400 hover:text-blue-600 rounded transition-colors'
-                }, React.createElement(Edit, { size: 16 }))
-            ]),
-            React.createElement('div', { key: 'details', className: 'grid grid-cols-2 gap-4 text-sm' }, [
-                React.createElement('div', { key: 'tax' }, [
-                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Tax Rate: '),
-                    React.createElement('span', { className: 'font-medium dark:text-white' }, 
-                        `${(location.tax_rate * 100).toFixed(2)}%`
-                    )
-                ]),
-                React.createElement('div', { key: 'manager' }, [
-                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Manager: '),
-                    React.createElement('span', { className: 'font-medium dark:text-white' }, 
-                        location.manager_name || 'Not assigned'
-                    )
+                React.createElement('div', { key: 'details', className: 'grid grid-cols-2 gap-4 text-sm' }, [
+                    React.createElement('div', { key: 'tax' }, [
+                        React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Tax Rate: '),
+                        React.createElement('span', { className: 'font-medium dark:text-white' }, 
+                            `${(location.tax_rate * 100).toFixed(2)}%`
+                        )
+                    ]),
+                    React.createElement('div', { key: 'manager' }, [
+                        React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Manager: '),
+                        React.createElement('span', { className: 'font-medium dark:text-white' }, 
+                            location.manager_name || 'Not assigned'
+                        )
+                    ])
                 ])
             ])
-        ])
-    );
+        );
 
-    const LocationFormModal = ({ show, onClose, title, isEdit = false }) => {
-        if (!show) return null;
+        const LocationFormModal = ({ show, onClose, title, isEdit = false }) => {
+            if (!show) return null;
 
-        return React.createElement('div', {
-            className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
-        }, [
-            React.createElement('div', { 
-                key: 'modal',
-                className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto'
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
             }, [
-                React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
-                    React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, title),
-                    React.createElement('button', {
-                        onClick: onClose,
-                        className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                    }, React.createElement(X, { size: 24 }))
-                ]),
-                
-                React.createElement('div', { key: 'form', className: 'p-6 space-y-6' }, [
-                    // Logo upload section
-                    React.createElement('div', { key: 'logo-section' }, [
-                        React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Logo'),
-                        React.createElement('div', { className: 'flex items-center gap-4' }, [
-                            React.createElement('div', { 
-                                className: 'w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700' 
-                            }, [
-                                logoPreview || newLocationForm.logo_base64 ? 
-                                    React.createElement('img', {
-                                        src: logoPreview || newLocationForm.logo_base64,
-                                        alt: 'Logo preview',
-                                        className: 'w-full h-full object-contain rounded'
-                                    }) :
-                                    React.createElement(Image, { size: 24, className: 'text-gray-400' })
+                React.createElement('div', { 
+                    key: 'modal',
+                    className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto'
+                }, [
+                    React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                        React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, title),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                        }, React.createElement(X, { size: 24 }))
+                    ]),
+                    
+                    React.createElement('div', { key: 'form', className: 'p-6 space-y-6' }, [
+                        // Logo upload section
+                        React.createElement('div', { key: 'logo-section' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Logo'),
+                            React.createElement('div', { className: 'flex items-center gap-4' }, [
+                                React.createElement('div', { 
+                                    className: 'w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700' 
+                                }, [
+                                    logoPreview || newLocationForm.logo_base64 ? 
+                                        React.createElement('img', {
+                                            src: logoPreview || newLocationForm.logo_base64,
+                                            alt: 'Logo preview',
+                                            className: 'w-full h-full object-contain rounded'
+                                        }) :
+                                        React.createElement(Image, { size: 24, className: 'text-gray-400' })
+                                ]),
+                                React.createElement('input', {
+                                    type: 'file',
+                                    accept: 'image/*',
+                                    onChange: (e) => handleLogoUpload(e, true),
+                                    className: 'hidden',
+                                    id: 'logo-upload'
+                                }),
+                                React.createElement('label', {
+                                    htmlFor: 'logo-upload',
+                                    className: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors'
+                                }, [
+                                    React.createElement(Upload, { key: 'icon', size: 16 }),
+                                    'Upload Logo'
+                                ])
+                            ])
+                        ]),
+
+                        // Basic information
+                        React.createElement('div', { key: 'basic-info', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                            React.createElement('div', { key: 'store-code' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Code *'),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.store_code,
+                                    onChange: (e) => handleInputChange('store_code', e.target.value.toUpperCase()),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'NYC001',
+                                    maxLength: 10
+                                })
                             ]),
+                            React.createElement('div', { key: 'store-name' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Name *'),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.store_name,
+                                    onChange: (e) => handleInputChange('store_name', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'Manhattan Flagship'
+                                })
+                            ]),
+                            React.createElement('div', { key: 'brand' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Brand *'),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.brand,
+                                    onChange: (e) => handleInputChange('brand', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'TUMI'
+                                })
+                            ]),
+                            React.createElement('div', { key: 'manager' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Manager Name'),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.manager_name,
+                                    onChange: (e) => handleInputChange('manager_name', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'John Manager'
+                                })
+                            ])
+                        ]),
+
+                        // Address information
+                        React.createElement('div', { key: 'address-section' }, [
+                            React.createElement('h3', { className: 'text-lg font-semibold mb-4 dark:text-white' }, 'Address Information'),
+                            React.createElement('div', { className: 'space-y-4' }, [
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.address_line1,
+                                    onChange: (e) => handleInputChange('address_line1', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'Street Address *'
+                                }),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.address_line2,
+                                    onChange: (e) => handleInputChange('address_line2', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'Apartment, suite, etc. (optional)'
+                                }),
+                                React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 gap-4' }, [
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: newLocationForm.city,
+                                        onChange: (e) => handleInputChange('city', e.target.value),
+                                        className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                        placeholder: 'City *'
+                                    }),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: newLocationForm.state,
+                                        onChange: (e) => handleInputChange('state', e.target.value),
+                                        className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                        placeholder: 'State *',
+                                        maxLength: 2
+                                    }),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: newLocationForm.zip_code,
+                                        onChange: (e) => handleInputChange('zip_code', e.target.value),
+                                        className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                        placeholder: 'ZIP Code *'
+                                    })
+                                ])
+                            ])
+                        ]),
+
+                        // Contact and business information
+                        React.createElement('div', { key: 'contact-section', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                            React.createElement('div', { key: 'phone' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Phone'),
+                                React.createElement('input', {
+                                    type: 'tel',
+                                    value: newLocationForm.phone,
+                                    onChange: (e) => handleInputChange('phone', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: '(555) 123-4567'
+                                })
+                            ]),
+                            React.createElement('div', { key: 'email' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                                React.createElement('input', {
+                                    type: 'email',
+                                    value: newLocationForm.email,
+                                    onChange: (e) => handleInputChange('email', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'store@company.com'
+                                })
+                            ]),
+                            React.createElement('div', { key: 'tax-rate', className: 'md:col-span-2' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Tax Rate (decimal) *'),
+                                React.createElement('input', {
+                                    type: 'number',
+                                    step: '0.0001',
+                                    min: '0',
+                                    max: '1',
+                                    value: newLocationForm.tax_rate,
+                                    onChange: (e) => handleInputChange('tax_rate', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: '0.08'
+                                }),
+                                React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
+                                    'Enter as decimal: 0.08 for 8%, 0.10 for 10%'
+                                )
+                            ])
+                        ])
+                    ]),
+
+                    React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                        React.createElement('button', {
+                            onClick: onClose,
+                            disabled: loading,
+                            className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50'
+                        }, 'Cancel'),
+                        React.createElement('button', {
+                            onClick: handleCreateLocation,
+                            disabled: loading,
+                            className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
+                        }, [
+                            loading && React.createElement('div', { 
+                                key: 'spinner',
+                                className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                            }),
+                            loading ? 'Creating...' : 'Create Location'
+                        ])
+                    ])
+                ])
+            ]);
+        };
+
+        return React.createElement('div', { className: 'space-y-6 dark:text-white' }, [
+            // Header
+            React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+                React.createElement('div', { className: 'flex items-center justify-between mb-6' }, [
+                    React.createElement('div', { key: 'title' }, [
+                        React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-3 dark:text-white' }, [
+                            React.createElement(Settings, { key: 'icon', size: 28 }),
+                            'Settings'
+                        ]),
+                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
+                            'Manage locations, preferences, and system settings'
+                        )
+                    ]),
+                    React.createElement('div', { key: 'theme-toggle', className: 'flex items-center gap-4' }, [
+                        React.createElement('span', { className: 'text-sm font-medium dark:text-gray-300' }, 'Theme:'),
+                        React.createElement('button', {
+                            onClick: handleThemeToggle,
+                            className: `flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                                isDarkMode 
+                                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`
+                        }, [
+                            React.createElement(isDarkMode ? Sun : Moon, { key: 'theme-icon', size: 20 }),
+                            React.createElement('span', { key: 'theme-text', className: 'font-medium' }, 
+                                isDarkMode ? 'Dark Mode' : 'Light Mode'
+                            )
+                        ])
+                    ])
+                ])
+            ]),
+
+            // Location Management
+            React.createElement('div', { key: 'locations', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+                React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
+                    React.createElement('div', { key: 'title' }, [
+                        React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                            React.createElement(MapPin, { key: 'icon', size: 24 }),
+                            'Store Locations'
+                        ]),
+                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                            `${locations.length} locations configured • Selected: ${selectedLocation?.store_name || 'None'}`
+                        )
+                    ]),
+                    React.createElement('button', {
+                        key: 'add-btn',
+                        onClick: () => setShowNewLocationModal(true),
+                        className: 'flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                    }, [
+                        React.createElement(Plus, { key: 'icon', size: 20 }),
+                        'Add Location'
+                    ])
+                ]),
+
+                // Current location selector
+                selectedLocation && React.createElement('div', { key: 'current-location', className: 'mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
+                    React.createElement('div', { className: 'flex items-center justify-between' }, [
+                        React.createElement('div', { key: 'current-info', className: 'flex items-center gap-3' }, [
+                            selectedLocation.logo_base64 && React.createElement('img', {
+                                key: 'logo',
+                                src: selectedLocation.logo_base64,
+                                alt: 'Current location logo',
+                                className: 'w-12 h-12 object-contain rounded'
+                            }),
+                            React.createElement('div', { key: 'details' }, [
+                                React.createElement('h4', { className: 'font-bold text-blue-900 dark:text-blue-100' }, 
+                                    `Currently Operating: ${selectedLocation.store_name}`
+                                ),
+                                React.createElement('p', { className: 'text-sm text-blue-700 dark:text-blue-200' }, 
+                                    `${selectedLocation.address_line1}, ${selectedLocation.city} • Tax: ${(selectedLocation.tax_rate * 100).toFixed(2)}%`
+                                )
+                            ])
+                        ]),
+                        React.createElement('div', { key: 'logo-upload', className: 'flex items-center gap-2' }, [
                             React.createElement('input', {
                                 type: 'file',
                                 accept: 'image/*',
-                                onChange: (e) => handleLogoUpload(e, true),
+                                onChange: (e) => handleLogoUpload(e, false),
                                 className: 'hidden',
-                                id: 'logo-upload'
+                                id: 'current-logo-upload'
                             }),
                             React.createElement('label', {
-                                htmlFor: 'logo-upload',
-                                className: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors'
+                                htmlFor: 'current-logo-upload',
+                                className: 'flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 cursor-pointer transition-colors'
                             }, [
                                 React.createElement(Upload, { key: 'icon', size: 16 }),
-                                'Upload Logo'
+                                'Update Logo'
                             ])
                         ])
-                    ]),
+                    ])
+                ]),
 
-                    // Basic information
-                    React.createElement('div', { key: 'basic-info', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
-                        React.createElement('div', { key: 'store-code' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Code *'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newLocationForm.store_code,
-                                onChange: (e) => handleInputChange('store_code', e.target.value.toUpperCase()),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'NYC001',
-                                maxLength: 10
-                            })
-                        ]),
-                        React.createElement('div', { key: 'store-name' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Name *'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newLocationForm.store_name,
-                                onChange: (e) => handleInputChange('store_name', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'Manhattan Flagship'
-                            })
-                        ]),
-                        React.createElement('div', { key: 'brand' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Brand *'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newLocationForm.brand,
-                                onChange: (e) => handleInputChange('brand', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'TUMI'
-                            })
-                        ]),
-                        React.createElement('div', { key: 'manager' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Manager Name'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newLocationForm.manager_name,
-                                onChange: (e) => handleInputChange('manager_name', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'John Manager'
-                            })
-                        ])
-                    ]),
-
-                    // Address information
-                    React.createElement('div', { key: 'address-section' }, [
-                        React.createElement('h3', { className: 'text-lg font-semibold mb-4 dark:text-white' }, 'Address Information'),
-                        React.createElement('div', { className: 'space-y-4' }, [
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newLocationForm.address_line1,
-                                onChange: (e) => handleInputChange('address_line1', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'Street Address *'
-                            }),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newLocationForm.address_line2,
-                                onChange: (e) => handleInputChange('address_line2', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'Apartment, suite, etc. (optional)'
-                            }),
-                            React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 gap-4' }, [
-                                React.createElement('input', {
-                                    type: 'text',
-                                    value: newLocationForm.city,
-                                    onChange: (e) => handleInputChange('city', e.target.value),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                    placeholder: 'City *'
-                                }),
-                                React.createElement('input', {
-                                    type: 'text',
-                                    value: newLocationForm.state,
-                                    onChange: (e) => handleInputChange('state', e.target.value),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                    placeholder: 'State *',
-                                    maxLength: 2
-                                }),
-                                React.createElement('input', {
-                                    type: 'text',
-                                    value: newLocationForm.zip_code,
-                                    onChange: (e) => handleInputChange('zip_code', e.target.value),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                    placeholder: 'ZIP Code *'
-                                })
-                            ])
-                        ])
-                    ]),
-
-                    // Contact and business information
-                    React.createElement('div', { key: 'contact-section', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
-                        React.createElement('div', { key: 'phone' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Phone'),
-                            React.createElement('input', {
-                                type: 'tel',
-                                value: newLocationForm.phone,
-                                onChange: (e) => handleInputChange('phone', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: '(555) 123-4567'
-                            })
-                        ]),
-                        React.createElement('div', { key: 'email' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
-                            React.createElement('input', {
-                                type: 'email',
-                                value: newLocationForm.email,
-                                onChange: (e) => handleInputChange('email', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'store@company.com'
-                            })
-                        ]),
-                        React.createElement('div', { key: 'tax-rate', className: 'md:col-span-2' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Tax Rate (decimal) *'),
-                            React.createElement('input', {
-                                type: 'number',
-                                step: '0.0001',
-                                min: '0',
-                                max: '1',
-                                value: newLocationForm.tax_rate,
-                                onChange: (e) => handleInputChange('tax_rate', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: '0.08'
-                            }),
-                            React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
-                                'Enter as decimal: 0.08 for 8%, 0.10 for 10%'
+                // Location selection dropdown
+                React.createElement('div', { key: 'location-selector', className: 'mb-6' }, [
+                    React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Select Active Location'),
+                    React.createElement('select', {
+                        value: selectedLocation?.id || '',
+                        onChange: (e) => {
+                            const locationId = parseInt(e.target.value);
+                            const location = locations.find(l => l.id === locationId);
+                            onLocationChange(location);
+                        },
+                        className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                    }, [
+                        React.createElement('option', { key: 'empty', value: '' }, 'Select a location...'),
+                        ...locations.map(location => 
+                            React.createElement('option', { key: location.id, value: location.id }, 
+                                `${location.store_name} (${location.store_code}) - ${location.city}, ${location.state}`
                             )
-                        ])
-                    ])
-                ]),
-
-                React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
-                    React.createElement('button', {
-                        onClick: onClose,
-                        disabled: loading,
-                        className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50'
-                    }, 'Cancel'),
-                    React.createElement('button', {
-                        onClick: handleCreateLocation,
-                        disabled: loading,
-                        className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
-                    }, [
-                        loading && React.createElement('div', { 
-                            key: 'spinner',
-                            className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
-                        }),
-                        loading ? 'Creating...' : 'Create Location'
-                    ])
-                ])
-            ])
-        ]);
-    };
-
-    return React.createElement('div', { className: 'space-y-6 dark:text-white' }, [
-        // Header
-        React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
-            React.createElement('div', { className: 'flex items-center justify-between mb-6' }, [
-                React.createElement('div', { key: 'title' }, [
-                    React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-3 dark:text-white' }, [
-                        React.createElement(Settings, { key: 'icon', size: 28 }),
-                        'Settings'
-                    ]),
-                    React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
-                        'Manage locations, preferences, and system settings'
-                    )
-                ]),
-                React.createElement('div', { key: 'theme-toggle', className: 'flex items-center gap-4' }, [
-                    React.createElement('span', { className: 'text-sm font-medium dark:text-gray-300' }, 'Theme:'),
-                    React.createElement('button', {
-                        onClick: handleThemeToggle,
-                        className: `flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                            isDarkMode 
-                                ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`
-                    }, [
-                        React.createElement(isDarkMode ? Sun : Moon, { key: 'theme-icon', size: 20 }),
-                        React.createElement('span', { key: 'theme-text', className: 'font-medium' }, 
-                            isDarkMode ? 'Dark Mode' : 'Light Mode'
                         )
                     ])
-                ])
-            ])
-        ]),
-
-        // Location Management
-        React.createElement('div', { key: 'locations', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
-            React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
-                React.createElement('div', { key: 'title' }, [
-                    React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
-                        React.createElement(MapPin, { key: 'icon', size: 24 }),
-                        'Store Locations'
-                    ]),
-                    React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
-                        `${locations.length} locations configured • Selected: ${selectedLocation?.store_name || 'None'}`
-                    )
                 ]),
-                React.createElement('button', {
-                    key: 'add-btn',
-                    onClick: () => setShowNewLocationModal(true),
-                    className: 'flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                }, [
-                    React.createElement(Plus, { key: 'icon', size: 20 }),
-                    'Add Location'
-                ])
-            ]),
 
-            // Current location selector
-            selectedLocation && React.createElement('div', { key: 'current-location', className: 'mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
-                React.createElement('div', { className: 'flex items-center justify-between' }, [
-                    React.createElement('div', { key: 'current-info', className: 'flex items-center gap-3' }, [
-                        selectedLocation.logo_base64 && React.createElement('img', {
-                            key: 'logo',
-                            src: selectedLocation.logo_base64,
-                            alt: 'Current location logo',
-                            className: 'w-12 h-12 object-contain rounded'
-                        }),
-                        React.createElement('div', { key: 'details' }, [
-                            React.createElement('h4', { className: 'font-bold text-blue-900 dark:text-blue-100' }, 
-                                `Currently Operating: ${selectedLocation.store_name}`
-                            ),
-                            React.createElement('p', { className: 'text-sm text-blue-700 dark:text-blue-200' }, 
-                                `${selectedLocation.address_line1}, ${selectedLocation.city} • Tax: ${(selectedLocation.tax_rate * 100).toFixed(2)}%`
-                            )
-                        ])
-                    ]),
-                    React.createElement('div', { key: 'logo-upload', className: 'flex items-center gap-2' }, [
-                        React.createElement('input', {
-                            type: 'file',
-                            accept: 'image/*',
-                            onChange: (e) => handleLogoUpload(e, false),
-                            className: 'hidden',
-                            id: 'current-logo-upload'
-                        }),
-                        React.createElement('label', {
-                            htmlFor: 'current-logo-upload',
-                            className: 'flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 cursor-pointer transition-colors'
-                        }, [
-                            React.createElement(Upload, { key: 'icon', size: 16 }),
-                            'Update Logo'
-                        ])
-                    ])
-                ])
-            ]),
-
-            // Location selection dropdown
-            React.createElement('div', { key: 'location-selector', className: 'mb-6' }, [
-                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Select Active Location'),
-                React.createElement('select', {
-                    value: selectedLocation?.id || '',
-                    onChange: (e) => {
-                        const locationId = parseInt(e.target.value);
-                        const location = locations.find(l => l.id === locationId);
-                        onLocationChange(location);
-                    },
-                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
-                }, [
-                    React.createElement('option', { key: 'empty', value: '' }, 'Select a location...'),
-                    ...locations.map(location => 
-                        React.createElement('option', { key: location.id, value: location.id }, 
-                            `${location.store_name} (${location.store_code}) - ${location.city}, ${location.state}`
+                // Locations grid
+                locations.length > 0 ? (
+                    React.createElement('div', { key: 'locations-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, 
+                        locations.map(location => 
+                            React.createElement('div', {
+                                key: location.id,
+                                onClick: () => onLocationChange(location)
+                            }, React.createElement(LocationCard, { 
+                                location, 
+                                isSelected: selectedLocation?.id === location.id 
+                            }))
                         )
                     )
-                ])
-            ]),
-
-            // Locations grid
-            locations.length > 0 ? (
-                React.createElement('div', { key: 'locations-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, 
-                    locations.map(location => 
-                        React.createElement('div', {
-                            key: location.id,
-                            onClick: () => onLocationChange(location)
-                        }, React.createElement(LocationCard, { 
-                            location, 
-                            isSelected: selectedLocation?.id === location.id 
-                        }))
-                    )
+                ) : (
+                    React.createElement('div', { key: 'no-locations', className: 'text-center py-12 text-gray-500 dark:text-gray-400' }, [
+                        React.createElement(MapPin, { key: 'icon', className: 'mx-auto mb-4', size: 48 }),
+                        React.createElement('p', { key: 'text', className: 'text-lg mb-2' }, 'No locations configured'),
+                        React.createElement('p', { key: 'subtext', className: 'text-sm' }, 'Create your first location to get started')
+                    ])
                 )
-            ) : (
-                React.createElement('div', { key: 'no-locations', className: 'text-center py-12 text-gray-500 dark:text-gray-400' }, [
-                    React.createElement(MapPin, { key: 'icon', className: 'mx-auto mb-4', size: 48 }),
-                    React.createElement('p', { key: 'text', className: 'text-lg mb-2' }, 'No locations configured'),
-                    React.createElement('p', { key: 'subtext', className: 'text-sm' }, 'Create your first location to get started')
-                ])
-            )
-        ]),
+            ]),
 
-        // Modals
-        React.createElement(LocationFormModal, {
-            key: 'new-location-modal',
-            show: showNewLocationModal,
-            onClose: () => {
-                setShowNewLocationModal(false);
-                setLogoPreview(null);
-                setNewLocationForm({
-                    store_code: '',
-                    store_name: '',
-                    brand: '',
-                    address_line1: '',
-                    address_line2: '',
-                    city: '',
-                    state: '',
-                    zip_code: '',
-                    phone: '',
-                    email: '',
-                    tax_rate: '0.08',
-                    manager_name: '',
-                    logo_base64: null
-                });
-            },
-            title: 'Create New Location'
-        })
-    ]);
+            // Modals
+            React.createElement(LocationFormModal, {
+                key: 'new-location-modal',
+                show: showNewLocationModal,
+                onClose: () => {
+                    setShowNewLocationModal(false);
+                    setLogoPreview(null);
+                    setNewLocationForm({
+                        store_code: '',
+                        store_name: '',
+                        brand: '',
+                        address_line1: '',
+                        address_line2: '',
+                        city: '',
+                        state: '',
+                        zip_code: '',
+                        phone: '',
+                        email: '',
+                        tax_rate: '0.08',
+                        manager_name: '',
+                        logo_base64: null
+                    });
+                },
+                title: 'Create New Location'
+            })
+        ]);
+    }
 };
