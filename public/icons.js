@@ -147,7 +147,7 @@ window.Icons = {
     TrendingDown: (props) => React.createElement('svg', { ...iconProps, ...props }, [
         React.createElement('polyline', { key: 'polyline1', points: "22,17 13.5,8.5 8.5,13.5 2,7" }),
         React.createElement('polyline', { key: 'polyline2', points: "16,17 22,17 22,11" })
-    ])
+    ]),
 
     // New icons for enhanced features
     Moon: (props) => React.createElement('svg', { ...iconProps, ...props }, [
