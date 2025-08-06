@@ -296,9 +296,10 @@ console.log('RT -1 - selectedLocation = ' + selectedLocation);
         ]);
     }
 console.log('RT - Is this first time? '+ isFirstTimeSetup);
-console.log('RT - selectedLocation = ' + selectedLocation);
-console.log('RT - userSettings = ' + userSettings);
-console.log('RT - selectedLocation = ' + selectedLocation);
+console.log('RT - selectedLocation = ');
+console.dir(selectedLocation);
+console.log('RT - userSettings = ');
+console.dir(userSettings);
     // First-time setup screen
     if (isFirstTimeSetup) {
         return React.createElement('div', { 
