@@ -48,6 +48,76 @@ const POSApp = () => {
             window.Views = {};
         }
 
+        // Basic Settings View placeholder
+        if (!window.Views.SettingsView) {
+            window.Views.SettingsView = ({ locations, selectedLocation, onLocationChange, onThemeToggle, userSettings }) => {
+                return React.createElement('div', { className: 'space-y-6' }, [
+                    React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+                        React.createElement('h2', { className: 'text-2xl font-bold mb-4 dark:text-white' }, 'Settings'),
+                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mb-6' }, 'Basic settings management')
+                    ]),
+                    
+                    React.createElement('div', { key: 'location-settings', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+                        React.createElement('h3', { className: 'text-xl font-bold mb-4 dark:text-white' }, 'Location Selection'),
+                        React.createElement('div', { className: 'mb-4' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Active Location'),
+                            React.createElement('select', {
+                                value: selectedLocation?.id || '',
+                                onChange: (e) => {
+                                    const locationId = parseInt(e.target.value);
+                                    const location = locations.find(l => l.id === locationId);
+                                    if (location && onLocationChange) {
+                                        onLocationChange(location);
+                                    }
+                                },
+                                className: 'w-full p-3 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                            }, [
+                                React.createElement('option', { key: 'empty', value: '' }, 'Select a location...'),
+                                ...locations.map(location => 
+                                    React.createElement('option', { key: location.id, value: location.id }, 
+                                        `${location.store_name} (${location.store_code}) - ${location.city}, ${location.state}`
+                                    )
+                                )
+                            ])
+                        ]),
+                        
+                        selectedLocation && React.createElement('div', { key: 'current-location', className: 'p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
+                            React.createElement('div', { className: 'font-semibold text-blue-800 dark:text-blue-200' }, selectedLocation.store_name),
+                            React.createElement('div', { className: 'text-sm text-blue-600 dark:text-blue-300' }, 
+                                `${selectedLocation.address_line1}, ${selectedLocation.city} • Tax: ${(selectedLocation.tax_rate * 100).toFixed(2)}%`
+                            )
+                        ])
+                    ]),
+
+                    React.createElement('div', { key: 'theme-settings', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+                        React.createElement('h3', { className: 'text-xl font-bold mb-4 dark:text-white' }, 'Theme Settings'),
+                        React.createElement('div', { className: 'flex items-center justify-between' }, [
+                            React.createElement('span', { className: 'text-sm font-medium dark:text-white' }, 'Dark Mode'),
+                            React.createElement('button', {
+                                onClick: () => {
+                                    const newTheme = userSettings.theme_mode === 'dark' ? 'light' : 'dark';
+                                    if (onThemeToggle) {
+                                        onThemeToggle(newTheme);
+                                    }
+                                },
+                                className: `px-4 py-2 rounded-lg transition-colors ${
+                                    userSettings.theme_mode === 'dark' 
+                                        ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                                        : 'bg-gray-600 text-white hover:bg-gray-700'
+                                }`
+                            }, userSettings.theme_mode === 'dark' ? '🌞 Light Mode' : '🌙 Dark Mode')
+                        ])
+                    ]),
+
+                    React.createElement('div', { key: 'info', className: 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4' }, [
+                        React.createElement('p', { className: 'text-yellow-800 dark:text-yellow-200 text-sm' }, 
+                            'This is a basic settings view. The full settings view with logo upload and location management will be available once you add the enhanced components.'
+                        )
+                    ])
+                ]);
+            };
+        }
+
         // Basic POS View placeholder
         if (!window.Views.POSView) {
             window.Views.POSView = ({ selectedLocation }) => {
