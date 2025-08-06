@@ -48,6 +48,11 @@ const POSApp = () => {
             window.Views = {};
         }
 
+        // Load the enhanced POS view if available
+        if (window.createEnhancedPOSView) {
+            window.createEnhancedPOSView();
+        }
+
         // Basic Settings View placeholder
         if (!window.Views.SettingsView) {
             window.Views.SettingsView = ({ locations, selectedLocation, onLocationChange, onThemeToggle, userSettings }) => {
@@ -118,7 +123,7 @@ const POSApp = () => {
             };
         }
 
-        // Basic POS View placeholder
+        // Basic POS View placeholder (will be replaced by enhanced version if loaded)
         if (!window.Views.POSView) {
             window.Views.POSView = ({ selectedLocation }) => {
                 return React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8' }, [
