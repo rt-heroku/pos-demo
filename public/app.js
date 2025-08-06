@@ -116,7 +116,7 @@ const POSApp = () => {
             if (response.ok) {
                 const data = await response.json();
                 setUserSettings(data || { theme_mode: 'light' });
-                setSelectedLocation(getLocation(data.selected_location_id));
+                setSelectedLocation(await getLocation(data.selected_location_id));
                 console.log('Loaded user settings:', data);
                 return data || { theme_mode: 'light' };
             }
