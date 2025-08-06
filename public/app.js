@@ -454,8 +454,17 @@ const POSApp = () => {
                 React.createElement('p', { key: 'debug2' }, `Selected location: ${selectedLocation?.store_name || 'None'}`),
                 React.createElement('p', { key: 'debug3' }, `Locations loaded: ${locations.length}`),
                 React.createElement('p', { key: 'debug4' }, `window.Views exists: ${!!window.Views}`),
-                React.createElement('p', { key: 'debug5' }, `window.API exists: ${!!window.API}`),
-                React.createElement('p', { key: 'debug6' }, `Theme: ${userSettings.theme_mode}`)
+                React.createElement('p', { key: 'debug5' }, `window.Views.POSView exists: ${!!(window.Views && window.Views.POSView)}`),
+                React.createElement('p', { key: 'debug6' }, `window.Views.SettingsView exists: ${!!(window.Views && window.Views.SettingsView)}`),
+                React.createElement('p', { key: 'debug7' }, `window.API exists: ${!!window.API}`),
+                React.createElement('p', { key: 'debug8' }, `window.Modals exists: ${!!window.Modals}`),
+                React.createElement('p', { key: 'debug9' }, `Theme: ${userSettings.theme_mode}`),
+                React.createElement('p', { key: 'debug10' }, `Available Views: ${window.Views ? Object.keys(window.Views).join(', ') : 'None'}`),
+                React.createElement('button', {
+                    key: 'reload-btn',
+                    onClick: () => window.location.reload(),
+                    className: 'mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700'
+                }, 'Reload Page')
             ])
         ]),
 
