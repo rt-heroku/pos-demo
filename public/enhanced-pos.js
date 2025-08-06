@@ -8,7 +8,7 @@ const createEnhancedPOSView = () => {
     }
 
     // Enhanced POS View with all features
-    window.Views.POSView = ({ 
+    window.Views.POSView2 = ({ 
         selectedLocation,
         products = [],
         onLoadProducts,
