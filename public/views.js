@@ -1801,7 +1801,7 @@ const ProductRow = ({ product }) => {
                 ])
             ])
         );
-console.log('RT - Locations:');
+console.log('RT Views - Locations:');
 console.dir(locations);
         const LocationFormModal = ({ show, onClose, title, isEdit = false }) => {
             if (!show) return null;
