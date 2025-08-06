@@ -1609,7 +1609,7 @@ const ProductRow = ({ product }) => {
     },
 
     // Settings View Component for Multi-Location POS System
-    SettingsView = ({ 
+    SettingsView : ({ 
         locations,
         selectedLocation,
         userSettings,
