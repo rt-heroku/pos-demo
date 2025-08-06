@@ -132,6 +132,8 @@ CREATE INDEX IF NOT EXISTS idx_work_orders_created_date ON work_orders(created_d
 CREATE INDEX IF NOT EXISTS idx_work_order_products_work_order ON work_order_products(work_order_id);
 
 -- Functions for generating work order numbers
+DROP FUNCTION IF EXISTS generate_work_order_number(integer);
+
 CREATE OR REPLACE FUNCTION generate_work_order_number(loc_id INTEGER) RETURNS TEXT AS $$
 DECLARE
     location_code TEXT;
@@ -142,10 +144,18 @@ BEGIN
     SELECT store_code INTO location_code FROM locations WHERE id = loc_id;
     
     -- Get next sequential number for this location
-    SELECT COALESCE(MAX(CAST(SUBSTRING(work_order_number FROM LENGTH(location_code) + 3) AS INTEGER)), 0) + 1
+    -- Extract number after "STORECODE-WO-" pattern
+    SELECT COALESCE(MAX(CAST(SUBSTRING(work_order_number FROM LENGTH(location_code) + 5) AS INTEGER)), 0) + 1
     INTO counter
     FROM work_orders 
-    WHERE work_order_number LIKE location_code || '-WO%';
+    WHERE work_order_number LIKE location_code || '-WO-%'
+    AND LENGTH(SUBSTRING(work_order_number FROM LENGTH(location_code) + 5)) > 0
+    AND SUBSTRING(work_order_number FROM LENGTH(location_code) + 5) ~ '^[0-9]+$';
+    
+    -- If no counter found, start with 1
+    IF counter IS NULL THEN
+        counter := 1;
+    END IF;
     
     -- Format: STORECODE-WO-001
     new_number := location_code || '-WO-' || LPAD(counter::TEXT, 3, '0');
