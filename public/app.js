@@ -131,8 +131,8 @@ const POSApp = () => {
                 setUserSettings(updatedSettings);
             }
             
-console.log('RT - userSettings = ' + userSettings);
-console.log('RT - selectedLocation = ' + selectedLocation);
+console.log('RT -1 - userSettings = ' + userSettings);
+console.log('RT -1 - selectedLocation = ' + selectedLocation);
             // If this was first-time setup, switch to POS view
             //if (isFirstTimeSetup) {
                 setIsFirstTimeSetup(false);
