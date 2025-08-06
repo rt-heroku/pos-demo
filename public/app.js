@@ -134,10 +134,10 @@ const POSApp = () => {
             }
             
             // If this was first-time setup, switch to POS view
-            if (isFirstTimeSetup) {
+            //if (isFirstTimeSetup) {
                 setIsFirstTimeSetup(false);
                 setCurrentView('pos');
-            }
+            //}
             
             console.log('Location changed successfully, isFirstTimeSetup' + isFirstTimeSetup);
         } catch (error) {
