@@ -136,7 +136,7 @@ const POSApp = () => {
                 setCurrentView('pos');
             }
             
-            console.log('Location changed successfully');
+            console.log('Location changed successfully, isFirstTimeSetup' + isFirstTimeSetup);
         } catch (error) {
             console.error('Failed to change location:', error);
             alert('Failed to switch location. Please try again.');
