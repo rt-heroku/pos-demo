@@ -48,6 +48,9 @@ const POSApp = () => {
         try {
             setAppLoading(true);
             
+            // Load basic data
+            await loadLocations();
+            await loadUserSettings();
             // Check if setup is required
             try {
                 const response = await fetch('/api/setup/status');
