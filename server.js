@@ -187,100 +187,6 @@ app.get('/api/customers/search/:query', async (req, res) => {
   }
 });
 
-// Transactions
-app.get('/api/transactions', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT 
-        t.*,
-        c.name as customer_name,
-        c.loyalty_number,
-        json_agg(
-          json_build_object(
-            'id', ti.product_id,
-            'name', ti.product_name,
-            'price', ti.product_price,
-            'quantity', ti.quantity
-          ) ORDER BY ti.id
-        ) as items
-      FROM transactions t
-      LEFT JOIN customers c ON t.customer_id = c.id
-      LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
-      GROUP BY t.id, c.name, c.loyalty_number
-      ORDER BY t.created_at DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching transactions:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.post('/api/transactions', async (req, res) => {
-  const client = await pool.connect();
-  
-  try {
-    await client.query('BEGIN');
-    
-    const { 
-      items, 
-      subtotal, 
-      tax, 
-      total, 
-      paymentMethod, 
-      customerId, 
-      amountReceived, 
-      change,
-      pointsRedeemed = 0
-    } = req.body;
-    
-    // Calculate points earned
-    const pointsEarned = calculatePoints(total);
-    
-    // Create transaction
-    const transactionResult = await client.query(
-      `INSERT INTO transactions 
-       (customer_id, subtotal, tax, total, payment_method, amount_received, change_amount, points_earned, points_redeemed) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [customerId, subtotal, tax, total, paymentMethod, amountReceived, change, pointsEarned, pointsRedeemed]
-    );
-    
-    const transactionId = transactionResult.rows[0].id;
-    
-    // Add transaction items and update stock
-    for (const item of items) {
-      await client.query(
-        'INSERT INTO transaction_items (transaction_id, product_id, product_name, product_price, quantity, subtotal) VALUES ($1, $2, $3, $4, $5, $6)',
-        [transactionId, item.id, item.name, item.price, item.quantity, item.price * item.quantity]
-      );
-      
-      // Update product stock
-      await client.query(
-        'UPDATE products SET stock = stock - $1 WHERE id = $2',
-        [item.quantity, item.id]
-      );
-    }
-    
-    await client.query('COMMIT');
-    
-    // Return transaction with customer info if available
-    const fullTransactionResult = await pool.query(`
-      SELECT t.*, c.name as customer_name, c.loyalty_number
-      FROM transactions t
-      LEFT JOIN customers c ON t.customer_id = c.id
-      WHERE t.id = $1
-    `, [transactionId]);
-    
-    res.json(fullTransactionResult.rows[0]);
-    
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Error creating transaction:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  } finally {
-    client.release();
-  }
-});
 
 // Loyalty-specific endpoints
 
@@ -928,6 +834,623 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
     client.release();
   }
 });
+
+
+// Enhanced API endpoints for location management and settings
+// Add these to your server.js file
+
+// Location Management API Routes
+app.get('/api/locations', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM locations WHERE is_active = true ORDER BY store_name');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching locations:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/locations/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM locations WHERE id = $1', [id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching location:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.post('/api/locations', async (req, res) => {
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+        
+        const {
+            store_code,
+            store_name,
+            brand,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            zip_code,
+            phone,
+            email,
+            tax_rate,
+            manager_name,
+            logo_base64
+        } = req.body;
+        
+        // Validate required fields
+        if (!store_code || !store_name || !brand || !address_line1 || !city || !state || !zip_code) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Check if store code already exists
+        const existingLocation = await client.query(
+            'SELECT id FROM locations WHERE store_code = $1',
+            [store_code.toUpperCase()]
+        );
+        
+        if (existingLocation.rows.length > 0) {
+            return res.status(400).json({ error: 'Store code already exists' });
+        }
+        
+        // Create location
+        const locationResult = await client.query(`
+            INSERT INTO locations (
+                store_code, store_name, brand, address_line1, address_line2, 
+                city, state, zip_code, phone, email, tax_rate, manager_name, logo_base64
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING *
+        `, [
+            store_code.toUpperCase(),
+            store_name,
+            brand,
+            address_line1,
+            address_line2 || null,
+            city,
+            state,
+            zip_code,
+            phone || null,
+            email || null,
+            parseFloat(tax_rate) || 0.08,
+            manager_name || null,
+            logo_base64 || null
+        ]);
+        
+        await client.query('COMMIT');
+        res.json(locationResult.rows[0]);
+        
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error creating location:', err);
+        
+        if (err.code === '23505') { // Unique constraint violation
+            res.status(400).json({ error: 'Store code already exists' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    } finally {
+        client.release();
+    }
+});
+
+app.put('/api/locations/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            store_name,
+            brand,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            zip_code,
+            phone,
+            email,
+            tax_rate,
+            manager_name,
+            logo_base64
+        } = req.body;
+        
+        const result = await pool.query(`
+            UPDATE locations SET 
+                store_name = $1, brand = $2, address_line1 = $3, address_line2 = $4,
+                city = $5, state = $6, zip_code = $7, phone = $8, email = $9,
+                tax_rate = $10, manager_name = $11, logo_base64 = $12, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $13 RETURNING *
+        `, [
+            store_name, brand, address_line1, address_line2, city, state, zip_code,
+            phone, email, parseFloat(tax_rate), manager_name, logo_base64, id
+        ]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating location:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.put('/api/locations/:id/logo', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { logo_base64 } = req.body;
+        
+        const result = await pool.query(
+            'UPDATE locations SET logo_base64 = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+            [logo_base64, id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating location logo:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Location Inventory API Routes
+app.get('/api/locations/:id/inventory', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { low_stock } = req.query;
+        
+        let query = `
+            SELECT 
+                li.*,
+                p.name as product_name,
+                p.sku,
+                p.price,
+                p.category,
+                p.image,
+                (li.quantity <= li.reorder_level) as needs_reorder
+            FROM location_inventory li
+            JOIN products p ON li.product_id = p.id
+            WHERE li.location_id = $1
+        `;
+        
+        if (low_stock === 'true') {
+            query += ' AND li.quantity <= li.reorder_level';
+        }
+        
+        query += ' ORDER BY p.name';
+        
+        const result = await pool.query(query, [id]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching location inventory:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Cross-location inventory search
+app.get('/api/inventory/search', async (req, res) => {
+    try {
+        const { product_name, sku } = req.query;
+        
+        if (!product_name && !sku) {
+            return res.status(400).json({ error: 'Product name or SKU is required' });
+        }
+        
+        let query = `
+            SELECT 
+                li.location_id,
+                li.product_id,
+                li.quantity,
+                li.reserved_quantity,
+                p.name as product_name,
+                p.sku,
+                p.price,
+                p.category,
+                l.store_name,
+                l.store_code,
+                l.city,
+                l.state
+            FROM location_inventory li
+            JOIN products p ON li.product_id = p.id
+            JOIN locations l ON li.location_id = l.id
+            WHERE l.is_active = true
+        `;
+        
+        const params = [];
+        let paramCount = 0;
+        
+        if (product_name) {
+            paramCount++;
+            query += ` AND LOWER(p.name) LIKE LOWER($${paramCount})`;
+            params.push(`%${product_name}%`);
+        }
+        
+        if (sku) {
+            paramCount++;
+            query += ` AND UPPER(p.sku) LIKE UPPER($${paramCount})`;
+            params.push(`%${sku}%`);
+        }
+        
+        query += ` ORDER BY p.name, l.store_name`;
+        
+        const result = await pool.query(query, params);
+        
+        // Group by product for easier consumption
+        const groupedResults = result.rows.reduce((acc, row) => {
+            const productKey = `${row.product_id}`;
+            if (!acc[productKey]) {
+                acc[productKey] = {
+                    product_id: row.product_id,
+                    product_name: row.product_name,
+                    sku: row.sku,
+                    price: row.price,
+                    category: row.category,
+                    locations: []
+                };
+            }
+            
+            acc[productKey].locations.push({
+                location_id: row.location_id,
+                store_name: row.store_name,
+                store_code: row.store_code,
+                city: row.city,
+                state: row.state,
+                quantity: row.quantity,
+                reserved_quantity: row.reserved_quantity,
+                available_quantity: row.quantity - row.reserved_quantity
+            });
+            
+            return acc;
+        }, {});
+        
+        res.json(Object.values(groupedResults));
+    } catch (err) {
+        console.error('Error searching inventory:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update location inventory
+app.put('/api/locations/:locationId/inventory/:productId', async (req, res) => {
+    try {
+        const { locationId, productId } = req.params;
+        const { quantity, reorder_level, notes } = req.body;
+        
+        const result = await pool.query(`
+            INSERT INTO location_inventory (location_id, product_id, quantity, reorder_level, notes)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (location_id, product_id)
+            DO UPDATE SET 
+                quantity = $3,
+                reorder_level = COALESCE($4, location_inventory.reorder_level),
+                notes = COALESCE($5, location_inventory.notes),
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `, [locationId, productId, quantity, reorder_level, notes]);
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating location inventory:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// User Settings API Routes
+app.get('/api/settings/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        const result = await pool.query(
+            'SELECT * FROM user_settings WHERE user_identifier = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            // Create default settings if none exist
+            const defaultSettings = await pool.query(`
+                INSERT INTO user_settings (user_identifier, theme_mode)
+                VALUES ($1, 'light')
+                RETURNING *
+            `, [userId]);
+            
+            return res.json(defaultSettings.rows[0]);
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching user settings:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.put('/api/settings/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { selected_location_id, theme_mode, language, currency_format, notifications_enabled } = req.body;
+        
+        const result = await pool.query(`
+            INSERT INTO user_settings (user_identifier, selected_location_id, theme_mode, language, currency_format, notifications_enabled)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (user_identifier)
+            DO UPDATE SET 
+                selected_location_id = COALESCE($2, user_settings.selected_location_id),
+                theme_mode = COALESCE($3, user_settings.theme_mode),
+                language = COALESCE($4, user_settings.language),
+                currency_format = COALESCE($5, user_settings.currency_format),
+                notifications_enabled = COALESCE($6, user_settings.notifications_enabled),
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `, [userId, selected_location_id, theme_mode, language, currency_format, notifications_enabled]);
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating user settings:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Enhanced Analytics with Location Support
+app.get('/api/analytics/:locationId', async (req, res) => {
+    try {
+        const { locationId } = req.params;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const [totalSales, todaySales, transactionCount, lowStockProducts, locationInfo] = await Promise.all([
+            pool.query('SELECT COALESCE(SUM(total), 0) as total FROM transactions WHERE location_id = $1', [locationId]),
+            pool.query('SELECT COALESCE(SUM(total), 0) as total FROM transactions WHERE location_id = $1 AND created_at >= $2', [locationId, todayStart]),
+            pool.query('SELECT COUNT(*) as count FROM transactions WHERE location_id = $1', [locationId]),
+            pool.query('SELECT COUNT(*) as count FROM location_inventory WHERE location_id = $1 AND quantity <= reorder_level', [locationId]),
+            pool.query('SELECT store_name, store_code FROM locations WHERE id = $1', [locationId])
+        ]);
+        
+        res.json({
+            location: locationInfo.rows[0] || null,
+            totalSales: parseFloat(totalSales.rows[0].total),
+            todaySales: parseFloat(todaySales.rows[0].total),
+            transactionCount: parseInt(transactionCount.rows[0].count),
+            lowStockCount: parseInt(lowStockProducts.rows[0].count)
+        });
+    } catch (err) {
+        console.error('Error fetching location analytics:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get transactions by location
+app.get('/api/transactions/location/:locationId', async (req, res) => {
+    try {
+        const { locationId } = req.params;
+        const result = await pool.query(`
+            SELECT 
+                t.*,
+                c.name as customer_name,
+                c.loyalty_number,
+                json_agg(
+                    json_build_object(
+                        'id', ti.product_id,
+                        'name', ti.product_name,
+                        'price', ti.product_price,
+                        'quantity', ti.quantity,
+                        'subtotal', ti.subtotal
+                    ) ORDER BY ti.id
+                ) as items
+            FROM transactions t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
+            WHERE t.location_id = $1
+            GROUP BY t.id, c.name, c.loyalty_number
+            ORDER BY t.created_at DESC
+            LIMIT 50
+        `, [locationId]);
+        
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching location transactions:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Enhanced transactions endpoint - now requires location_id
+app.post('/api/transactions', async (req, res) => {
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+        
+        const { 
+            items, 
+            subtotal, 
+            tax, 
+            total, 
+            paymentMethod, 
+            customerId, 
+            amountReceived, 
+            change,
+            pointsRedeemed = 0,
+            locationId,
+            discountAmount = 0,
+            discountType = null,
+            discountReason = null,
+            cardLastFour = null,
+            cardType = null,
+            paymentReference = null
+        } = req.body;
+        
+        if (!locationId) {
+            return res.status(400).json({ error: 'Location ID is required' });
+        }
+        
+        // Calculate points earned
+        const pointsEarned = Math.floor(total);
+        
+        // Create transaction
+        const transactionResult = await client.query(`
+            INSERT INTO transactions 
+            (customer_id, location_id, subtotal, tax, total, payment_method, amount_received, 
+             change_amount, points_earned, points_redeemed, discount_amount, discount_type, 
+             discount_reason, card_last_four, card_type, payment_reference) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
+            RETURNING *
+        `, [
+            customerId, locationId, subtotal, tax, total, paymentMethod, 
+            amountReceived, change, pointsEarned, pointsRedeemed, discountAmount,
+            discountType, discountReason, cardLastFour, cardType, paymentReference
+        ]);
+        
+        const transactionId = transactionResult.rows[0].id;
+        
+        // Add transaction items
+        for (const item of items) {
+            await client.query(
+                'INSERT INTO transaction_items (transaction_id, product_id, product_name, product_price, quantity, subtotal) VALUES ($1, $2, $3, $4, $5, $6)',
+                [transactionId, item.id, item.name, item.price, item.quantity, item.price * item.quantity]
+            );
+        }
+        
+        await client.query('COMMIT');
+        
+        // Return transaction with customer and location info
+        const fullTransactionResult = await pool.query(`
+            SELECT t.*, c.name as customer_name, c.loyalty_number, l.store_name, l.store_code
+            FROM transactions t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            LEFT JOIN locations l ON t.location_id = l.id
+            WHERE t.id = $1
+        `, [transactionId]);
+        
+        res.json(fullTransactionResult.rows[0]);
+        
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error creating transaction:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    } finally {
+        client.release();
+    }
+});
+
+// Check if this is first-time setup (no locations exist)
+app.get('/api/setup/status', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT COUNT(*) as count FROM locations WHERE is_active = true');
+        const hasLocations = parseInt(result.rows[0].count) > 0;
+        
+        res.json({
+            setupRequired: !hasLocations,
+            locationCount: parseInt(result.rows[0].count)
+        });
+    } catch (err) {
+        console.error('Error checking setup status:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Transactions
+// app.get('/api/transactions', async (req, res) => {
+//   try {
+//     const result = await pool.query(`
+//       SELECT 
+//         t.*,
+//         c.name as customer_name,
+//         c.loyalty_number,
+//         json_agg(
+//           json_build_object(
+//             'id', ti.product_id,
+//             'name', ti.product_name,
+//             'price', ti.product_price,
+//             'quantity', ti.quantity
+//           ) ORDER BY ti.id
+//         ) as items
+//       FROM transactions t
+//       LEFT JOIN customers c ON t.customer_id = c.id
+//       LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
+//       GROUP BY t.id, c.name, c.loyalty_number
+//       ORDER BY t.created_at DESC
+//     `);
+//     res.json(result.rows);
+//   } catch (err) {
+//     console.error('Error fetching transactions:', err);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+
+// app.post('/api/transactions', async (req, res) => {
+//   const client = await pool.connect();
+  
+//   try {
+//     await client.query('BEGIN');
+    
+//     const { 
+//       items, 
+//       subtotal, 
+//       tax, 
+//       total, 
+//       paymentMethod, 
+//       customerId, 
+//       amountReceived, 
+//       change,
+//       pointsRedeemed = 0
+//     } = req.body;
+    
+//     // Calculate points earned
+//     const pointsEarned = calculatePoints(total);
+    
+//     // Create transaction
+//     const transactionResult = await client.query(
+//       `INSERT INTO transactions 
+//        (customer_id, subtotal, tax, total, payment_method, amount_received, change_amount, points_earned, points_redeemed) 
+//        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+//       [customerId, subtotal, tax, total, paymentMethod, amountReceived, change, pointsEarned, pointsRedeemed]
+//     );
+    
+//     const transactionId = transactionResult.rows[0].id;
+    
+//     // Add transaction items and update stock
+//     for (const item of items) {
+//       await client.query(
+//         'INSERT INTO transaction_items (transaction_id, product_id, product_name, product_price, quantity, subtotal) VALUES ($1, $2, $3, $4, $5, $6)',
+//         [transactionId, item.id, item.name, item.price, item.quantity, item.price * item.quantity]
+//       );
+      
+//       // Update product stock
+//       await client.query(
+//         'UPDATE products SET stock = stock - $1 WHERE id = $2',
+//         [item.quantity, item.id]
+//       );
+//     }
+    
+//     await client.query('COMMIT');
+    
+//     // Return transaction with customer info if available
+//     const fullTransactionResult = await pool.query(`
+//       SELECT t.*, c.name as customer_name, c.loyalty_number
+//       FROM transactions t
+//       LEFT JOIN customers c ON t.customer_id = c.id
+//       WHERE t.id = $1
+//     `, [transactionId]);
+    
+//     res.json(fullTransactionResult.rows[0]);
+    
+//   } catch (err) {
+//     await client.query('ROLLBACK');
+//     console.error('Error creating transaction:', err);
+//     res.status(500).json({ error: 'Internal server error' });
+//   } finally {
+//     client.release();
+//   }
+// });
 
 
 

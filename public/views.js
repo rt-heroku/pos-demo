@@ -1289,3 +1289,566 @@ const ProductRow = ({ product }) => {
         ]);
     }
 };
+
+// Settings View Component for Multi-Location POS System
+// window.Views = window.Views || {};
+
+window.Views.SettingsView = ({ 
+    locations,
+    selectedLocation,
+    userSettings,
+    onLocationChange,
+    onCreateLocation,
+    onUpdateLocation,
+    onThemeToggle,
+    onLogoUpload,
+    loading
+}) => {
+    const { Settings, Plus, Upload, Moon, Sun, MapPin, Edit, Save, X, Image } = window.Icons;
+    
+    const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
+    const [editingLocation, setEditingLocation] = React.useState(null);
+    const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
+    const [logoPreview, setLogoPreview] = React.useState(null);
+    
+    const [newLocationForm, setNewLocationForm] = React.useState({
+        store_code: '',
+        store_name: '',
+        brand: '',
+        address_line1: '',
+        address_line2: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        phone: '',
+        email: '',
+        tax_rate: '0.08',
+        manager_name: '',
+        logo_base64: null
+    });
+
+    // Handle dark mode toggle
+    const handleThemeToggle = () => {
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        onThemeToggle(newMode ? 'dark' : 'light');
+        
+        // Apply theme to document
+        if (newMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    };
+
+    // Handle logo upload
+    const handleLogoUpload = (event, isForLocation = false) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file');
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Image size should be less than 2MB');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            
+            if (isForLocation) {
+                setNewLocationForm(prev => ({
+                    ...prev,
+                    logo_base64: base64
+                }));
+                setLogoPreview(base64);
+            } else {
+                // Update current location logo
+                onLogoUpload(selectedLocation.id, base64);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Handle form input changes
+    const handleInputChange = (field, value) => {
+        setNewLocationForm(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    // Handle create new location
+    const handleCreateLocation = () => {
+        // Validate required fields
+        const required = ['store_code', 'store_name', 'brand', 'address_line1', 'city', 'state', 'zip_code'];
+        const missing = required.filter(field => !newLocationForm[field].trim());
+        
+        if (missing.length > 0) {
+            alert(`Please fill in required fields: ${missing.join(', ')}`);
+            return;
+        }
+
+        // Validate store code format
+        if (!/^[A-Z0-9]{3,10}$/.test(newLocationForm.store_code)) {
+            alert('Store code must be 3-10 uppercase letters and numbers');
+            return;
+        }
+
+        // Validate tax rate
+        const taxRate = parseFloat(newLocationForm.tax_rate);
+        if (isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
+            alert('Tax rate must be a decimal between 0 and 1 (e.g., 0.08 for 8%)');
+            return;
+        }
+
+        onCreateLocation(newLocationForm);
+        setShowNewLocationModal(false);
+        setNewLocationForm({
+            store_code: '',
+            store_name: '',
+            brand: '',
+            address_line1: '',
+            address_line2: '',
+            city: '',
+            state: '',
+            zip_code: '',
+            phone: '',
+            email: '',
+            tax_rate: '0.08',
+            manager_name: '',
+            logo_base64: null
+        });
+        setLogoPreview(null);
+    };
+
+    const LocationCard = ({ location, isSelected }) => (
+        React.createElement('div', {
+            className: `border rounded-lg p-4 cursor-pointer transition-all ${
+                isSelected 
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
+            }`
+        }, [
+            React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
+                React.createElement('div', { key: 'info', className: 'flex-1' }, [
+                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' }, [
+                        location.logo_base64 && React.createElement('img', {
+                            key: 'logo',
+                            src: location.logo_base64,
+                            alt: `${location.store_name} logo`,
+                            className: 'w-8 h-8 object-contain rounded'
+                        }),
+                        React.createElement('h3', { key: 'name', className: 'font-bold text-lg dark:text-white' }, 
+                            location.store_name
+                        ),
+                        isSelected && React.createElement('span', {
+                            key: 'selected-badge',
+                            className: 'px-2 py-1 bg-blue-600 text-white text-xs rounded-full'
+                        }, 'Selected')
+                    ]),
+                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                        `${location.brand} • ${location.store_code}`
+                    ),
+                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                        `${location.address_line1}, ${location.city}, ${location.state}`
+                    )
+                ]),
+                React.createElement('button', {
+                    key: 'edit-btn',
+                    onClick: (e) => {
+                        e.stopPropagation();
+                        setEditingLocation(location);
+                    },
+                    className: 'p-2 text-gray-400 hover:text-blue-600 rounded transition-colors'
+                }, React.createElement(Edit, { size: 16 }))
+            ]),
+            React.createElement('div', { key: 'details', className: 'grid grid-cols-2 gap-4 text-sm' }, [
+                React.createElement('div', { key: 'tax' }, [
+                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Tax Rate: '),
+                    React.createElement('span', { className: 'font-medium dark:text-white' }, 
+                        `${(location.tax_rate * 100).toFixed(2)}%`
+                    )
+                ]),
+                React.createElement('div', { key: 'manager' }, [
+                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Manager: '),
+                    React.createElement('span', { className: 'font-medium dark:text-white' }, 
+                        location.manager_name || 'Not assigned'
+                    )
+                ])
+            ])
+        ])
+    );
+
+    const LocationFormModal = ({ show, onClose, title, isEdit = false }) => {
+        if (!show) return null;
+
+        return React.createElement('div', {
+            className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+        }, [
+            React.createElement('div', { 
+                key: 'modal',
+                className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto'
+            }, [
+                React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                    React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, title),
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    }, React.createElement(X, { size: 24 }))
+                ]),
+                
+                React.createElement('div', { key: 'form', className: 'p-6 space-y-6' }, [
+                    // Logo upload section
+                    React.createElement('div', { key: 'logo-section' }, [
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Logo'),
+                        React.createElement('div', { className: 'flex items-center gap-4' }, [
+                            React.createElement('div', { 
+                                className: 'w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700' 
+                            }, [
+                                logoPreview || newLocationForm.logo_base64 ? 
+                                    React.createElement('img', {
+                                        src: logoPreview || newLocationForm.logo_base64,
+                                        alt: 'Logo preview',
+                                        className: 'w-full h-full object-contain rounded'
+                                    }) :
+                                    React.createElement(Image, { size: 24, className: 'text-gray-400' })
+                            ]),
+                            React.createElement('input', {
+                                type: 'file',
+                                accept: 'image/*',
+                                onChange: (e) => handleLogoUpload(e, true),
+                                className: 'hidden',
+                                id: 'logo-upload'
+                            }),
+                            React.createElement('label', {
+                                htmlFor: 'logo-upload',
+                                className: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors'
+                            }, [
+                                React.createElement(Upload, { key: 'icon', size: 16 }),
+                                'Upload Logo'
+                            ])
+                        ])
+                    ]),
+
+                    // Basic information
+                    React.createElement('div', { key: 'basic-info', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                        React.createElement('div', { key: 'store-code' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Code *'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLocationForm.store_code,
+                                onChange: (e) => handleInputChange('store_code', e.target.value.toUpperCase()),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'NYC001',
+                                maxLength: 10
+                            })
+                        ]),
+                        React.createElement('div', { key: 'store-name' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Name *'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLocationForm.store_name,
+                                onChange: (e) => handleInputChange('store_name', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'Manhattan Flagship'
+                            })
+                        ]),
+                        React.createElement('div', { key: 'brand' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Brand *'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLocationForm.brand,
+                                onChange: (e) => handleInputChange('brand', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'TUMI'
+                            })
+                        ]),
+                        React.createElement('div', { key: 'manager' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Manager Name'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLocationForm.manager_name,
+                                onChange: (e) => handleInputChange('manager_name', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'John Manager'
+                            })
+                        ])
+                    ]),
+
+                    // Address information
+                    React.createElement('div', { key: 'address-section' }, [
+                        React.createElement('h3', { className: 'text-lg font-semibold mb-4 dark:text-white' }, 'Address Information'),
+                        React.createElement('div', { className: 'space-y-4' }, [
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLocationForm.address_line1,
+                                onChange: (e) => handleInputChange('address_line1', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'Street Address *'
+                            }),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLocationForm.address_line2,
+                                onChange: (e) => handleInputChange('address_line2', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'Apartment, suite, etc. (optional)'
+                            }),
+                            React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 gap-4' }, [
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.city,
+                                    onChange: (e) => handleInputChange('city', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'City *'
+                                }),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.state,
+                                    onChange: (e) => handleInputChange('state', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'State *',
+                                    maxLength: 2
+                                }),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newLocationForm.zip_code,
+                                    onChange: (e) => handleInputChange('zip_code', e.target.value),
+                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                    placeholder: 'ZIP Code *'
+                                })
+                            ])
+                        ])
+                    ]),
+
+                    // Contact and business information
+                    React.createElement('div', { key: 'contact-section', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                        React.createElement('div', { key: 'phone' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Phone'),
+                            React.createElement('input', {
+                                type: 'tel',
+                                value: newLocationForm.phone,
+                                onChange: (e) => handleInputChange('phone', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: '(555) 123-4567'
+                            })
+                        ]),
+                        React.createElement('div', { key: 'email' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                            React.createElement('input', {
+                                type: 'email',
+                                value: newLocationForm.email,
+                                onChange: (e) => handleInputChange('email', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'store@company.com'
+                            })
+                        ]),
+                        React.createElement('div', { key: 'tax-rate', className: 'md:col-span-2' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Tax Rate (decimal) *'),
+                            React.createElement('input', {
+                                type: 'number',
+                                step: '0.0001',
+                                min: '0',
+                                max: '1',
+                                value: newLocationForm.tax_rate,
+                                onChange: (e) => handleInputChange('tax_rate', e.target.value),
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: '0.08'
+                            }),
+                            React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
+                                'Enter as decimal: 0.08 for 8%, 0.10 for 10%'
+                            )
+                        ])
+                    ])
+                ]),
+
+                React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                    React.createElement('button', {
+                        onClick: onClose,
+                        disabled: loading,
+                        className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50'
+                    }, 'Cancel'),
+                    React.createElement('button', {
+                        onClick: handleCreateLocation,
+                        disabled: loading,
+                        className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
+                    }, [
+                        loading && React.createElement('div', { 
+                            key: 'spinner',
+                            className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                        }),
+                        loading ? 'Creating...' : 'Create Location'
+                    ])
+                ])
+            ])
+        ]);
+    };
+
+    return React.createElement('div', { className: 'space-y-6 dark:text-white' }, [
+        // Header
+        React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+            React.createElement('div', { className: 'flex items-center justify-between mb-6' }, [
+                React.createElement('div', { key: 'title' }, [
+                    React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-3 dark:text-white' }, [
+                        React.createElement(Settings, { key: 'icon', size: 28 }),
+                        'Settings'
+                    ]),
+                    React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
+                        'Manage locations, preferences, and system settings'
+                    )
+                ]),
+                React.createElement('div', { key: 'theme-toggle', className: 'flex items-center gap-4' }, [
+                    React.createElement('span', { className: 'text-sm font-medium dark:text-gray-300' }, 'Theme:'),
+                    React.createElement('button', {
+                        onClick: handleThemeToggle,
+                        className: `flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                            isDarkMode 
+                                ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`
+                    }, [
+                        React.createElement(isDarkMode ? Sun : Moon, { key: 'theme-icon', size: 20 }),
+                        React.createElement('span', { key: 'theme-text', className: 'font-medium' }, 
+                            isDarkMode ? 'Dark Mode' : 'Light Mode'
+                        )
+                    ])
+                ])
+            ])
+        ]),
+
+        // Location Management
+        React.createElement('div', { key: 'locations', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+            React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
+                React.createElement('div', { key: 'title' }, [
+                    React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                        React.createElement(MapPin, { key: 'icon', size: 24 }),
+                        'Store Locations'
+                    ]),
+                    React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                        `${locations.length} locations configured • Selected: ${selectedLocation?.store_name || 'None'}`
+                    )
+                ]),
+                React.createElement('button', {
+                    key: 'add-btn',
+                    onClick: () => setShowNewLocationModal(true),
+                    className: 'flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                }, [
+                    React.createElement(Plus, { key: 'icon', size: 20 }),
+                    'Add Location'
+                ])
+            ]),
+
+            // Current location selector
+            selectedLocation && React.createElement('div', { key: 'current-location', className: 'mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
+                React.createElement('div', { className: 'flex items-center justify-between' }, [
+                    React.createElement('div', { key: 'current-info', className: 'flex items-center gap-3' }, [
+                        selectedLocation.logo_base64 && React.createElement('img', {
+                            key: 'logo',
+                            src: selectedLocation.logo_base64,
+                            alt: 'Current location logo',
+                            className: 'w-12 h-12 object-contain rounded'
+                        }),
+                        React.createElement('div', { key: 'details' }, [
+                            React.createElement('h4', { className: 'font-bold text-blue-900 dark:text-blue-100' }, 
+                                `Currently Operating: ${selectedLocation.store_name}`
+                            ),
+                            React.createElement('p', { className: 'text-sm text-blue-700 dark:text-blue-200' }, 
+                                `${selectedLocation.address_line1}, ${selectedLocation.city} • Tax: ${(selectedLocation.tax_rate * 100).toFixed(2)}%`
+                            )
+                        ])
+                    ]),
+                    React.createElement('div', { key: 'logo-upload', className: 'flex items-center gap-2' }, [
+                        React.createElement('input', {
+                            type: 'file',
+                            accept: 'image/*',
+                            onChange: (e) => handleLogoUpload(e, false),
+                            className: 'hidden',
+                            id: 'current-logo-upload'
+                        }),
+                        React.createElement('label', {
+                            htmlFor: 'current-logo-upload',
+                            className: 'flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 cursor-pointer transition-colors'
+                        }, [
+                            React.createElement(Upload, { key: 'icon', size: 16 }),
+                            'Update Logo'
+                        ])
+                    ])
+                ])
+            ]),
+
+            // Location selection dropdown
+            React.createElement('div', { key: 'location-selector', className: 'mb-6' }, [
+                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Select Active Location'),
+                React.createElement('select', {
+                    value: selectedLocation?.id || '',
+                    onChange: (e) => {
+                        const locationId = parseInt(e.target.value);
+                        const location = locations.find(l => l.id === locationId);
+                        onLocationChange(location);
+                    },
+                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                }, [
+                    React.createElement('option', { key: 'empty', value: '' }, 'Select a location...'),
+                    ...locations.map(location => 
+                        React.createElement('option', { key: location.id, value: location.id }, 
+                            `${location.store_name} (${location.store_code}) - ${location.city}, ${location.state}`
+                        )
+                    )
+                ])
+            ]),
+
+            // Locations grid
+            locations.length > 0 ? (
+                React.createElement('div', { key: 'locations-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, 
+                    locations.map(location => 
+                        React.createElement('div', {
+                            key: location.id,
+                            onClick: () => onLocationChange(location)
+                        }, React.createElement(LocationCard, { 
+                            location, 
+                            isSelected: selectedLocation?.id === location.id 
+                        }))
+                    )
+                )
+            ) : (
+                React.createElement('div', { key: 'no-locations', className: 'text-center py-12 text-gray-500 dark:text-gray-400' }, [
+                    React.createElement(MapPin, { key: 'icon', className: 'mx-auto mb-4', size: 48 }),
+                    React.createElement('p', { key: 'text', className: 'text-lg mb-2' }, 'No locations configured'),
+                    React.createElement('p', { key: 'subtext', className: 'text-sm' }, 'Create your first location to get started')
+                ])
+            )
+        ]),
+
+        // Modals
+        React.createElement(LocationFormModal, {
+            key: 'new-location-modal',
+            show: showNewLocationModal,
+            onClose: () => {
+                setShowNewLocationModal(false);
+                setLogoPreview(null);
+                setNewLocationForm({
+                    store_code: '',
+                    store_name: '',
+                    brand: '',
+                    address_line1: '',
+                    address_line2: '',
+                    city: '',
+                    state: '',
+                    zip_code: '',
+                    phone: '',
+                    email: '',
+                    tax_rate: '0.08',
+                    manager_name: '',
+                    logo_base64: null
+                });
+            },
+            title: 'Create New Location'
+        })
+    ]);
+};

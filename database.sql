@@ -65,49 +65,6 @@ CREATE INDEX IF NOT EXISTS idx_transactions_customer_id ON transactions(customer
 CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_transaction_items_transaction_id ON transaction_items(transaction_id);
 
--- Insert sample products
-INSERT INTO products (name, price, category, stock, image) VALUES
-('Coffee', 4.50, 'Beverages', 50, '☕'),
-('Sandwich', 8.99, 'Food', 25, '🥪'),
-('Croissant', 3.75, 'Food', 15, '🥐'),
-('Juice', 3.25, 'Beverages', 30, '🧃'),
-('Muffin', 2.99, 'Food', 20, '🧁'),
-('Tea', 3.50, 'Beverages', 40, '🍵'),
-('Salad', 12.50, 'Food', 12, '🥗'),
-('Water', 1.99, 'Beverages', 100, '💧'),
-('Bagel', 2.25, 'Food', 30, '🥯'),
-('Smoothie', 5.99, 'Beverages', 20, '🥤');
-
--- Insert sample customers with loyalty numbers
-INSERT INTO customers (loyalty_number, name, email, phone, points, total_spent, visit_count, last_visit) VALUES
-('LOY001', 'John Doe', 'john@email.com', '555-0123', 150, 75.50, 12, '2025-07-25 14:30:00'),
-('LOY002', 'Jane Smith', 'jane@email.com', '555-0456', 220, 110.25, 18, '2025-07-28 10:15:00'),
-('LOY003', 'Mike Johnson', 'mike@email.com', '555-0789', 80, 40.00, 6, '2025-07-20 16:45:00'),
-('LOY004', 'Sarah Wilson', 'sarah@email.com', '555-0321', 350, 175.75, 25, '2025-07-29 12:00:00');
-
--- Insert sample transactions
-INSERT INTO transactions (customer_id, subtotal, tax, total, payment_method, points_earned, created_at) VALUES
-(1, 15.50, 1.24, 16.74, 'card', 16, '2025-07-25 14:30:00'),
-(2, 22.75, 1.82, 24.57, 'cash', 24, '2025-07-28 10:15:00'),
-(1, 8.25, 0.66, 8.91, 'mobile', 8, '2025-07-20 09:30:00'),
-(4, 31.50, 2.52, 34.02, 'card', 34, '2025-07-29 12:00:00');
-
--- Insert sample transaction items
-INSERT INTO transaction_items (transaction_id, product_id, product_name, product_price, quantity, subtotal) VALUES
--- Transaction 1 (John Doe)
-(1, 1, 'Coffee', 4.50, 2, 9.00),
-(1, 3, 'Croissant', 3.75, 1, 3.75),
-(1, 4, 'Juice', 3.25, 1, 3.25),
--- Transaction 2 (Jane Smith)
-(2, 2, 'Sandwich', 8.99, 1, 8.99),
-(2, 1, 'Coffee', 4.50, 1, 4.50),
-(2, 7, 'Salad', 12.50, 1, 12.50),
--- Transaction 3 (John Doe)
-(3, 5, 'Muffin', 2.99, 2, 5.98),
-(3, 6, 'Tea', 3.50, 1, 3.50),
--- Transaction 4 (Sarah Wilson)  
-(4, 2, 'Sandwich', 8.99, 2, 17.98),
-(4, 1, 'Coffee', 4.50, 3, 13.50);
 
 -- Function to generate loyalty number
 CREATE OR REPLACE FUNCTION generate_loyalty_number() RETURNS TEXT AS $$
@@ -263,6 +220,40 @@ UPDATE products SET
     main_image_url = 'https://example.com/backpack1.jpg'
 WHERE name = 'Sandwich';
 
+-- Insert sample products
+INSERT INTO public.products ("name",price,category,stock,image,created_at,updated_at,sku,product_type,laptop_size,brand,collection,material,gender,color,description,dimensions,weight,warranty_info,care_instructions,main_image_url,is_active,featured,sort_order) VALUES
+     ('Harrison Nylon Portfolio',225.00,'Accessories',24,'💼','2025-08-01 14:57:51.790811','2025-08-04 17:51:04.211511','TUM-ACC-001','Portfolio','12"','TUMI','Harrison','Nylon','Unisex','Navy','Carry what you need in style for daily commutes or as a personal item when you fly. This elevated messenger includes thoughtfully placed pockets to carry and organize your laptop, work documents, and more','13" x 10" x 1"',0.80,'','','https://tumi.scene7.com/is/image/Tumi/1524241041_main?wid=1020&hei=1238',true,false,0),
+     ('Alpha Bravo Business Backpack',395.00,'Backpacks',14,'🎒','2025-08-01 14:57:51.790811','2025-08-04 16:50:21.345291','TUM-BAG-002','Backpack','15"','TUMI','Alpha Bravo','Ballistic Nylon','Unisex','Anthracite','This compact backpack with a streamlined silhouette has smart organization for commuting and travel gear, as well as a dedicated padded laptop compartment.','17.5" x 12.5" x 7"',3.80,'','','https://tumi.scene7.com/is/image/Tumi/1426141041_main?wid=1020&hei=1238',true,true,0),
+     ('Alpha Continental Carry-On',1050.00,'Luggage',11,'🧳','2025-08-01 14:57:51.790811','2025-08-04 17:47:48.574674','TUM-LUG-003','Luggage','','TUMI','Alpha','Ballistic Nylon','Unisex','Black','Versatile and compact, this case makes taking your business on the road a breeze. With the option of being carried or wheeled, it gives you flexibility wherever you need to travel.','22" x 14" x 9"',8.90,'','','https://tumi.scene7.com/is/image/Tumi/1171571041_main?wid=1020&hei=1238',true,false,0),
+     ('19 Degree Extended Trip Case',950.00,'Luggage',6,'🧳','2025-08-01 14:57:51.790811','2025-08-04 16:49:57.71472','','','','TUMI','','','Unisex','','','',NULL,'','','https://tumi.scene7.com/is/image/Tumi/1171611041_main?wid=1020&hei=1238',true,false,0),
+     ('Voyageur Celina Backpack',275.00,'Backpacks',16,'🎒','2025-08-01 14:57:51.790811','2025-08-04 17:56:14.077857','TUM-BAG-003','Backpack','13"','TUMI','Voyageur','Nylon','Women','Black','Lightweight everyday backpack with modern design','15" x 11" x 5"',2.10,'','','https://tumi.scene7.com/is/image/Tumi/146566T522_main?wid=1020&hei=1238',true,false,0);
+
+
+-- Insert sample customers with loyalty numbers
+INSERT INTO customers (loyalty_number, name, email, phone, points, total_spent, visit_count, last_visit) VALUES
+('LOY001', 'John Doe', 'john@email.com', '555-0123', 150, 75.50, 12, '2025-07-25 14:30:00'),
+('LOY002', 'Jane Smith', 'jane@email.com', '555-0456', 220, 110.25, 18, '2025-07-28 10:15:00'),
+('LOY003', 'Mike Johnson', 'mike@email.com', '555-0789', 80, 40.00, 6, '2025-07-20 16:45:00'),
+('LOY004', 'Sarah Wilson', 'sarah@email.com', '555-0321', 350, 175.75, 25, '2025-07-29 12:00:00');
+
+-- Insert sample transactions
+INSERT INTO public.transactions (customer_id,subtotal,tax,total,payment_method,amount_received,change_amount,points_earned,points_redeemed,created_at) VALUES
+     (1,1445.00,115.60,1560.60,'cash',1560.60,NULL,1560,0,'2025-08-05 15:33:37.880566'),
+     (2,1450.00,116.00,1566.00,'cash',1566.00,NULL,1566,0,'2025-08-05 15:07:48.454387'),
+     (3,950.00,76.00,1026.00,'cash',1026.00,NULL,1026,0,'2025-08-05 19:12:52.504183'),
+     (4,825.00,66.00,891.00,'cash',891.00,NULL,891,0,'2025-08-05 19:13:14.823182');
+
+-- Insert sample transaction items
+INSERT INTO public.transaction_items (transaction_id,product_id,product_name,product_price,quantity,subtotal) VALUES
+     (34,13,'19 Degree Extended Trip Case',950.00,1,950.00),
+     (34,12,'Voyageur Celina Backpack',275.00,1,275.00),
+     (34,15,'Harrison Nylon Portfolio',225.00,1,225.00),
+     (35,11,'Alpha Bravo Business Backpack',395.00,1,395.00),
+     (35,14,'Alpha Continental Carry-On',1050.00,1,1050.00),
+     (36,13,'19 Degree Extended Trip Case',950.00,1,950.00),
+     (37,12,'Voyageur Celina Backpack',275.00,3,825.00);
+
+
 -- Insert sample product features
 INSERT INTO product_features (product_id, feature_name, feature_value) VALUES
 (1, 'Expandable', 'Yes'),
@@ -276,42 +267,6 @@ INSERT INTO product_features (product_id, feature_name, feature_value) VALUES
 (2, 'Water Resistant', 'Weather-resistant exterior');
 
 -- Insert sample product images
-INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order) VALUES
-(1, 'https://example.com/luggage1-main.jpg', 'TUMI 19 Degree Carry-On - Main View', true, 1),
-(1, 'https://example.com/luggage1-interior.jpg', 'TUMI 19 Degree Carry-On - Interior View', false, 2),
-(1, 'https://example.com/luggage1-wheels.jpg', 'TUMI 19 Degree Carry-On - Wheel Detail', false, 3),
-(2, 'https://example.com/backpack1-main.jpg', 'TUMI Alpha Backpack - Main View', true, 1),
-(2, 'https://example.com/backpack1-laptop.jpg', 'TUMI Alpha Backpack - Laptop Compartment', false, 2);
-
--- Sample data for realistic product catalog
-INSERT INTO products (name, price, category, stock, sku, product_type, brand, collection, material, gender, color, description, dimensions, weight, laptop_size, main_image_url, image) VALUES
-('Alpha Bravo Business Backpack', 395.00, 'Backpacks', 15, 'TUM-BAG-002', 'Backpack', 'TUMI', 'Alpha Bravo', 'Ballistic Nylon', 'Unisex', 'Anthracite', 'Durable business backpack with organizational features', '17.5" x 12.5" x 7"', 3.8, '15"', 'https://example.com/alpha-bravo-backpack.jpg', '🎒'),
-('Voyageur Carson Backpack', 275.00, 'Backpacks', 20, 'TUM-BAG-003', 'Backpack', 'TUMI', 'Voyageur', 'Nylon', 'Women', 'Black', 'Lightweight everyday backpack with modern design', '15" x 11" x 5"', 2.1, '13"', 'https://example.com/voyageur-carson.jpg', '🎒'),
-('19 Degree Extended Trip Case', 950.00, 'Luggage', 8, 'TUM-LUG-002', 'Luggage', 'TUMI', '19 Degree', 'Polycarbonate', 'Unisex', 'Silver', 'Large expandable hardside luggage for extended trips', '29" x 20" x 12"', 11.2, NULL, 'https://example.com/19-degree-extended.jpg', '🧳'),
-('Alpha Continental Carry-On', 1050.00, 'Luggage', 12, 'TUM-LUG-003', 'Luggage', 'TUMI', 'Alpha', 'Ballistic Nylon', 'Unisex', 'Black', 'Premium soft-sided carry-on with dual access', '22" x 14" x 9"', 8.9, NULL, 'https://example.com/alpha-continental.jpg', '🧳'),
-('Harrison Nylon Portfolio', 225.00, 'Accessories', 25, 'TUM-ACC-001', 'Portfolio', 'TUMI', 'Harrison', 'Nylon', 'Unisex', 'Navy', 'Slim portfolio for documents and tablets', '13" x 10" x 1"', 0.8, '12"', 'https://example.com/harrison-portfolio.jpg', '💼');
-
--- Add images for new products
-INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order) VALUES
--- Alpha Bravo Backpack images
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'https://example.com/alpha-bravo-main.jpg', 'Alpha Bravo Backpack - Main View', true, 1),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'https://example.com/alpha-bravo-side.jpg', 'Alpha Bravo Backpack - Side View', false, 2),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'https://example.com/alpha-bravo-interior.jpg', 'Alpha Bravo Backpack - Interior', false, 3),
-
--- Voyageur Carson images
-((SELECT id FROM products WHERE sku = 'TUM-BAG-003'), 'https://example.com/voyageur-main.jpg', 'Voyageur Carson - Main View', true, 1),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-003'), 'https://example.com/voyageur-worn.jpg', 'Voyageur Carson - Lifestyle', false, 2),
-
--- Extended Trip Case images
-((SELECT id FROM products WHERE sku = 'TUM-LUG-002'), 'https://example.com/19-degree-extended-main.jpg', '19 Degree Extended - Main View', true, 1),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-002'), 'https://example.com/19-degree-extended-open.jpg', '19 Degree Extended - Interior', false, 2),
-
--- Alpha Continental images
-((SELECT id FROM products WHERE sku = 'TUM-LUG-003'), 'https://example.com/alpha-continental-main.jpg', 'Alpha Continental - Main View', true, 1),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-003'), 'https://example.com/alpha-continental-access.jpg', 'Alpha Continental - Dual Access', false, 2),
-
--- Harrison Portfolio images
-((SELECT id FROM products WHERE sku = 'TUM-ACC-001'), 'https://example.com/harrison-portfolio-main.jpg', 'Harrison Portfolio - Main View', true, 1);
 
 -- Add features for new products
 INSERT INTO product_features (product_id, feature_name, feature_value) VALUES
