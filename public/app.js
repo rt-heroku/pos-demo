@@ -42,11 +42,74 @@ const POSApp = () => {
         return userId;
     };
 
+    // Create basic placeholder views if they don't exist
+    const createBasicViews = () => {
+        if (!window.Views) {
+            window.Views = {};
+        }
+
+        // Basic POS View placeholder
+        if (!window.Views.POSView) {
+            window.Views.POSView = ({ selectedLocation }) => {
+                return React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8' }, [
+                    React.createElement('h2', { key: 'title', className: 'text-2xl font-bold mb-4 dark:text-white' }, 'POS System'),
+                    React.createElement('p', { key: 'location', className: 'text-gray-600 dark:text-gray-300 mb-4' }, 
+                        `Active Location: ${selectedLocation?.store_name || 'No location selected'}`
+                    ),
+                    React.createElement('div', { key: 'message', className: 'p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
+                        React.createElement('p', { className: 'text-blue-800 dark:text-blue-200' }, 
+                            'Basic POS view is working! The enhanced POS view with cart, payments, and discounts will be available once you add the enhanced components.'
+                        )
+                    ])
+                ]);
+            };
+        }
+
+        // Basic Loyalty View placeholder
+        if (!window.Views.LoyaltyView) {
+            window.Views.LoyaltyView = () => {
+                return React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8' }, [
+                    React.createElement('h2', { key: 'title', className: 'text-2xl font-bold mb-4 dark:text-white' }, 'Loyalty Management'),
+                    React.createElement('p', { key: 'message', className: 'text-gray-600 dark:text-gray-300' }, 
+                        'Loyalty management features will be available once the enhanced components are added.'
+                    )
+                ]);
+            };
+        }
+
+        // Basic Inventory View placeholder
+        if (!window.Views.InventoryView) {
+            window.Views.InventoryView = () => {
+                return React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8' }, [
+                    React.createElement('h2', { key: 'title', className: 'text-2xl font-bold mb-4 dark:text-white' }, 'Inventory Management'),
+                    React.createElement('p', { key: 'message', className: 'text-gray-600 dark:text-gray-300' }, 
+                        'Inventory management features will be available once the enhanced components are added.'
+                    )
+                ]);
+            };
+        }
+
+        // Basic Sales View placeholder
+        if (!window.Views.SalesView) {
+            window.Views.SalesView = () => {
+                return React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8' }, [
+                    React.createElement('h2', { key: 'title', className: 'text-2xl font-bold mb-4 dark:text-white' }, 'Sales Analytics'),
+                    React.createElement('p', { key: 'message', className: 'text-gray-600 dark:text-gray-300' }, 
+                        'Sales reporting features will be available once the enhanced components are added.'
+                    )
+                ]);
+            };
+        }
+    };
+
     // Initialize the application
     const initializeApp = async () => {
         console.log('Initializing app...');
         try {
             setAppLoading(true);
+            
+            // Create basic views if they don't exist
+            createBasicViews();
             
             // Load basic data first
             const locations = await loadLocations();
@@ -409,44 +472,49 @@ const POSApp = () => {
                     SimpleView('Settings', 'Settings view is loading... Please make sure views.js is loaded correctly.')
             ) : null,
 
-            // No location selected message
-            (currentView === 'pos' || currentView === 'sales') && !selectedLocation ? 
-                React.createElement('div', { 
-                    key: 'no-location',
-                    className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-12 text-center' 
-                }, [
-                    React.createElement(Settings, { 
-                        key: 'icon',
-                        className: 'mx-auto mb-4 text-gray-400', 
-                        size: 64 
-                    }),
-                    React.createElement('h3', { 
-                        key: 'title',
-                        className: 'text-xl font-semibold text-gray-900 dark:text-white mb-2' 
-                    }, 'No Location Selected'),
-                    React.createElement('p', { 
-                        key: 'description',
-                        className: 'text-gray-600 dark:text-gray-300 mb-6' 
-                    }, 'Please select a location in Settings to use this feature'),
-                    React.createElement('button', {
-                        key: 'go-settings',
-                        onClick: () => setCurrentView('settings'),
-                        className: 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                    }, 'Go to Settings')
-                ]) : null,
-
-            // Other views with simple placeholders
-            currentView === 'pos' && selectedLocation ? 
-                SimpleView('POS', 'POS view will be available once all components are loaded.') : null,
+            // POS view - now should always work
+            currentView === 'pos' ? (
+                selectedLocation ? 
+                    React.createElement(window.Views.POSView, {
+                        key: 'pos-view',
+                        selectedLocation
+                    }) :
+                    React.createElement('div', { 
+                        key: 'no-location',
+                        className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-12 text-center' 
+                    }, [
+                        React.createElement(Settings, { 
+                            key: 'icon',
+                            className: 'mx-auto mb-4 text-gray-400', 
+                            size: 64 
+                        }),
+                        React.createElement('h3', { 
+                            key: 'title',
+                            className: 'text-xl font-semibold text-gray-900 dark:text-white mb-2' 
+                        }, 'No Location Selected'),
+                        React.createElement('p', { 
+                            key: 'description',
+                            className: 'text-gray-600 dark:text-gray-300 mb-6' 
+                        }, 'Please select a location in Settings to use this feature'),
+                        React.createElement('button', {
+                            key: 'go-settings',
+                            onClick: () => setCurrentView('settings'),
+                            className: 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                        }, 'Go to Settings')
+                    ])
+            ) : null,
             
+            // Loyalty view
             currentView === 'loyalty' ? 
-                SimpleView('Loyalty', 'Loyalty management will be available when fully loaded.') : null,
+                React.createElement(window.Views.LoyaltyView, { key: 'loyalty-view' }) : null,
                 
+            // Inventory view
             currentView === 'inventory' ? 
-                SimpleView('Inventory', 'Inventory management will be available when fully loaded.') : null,
+                React.createElement(window.Views.InventoryView, { key: 'inventory-view' }) : null,
                 
+            // Sales view  
             currentView === 'sales' ? 
-                SimpleView('Sales', 'Sales reporting will be available when fully loaded.') : null,
+                React.createElement(window.Views.SalesView, { key: 'sales-view' }) : null,
 
             // Debug info for development
             React.createElement('div', { key: 'debug', className: 'mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400' }, [
