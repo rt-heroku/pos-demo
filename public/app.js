@@ -48,15 +48,13 @@ const POSApp = () => {
         try {
             setAppLoading(true);
             
-            // Load basic data
-            await loadLocations();
-            await loadUserSettings();
             // Check if setup is required
             try {
                 const response = await fetch('/api/setup/status');
                 if (response.ok) {
                     const setupStatus = await response.json();
                     setIsFirstTimeSetup(setupStatus.setupRequired);
+                    console.dir(setupStatus)
                     console.log('Setup required:', setupStatus.setupRequired);
                 } else {
                     console.log('Setup API not available, assuming first-time setup');
@@ -278,7 +276,8 @@ const POSApp = () => {
             ])
         ]);
     }
-
+console.log('RT - Is this first time? '+ isFirstTimeSetup);
+console.log('RT - selectedLocation = ' + selectedLocation);
     // First-time setup screen
     if (isFirstTimeSetup) {
         return React.createElement('div', { 
