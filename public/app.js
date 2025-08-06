@@ -131,6 +131,8 @@ const POSApp = () => {
                 setUserSettings(updatedSettings);
             }
             
+console.log('RT - userSettings = ' + userSettings);
+console.log('RT - selectedLocation = ' + selectedLocation);
             // If this was first-time setup, switch to POS view
             //if (isFirstTimeSetup) {
                 setIsFirstTimeSetup(false);
@@ -277,6 +279,8 @@ const POSApp = () => {
         ]);
     }
 console.log('RT - Is this first time? '+ isFirstTimeSetup);
+console.log('RT - selectedLocation = ' + selectedLocation);
+console.log('RT - userSettings = ' + userSettings);
 console.log('RT - selectedLocation = ' + selectedLocation);
     // First-time setup screen
     if (isFirstTimeSetup) {
