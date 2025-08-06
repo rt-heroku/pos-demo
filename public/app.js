@@ -423,17 +423,17 @@ const POSApp = () => {
                 ]) : null,
 
             // Other views with simple placeholders
-            currentView === 'pos' && selectedLocation ? 
-                SimpleView('POS', 'POS view will be available once all components are loaded.') : null,
+            // currentView === 'pos' && selectedLocation ? 
+            //     SimpleView('POS', 'POS view will be available once all components are loaded.') : null,
             
-            currentView === 'loyalty' ? 
-                SimpleView('Loyalty', 'Loyalty management will be available when fully loaded.') : null,
+            // currentView === 'loyalty' ? 
+            //     SimpleView('Loyalty', 'Loyalty management will be available when fully loaded.') : null,
                 
-            currentView === 'inventory' ? 
-                SimpleView('Inventory', 'Inventory management will be available when fully loaded.') : null,
+            // currentView === 'inventory' ? 
+            //     SimpleView('Inventory', 'Inventory management will be available when fully loaded.') : null,
                 
-            currentView === 'sales' ? 
-                SimpleView('Sales', 'Sales reporting will be available when fully loaded.') : null,
+            // currentView === 'sales' ? 
+            //     SimpleView('Sales', 'Sales reporting will be available when fully loaded.') : null,
 
             // Debug info for development
             React.createElement('div', { key: 'debug', className: 'mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400' }, [
