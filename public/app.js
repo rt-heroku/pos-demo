@@ -48,26 +48,41 @@ const POSApp = () => {
         try {
             setAppLoading(true);
             
+            // Load basic data first
+            const locations = await loadLocations();
+            const settings = await loadUserSettings();
+            
             // Check if setup is required
+            let setupRequired = locations.length === 0;
+            
             try {
                 const response = await fetch('/api/setup/status');
                 if (response.ok) {
                     const setupStatus = await response.json();
-                    setIsFirstTimeSetup(setupStatus.setupRequired);
-                    console.dir(setupStatus)
-                    console.log('Setup required:', setupStatus.setupRequired);
-                } else {
-                    console.log('Setup API not available, assuming first-time setup');
-                    setIsFirstTimeSetup(true);
+                    setupRequired = setupStatus.setupRequired;
                 }
             } catch (error) {
-                console.log('Setup API not available, assuming first-time setup');
-                setIsFirstTimeSetup(true);
+                console.log('Setup API not available, using location count');
             }
             
-            // Load basic data
-            await loadLocations();
-            await loadUserSettings();
+            setIsFirstTimeSetup(setupRequired);
+            console.log('Setup required:', setupRequired);
+            
+            // If user has a selected location in settings, set it
+            if (!setupRequired && settings.selected_location_id && locations.length > 0) {
+                const selectedLoc = locations.find(l => l.id === settings.selected_location_id);
+                if (selectedLoc) {
+                    console.log('Auto-selecting location:', selectedLoc.store_name);
+                    setSelectedLocation(selectedLoc);
+                    setCurrentView('pos'); // Switch to POS view
+                } else {
+                    console.log('Previously selected location not found, staying in settings');
+                    setCurrentView('settings');
+                }
+            } else if (!setupRequired) {
+                console.log('No location selected, staying in settings');
+                setCurrentView('settings');
+            }
             
             console.log('App initialization complete');
         } catch (error) {
@@ -93,30 +108,13 @@ const POSApp = () => {
         return [];
     };
 
-    // Load Location based on id
-    const getLocation = async (id) => {
-        try {
-            const response = await fetch(`/api/locations/${id}`);
-            if (response.ok) {
-                const data = await response.json();
-                setLocations(data || []);
-                console.log('Loaded locations:', data?.length || 0);
-                return data || [];
-            }
-        } catch (error) {
-            console.error('Failed to load locations:', error);
-        }
-        return [];
-    };
-
     const loadUserSettings = async () => {
         try {
             const userId = getUserId();
             const response = await fetch(`/api/settings/${userId}`);
             if (response.ok) {
                 const data = await response.json();
-                setUserSettings(data || { theme_mode: 'light' }).then(
-                    selectedLocation => getLocation(data.selected_location_id));
+                setUserSettings(data || { theme_mode: 'light' });
                 console.log('Loaded user settings:', data);
                 return data || { theme_mode: 'light' };
             }
@@ -146,18 +144,15 @@ const POSApp = () => {
             if (response.ok) {
                 const updatedSettings = await response.json();
                 setUserSettings(updatedSettings);
-                setSelectedLocation(await getLocation(updatedSettings.selected_location_id));
             }
             
-console.log('RT -1 - userSettings = ' + userSettings);
-console.log('RT -1 - selectedLocation = ' + selectedLocation);
             // If this was first-time setup, switch to POS view
             if (isFirstTimeSetup) {
                 setIsFirstTimeSetup(false);
                 setCurrentView('pos');
             }
             
-            console.log('Location changed successfully, isFirstTimeSetup' + isFirstTimeSetup);
+            console.log('Location changed successfully');
         } catch (error) {
             console.error('Failed to change location:', error);
             alert('Failed to switch location. Please try again.');
@@ -296,11 +291,7 @@ console.log('RT -1 - selectedLocation = ' + selectedLocation);
             ])
         ]);
     }
-console.log('RT - Is this first time? '+ isFirstTimeSetup);
-console.log('RT - selectedLocation = ');
-console.dir(selectedLocation);
-console.log('RT - userSettings = ');
-console.dir(userSettings);
+
     // First-time setup screen
     if (isFirstTimeSetup) {
         return React.createElement('div', { 
@@ -445,17 +436,17 @@ console.dir(userSettings);
                 ]) : null,
 
             // Other views with simple placeholders
-            // currentView === 'pos' && selectedLocation ? 
-            //     SimpleView('POS', 'POS view will be available once all components are loaded.') : null,
+            currentView === 'pos' && selectedLocation ? 
+                SimpleView('POS', 'POS view will be available once all components are loaded.') : null,
             
-            // currentView === 'loyalty' ? 
-            //     SimpleView('Loyalty', 'Loyalty management will be available when fully loaded.') : null,
+            currentView === 'loyalty' ? 
+                SimpleView('Loyalty', 'Loyalty management will be available when fully loaded.') : null,
                 
-            // currentView === 'inventory' ? 
-            //     SimpleView('Inventory', 'Inventory management will be available when fully loaded.') : null,
+            currentView === 'inventory' ? 
+                SimpleView('Inventory', 'Inventory management will be available when fully loaded.') : null,
                 
-            // currentView === 'sales' ? 
-            //     SimpleView('Sales', 'Sales reporting will be available when fully loaded.') : null,
+            currentView === 'sales' ? 
+                SimpleView('Sales', 'Sales reporting will be available when fully loaded.') : null,
 
             // Debug info for development
             React.createElement('div', { key: 'debug', className: 'mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400' }, [
