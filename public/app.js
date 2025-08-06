@@ -93,6 +93,22 @@ const POSApp = () => {
         return [];
     };
 
+    // Load Location based on id
+    const getLocation = async (id) => {
+        try {
+            const response = await fetch(`/api/locations/${id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setLocations(data || []);
+                console.log('Loaded locations:', data?.length || 0);
+                return data || [];
+            }
+        } catch (error) {
+            console.error('Failed to load locations:', error);
+        }
+        return [];
+    };
+
     const loadUserSettings = async () => {
         try {
             const userId = getUserId();
@@ -100,6 +116,7 @@ const POSApp = () => {
             if (response.ok) {
                 const data = await response.json();
                 setUserSettings(data || { theme_mode: 'light' });
+                setSelectedLocation(getLocation(data.selected_location_id));
                 console.log('Loaded user settings:', data);
                 return data || { theme_mode: 'light' };
             }
