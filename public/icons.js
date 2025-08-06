@@ -256,6 +256,3 @@ window.Icons = {
         React.createElement('line', { key: 'line4', x1: "16", x2: "14", y1: "3", y2: "21" })
     ])
 };
-
-// Make sure iconProps is still available
-const iconProps = { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
