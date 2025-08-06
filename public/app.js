@@ -146,15 +146,16 @@ const POSApp = () => {
             if (response.ok) {
                 const updatedSettings = await response.json();
                 setUserSettings(updatedSettings);
+                setSelectedLocation(await getLocation(updatedSettings.selected_location_id));
             }
             
 console.log('RT -1 - userSettings = ' + userSettings);
 console.log('RT -1 - selectedLocation = ' + selectedLocation);
             // If this was first-time setup, switch to POS view
-            //if (isFirstTimeSetup) {
+            if (isFirstTimeSetup) {
                 setIsFirstTimeSetup(false);
                 setCurrentView('pos');
-            //}
+            }
             
             console.log('Location changed successfully, isFirstTimeSetup' + isFirstTimeSetup);
         } catch (error) {
