@@ -584,3 +584,648 @@ GROUP BY wo.id, c.name, c.loyalty_number, c.email, l.store_name, l.store_code;
 -- Insert default user settings (for browser-based usage)
 INSERT INTO user_settings (user_identifier, theme_mode) VALUES ('default_user', 'light')
 ON CONFLICT (user_identifier) DO NOTHING;
+
+
+ALTER TABLE customers 
+ADD COLUMN IF NOT EXISTS notes TEXT,
+ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS preferred_contact VARCHAR(20) DEFAULT 'email',
+ADD COLUMN IF NOT EXISTS date_of_birth DATE,
+ADD COLUMN IF NOT EXISTS address_line1 VARCHAR(255),
+ADD COLUMN IF NOT EXISTS address_line2 VARCHAR(255),
+ADD COLUMN IF NOT EXISTS city VARCHAR(100),
+ADD COLUMN IF NOT EXISTS state VARCHAR(50),
+ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20),
+ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN DEFAULT false;
+
+-- Create customer activity log table
+CREATE TABLE IF NOT EXISTS customer_activity_log (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+    activity_type VARCHAR(50) NOT NULL, -- 'purchase', 'points_earned', 'points_redeemed', 'profile_updated', etc.
+    description TEXT,
+    points_change INTEGER DEFAULT 0, -- positive for earned, negative for redeemed
+    transaction_id INTEGER REFERENCES transactions(id),
+    created_by VARCHAR(255), -- staff member or 'system'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create customer preferences table
+CREATE TABLE IF NOT EXISTS customer_preferences (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+    preference_key VARCHAR(100) NOT NULL,
+    preference_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(customer_id, preference_key)
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(LOWER(name));
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+CREATE INDEX IF NOT EXISTS idx_customers_active ON customers(is_active);
+CREATE INDEX IF NOT EXISTS idx_customers_created_at ON customers(created_at);
+CREATE INDEX IF NOT EXISTS idx_customers_last_visit ON customers(last_visit);
+CREATE INDEX IF NOT EXISTS idx_customer_activity_log_customer ON customer_activity_log(customer_id);
+CREATE INDEX IF NOT EXISTS idx_customer_activity_log_type ON customer_activity_log(activity_type);
+CREATE INDEX IF NOT EXISTS idx_customer_activity_log_created ON customer_activity_log(created_at);
+
+-- Enhanced loyalty number generation function
+CREATE OR REPLACE FUNCTION generate_loyalty_number() RETURNS TEXT AS $$
+DECLARE
+    new_number TEXT;
+    counter INTEGER;
+    max_attempts INTEGER := 100;
+    attempt INTEGER := 0;
+BEGIN
+    LOOP
+        -- Get the next sequential number
+        SELECT COALESCE(MAX(CAST(SUBSTRING(loyalty_number FROM 4) AS INTEGER)), 0) + 1 
+        INTO counter 
+        FROM customers 
+        WHERE loyalty_number LIKE 'LOY%' AND LENGTH(loyalty_number) = 6;
+        
+        new_number := 'LOY' || LPAD(counter::TEXT, 3, '0');
+        
+        -- Check if this number already exists (extra safety check)
+        IF NOT EXISTS (SELECT 1 FROM customers WHERE loyalty_number = new_number) THEN
+            RETURN new_number;
+        END IF;
+        
+        attempt := attempt + 1;
+        IF attempt >= max_attempts THEN
+            RAISE EXCEPTION 'Unable to generate unique loyalty number after % attempts', max_attempts;
+        END IF;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to log customer activity
+CREATE OR REPLACE FUNCTION log_customer_activity(
+    p_customer_id INTEGER,
+    p_activity_type VARCHAR(50),
+    p_description TEXT DEFAULT NULL,
+    p_points_change INTEGER DEFAULT 0,
+    p_transaction_id INTEGER DEFAULT NULL,
+    p_created_by VARCHAR(255) DEFAULT 'system'
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO customer_activity_log 
+    (customer_id, activity_type, description, points_change, transaction_id, created_by)
+    VALUES 
+    (p_customer_id, p_activity_type, p_description, p_points_change, p_transaction_id, p_created_by);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Enhanced trigger to update customer stats and log activity
+CREATE OR REPLACE FUNCTION update_customer_stats_enhanced() RETURNS TRIGGER AS $$
+BEGIN
+    -- Update customer statistics
+    UPDATE customers 
+    SET 
+        points = points + NEW.points_earned - COALESCE(NEW.points_redeemed, 0),
+        total_spent = total_spent + NEW.total,
+        visit_count = visit_count + 1,
+        last_visit = NEW.created_at,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.customer_id;
+    
+    -- Log the purchase activity
+    PERFORM log_customer_activity(
+        NEW.customer_id,
+        'purchase',
+        'Purchase transaction #' || NEW.id,
+        NEW.points_earned - COALESCE(NEW.points_redeemed, 0),
+        NEW.id,
+        'pos_system'
+    );
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update the existing trigger
+DROP TRIGGER IF EXISTS trigger_update_customer_stats ON transactions;
+CREATE TRIGGER trigger_update_customer_stats
+    AFTER INSERT ON transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_customer_stats_enhanced();
+
+-- Function to get customer summary with recent activity
+CREATE OR REPLACE FUNCTION get_customer_summary(p_customer_id INTEGER)
+RETURNS TABLE (
+    customer_info JSON,
+    recent_activity JSON,
+    stats JSON
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        -- Customer basic info
+        row_to_json(c) as customer_info,
+        
+        -- Recent activity (last 10 activities)
+        (
+            SELECT json_agg(
+                json_build_object(
+                    'activity_type', cal.activity_type,
+                    'description', cal.description,
+                    'points_change', cal.points_change,
+                    'created_at', cal.created_at,
+                    'created_by', cal.created_by
+                )
+            )
+            FROM customer_activity_log cal 
+            WHERE cal.customer_id = p_customer_id 
+            ORDER BY cal.created_at DESC 
+            LIMIT 10
+        ) as recent_activity,
+        
+        -- Customer stats
+        json_build_object(
+            'total_transactions', (
+                SELECT COUNT(*) FROM transactions t WHERE t.customer_id = p_customer_id
+            ),
+            'avg_transaction_value', (
+                SELECT COALESCE(AVG(total), 0) FROM transactions t WHERE t.customer_id = p_customer_id
+            ),
+            'favorite_products', (
+                SELECT json_agg(
+                    json_build_object(
+                        'product_name', ti.product_name,
+                        'total_quantity', SUM(ti.quantity),
+                        'total_spent', SUM(ti.subtotal)
+                    )
+                )
+                FROM transactions t
+                JOIN transaction_items ti ON t.id = ti.transaction_id
+                WHERE t.customer_id = p_customer_id
+                GROUP BY ti.product_name
+                ORDER BY SUM(ti.quantity) DESC
+                LIMIT 5
+            ),
+            'monthly_spending', (
+                SELECT json_agg(
+                    json_build_object(
+                        'month', DATE_TRUNC('month', t.created_at),
+                        'total_spent', SUM(t.total),
+                        'transaction_count', COUNT(*)
+                    )
+                )
+                FROM transactions t
+                WHERE t.customer_id = p_customer_id
+                  AND t.created_at >= CURRENT_DATE - INTERVAL '12 months'
+                GROUP BY DATE_TRUNC('month', t.created_at)
+                ORDER BY DATE_TRUNC('month', t.created_at) DESC
+            )
+        ) as stats
+    FROM customers c
+    WHERE c.id = p_customer_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create view for customer management dashboard
+CREATE OR REPLACE VIEW customer_management_dashboard AS
+SELECT 
+    c.id,
+    c.loyalty_number,
+    c.name,
+    c.email,
+    c.phone,
+    c.points,
+    c.total_spent,
+    c.visit_count,
+    c.last_visit,
+    c.created_at,
+    c.is_active,
+    c.notes,
+    -- Calculate customer tier based on spending
+    CASE 
+        WHEN c.total_spent >= 1000 THEN 'Platinum'
+        WHEN c.total_spent >= 500 THEN 'Gold'
+        WHEN c.total_spent >= 100 THEN 'Silver'
+        ELSE 'Bronze'
+    END as customer_tier,
+    
+    -- Recent activity indicator
+    CASE 
+        WHEN c.last_visit >= CURRENT_DATE - INTERVAL '30 days' THEN 'Active'
+        WHEN c.last_visit >= CURRENT_DATE - INTERVAL '90 days' THEN 'Inactive'
+        WHEN c.last_visit IS NULL THEN 'New'
+        ELSE 'Dormant'
+    END as activity_status,
+    
+    -- Calculate days since last visit
+    CASE 
+        WHEN c.last_visit IS NOT NULL 
+        THEN EXTRACT(DAY FROM CURRENT_DATE - c.last_visit)
+        ELSE NULL 
+    END as days_since_last_visit,
+    
+    -- Customer lifetime value indicators
+    CASE 
+        WHEN c.visit_count > 0 
+        THEN ROUND(c.total_spent / c.visit_count, 2)
+        ELSE 0 
+    END as avg_transaction_value,
+    
+    -- Points redemption rate (if we track redeemed points)
+    ROUND((c.points::DECIMAL / GREATEST(c.total_spent, 1)) * 100, 1) as points_earning_rate
+
+FROM customers c
+WHERE c.is_active = true
+ORDER BY c.total_spent DESC, c.last_visit DESC;
+
+-- Insert sample data updates for existing customers
+UPDATE customers 
+SET 
+    notes = CASE 
+        WHEN loyalty_number = 'LOY001' THEN 'Frequent visitor, prefers email communication'
+        WHEN loyalty_number = 'LOY002' THEN 'VIP customer, birthday is in December'
+        WHEN loyalty_number = 'LOY003' THEN 'New customer, interested in backpack collection'
+        WHEN loyalty_number = 'LOY004' THEN 'Business customer, bulk purchaser'
+        ELSE notes
+    END,
+    is_active = true,
+    preferred_contact = 'email',
+    marketing_consent = true
+WHERE loyalty_number IN ('LOY001', 'LOY002', 'LOY003', 'LOY004');
+
+-- Create some sample customer activity logs for existing transactions
+INSERT INTO customer_activity_log (customer_id, activity_type, description, points_change, transaction_id, created_by)
+SELECT 
+    t.customer_id,
+    'purchase',
+    'Historical purchase transaction #' || t.id,
+    COALESCE(t.points_earned, 0) - COALESCE(t.points_redeemed, 0),
+    t.id,
+    'data_migration'
+FROM transactions t
+WHERE t.customer_id IS NOT NULL
+ON CONFLICT DO NOTHING;
+
+-- Create some sample customer preferences
+INSERT INTO customer_preferences (customer_id, preference_key, preference_value)
+SELECT 
+    c.id,
+    'notification_method',
+    CASE 
+        WHEN c.email IS NOT NULL THEN 'email'
+        WHEN c.phone IS NOT NULL THEN 'sms'
+        ELSE 'none'
+    END
+FROM customers c
+WHERE c.is_active = true
+ON CONFLICT (customer_id, preference_key) DO NOTHING;
+
+-- Enhanced Customer Database Schema with Status, Tiers, and Member Types
+-- Run these commands to update your customer management system
+
+-- First, update the customers table with new fields
+ALTER TABLE customers 
+DROP COLUMN IF EXISTS is_active CASCADE;
+
+ALTER TABLE customers 
+ADD COLUMN IF NOT EXISTS member_status VARCHAR(50) DEFAULT 'Active' CHECK (member_status IN ('Active', 'Inactive', 'Under Fraud Investigation', 'Merged', 'Fraudulent Member')),
+ADD COLUMN IF NOT EXISTS enrollment_date DATE DEFAULT CURRENT_DATE,
+ADD COLUMN IF NOT EXISTS member_type VARCHAR(20) DEFAULT 'Individual' CHECK (member_type IN ('Individual', 'Corporate')),
+ADD COLUMN IF NOT EXISTS sf_id VARCHAR(100), -- Salesforce ID, not visible in app
+ADD COLUMN IF NOT EXISTS customer_tier VARCHAR(20) DEFAULT 'Bronze' CHECK (customer_tier IN ('Bronze', 'Silver', 'Gold', 'Platinum')),
+ADD COLUMN IF NOT EXISTS tier_calculation_number DECIMAL(10,2) DEFAULT 0.00;
+
+-- Create customer tier rules table
+CREATE TABLE IF NOT EXISTS customer_tier_rules (
+    id SERIAL PRIMARY KEY,
+    tier_name VARCHAR(20) NOT NULL UNIQUE,
+    min_spending DECIMAL(10,2) DEFAULT 0.00,
+    min_visits INTEGER DEFAULT 0,
+    min_points INTEGER DEFAULT 0,
+    calculation_multiplier DECIMAL(4,2) DEFAULT 1.00,
+    benefits TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default tier rules
+INSERT INTO customer_tier_rules (tier_name, min_spending, min_visits, min_points, calculation_multiplier, benefits) VALUES
+('Bronze', 0.00, 0, 0, 1.00, 'Basic loyalty benefits, 1x points earning'),
+('Silver', 250.00, 5, 100, 1.25, 'Enhanced benefits, 1.25x points earning, priority support'),
+('Gold', 750.00, 15, 500, 1.50, 'Premium benefits, 1.5x points earning, exclusive offers'),
+('Platinum', 2000.00, 30, 1500, 2.00, 'VIP benefits, 2x points earning, personal concierge service')
+ON CONFLICT (tier_name) DO UPDATE SET
+    min_spending = EXCLUDED.min_spending,
+    min_visits = EXCLUDED.min_visits,
+    min_points = EXCLUDED.min_points,
+    calculation_multiplier = EXCLUDED.calculation_multiplier,
+    benefits = EXCLUDED.benefits,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- Function to calculate customer tier based on spending, visits, and points
+CREATE OR REPLACE FUNCTION calculate_customer_tier(
+    p_total_spent DECIMAL,
+    p_visit_count INTEGER,
+    p_points INTEGER
+) RETURNS VARCHAR(20) AS $$
+DECLARE
+    tier_result VARCHAR(20) := 'Bronze';
+BEGIN
+    -- Check tier requirements in descending order
+    IF p_total_spent >= 2000.00 AND p_visit_count >= 30 AND p_points >= 1500 THEN
+        tier_result := 'Platinum';
+    ELSIF p_total_spent >= 750.00 AND p_visit_count >= 15 AND p_points >= 500 THEN
+        tier_result := 'Gold';
+    ELSIF p_total_spent >= 250.00 AND p_visit_count >= 5 AND p_points >= 100 THEN
+        tier_result := 'Silver';
+    ELSE
+        tier_result := 'Bronze';
+    END IF;
+    
+    RETURN tier_result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to calculate tier-based calculation number
+CREATE OR REPLACE FUNCTION calculate_tier_number(
+    p_total_spent DECIMAL,
+    p_visit_count INTEGER,
+    p_points INTEGER,
+    p_tier VARCHAR(20)
+) RETURNS DECIMAL AS $$
+DECLARE
+    base_score DECIMAL := 0.00;
+    tier_multiplier DECIMAL := 1.00;
+BEGIN
+    -- Get tier multiplier
+    SELECT calculation_multiplier INTO tier_multiplier
+    FROM customer_tier_rules
+    WHERE tier_name = p_tier;
+    
+    -- Calculate base score
+    base_score := (p_total_spent * 0.5) + (p_visit_count * 10) + (p_points * 0.1);
+    
+    -- Apply tier multiplier
+    RETURN ROUND(base_score * tier_multiplier, 2);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Enhanced trigger to update customer tier and calculation number
+CREATE OR REPLACE FUNCTION update_customer_tier_and_stats() RETURNS TRIGGER AS $$
+DECLARE
+    new_tier VARCHAR(20);
+    new_calculation_number DECIMAL;
+BEGIN
+    -- Update customer statistics
+    UPDATE customers 
+    SET 
+        points = points + NEW.points_earned - COALESCE(NEW.points_redeemed, 0),
+        total_spent = total_spent + NEW.total,
+        visit_count = visit_count + 1,
+        last_visit = NEW.created_at,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.customer_id;
+    
+    -- Get updated customer data for tier calculation
+    SELECT 
+        calculate_customer_tier(total_spent + NEW.total, visit_count + 1, points + NEW.points_earned - COALESCE(NEW.points_redeemed, 0)),
+        calculate_tier_number(total_spent + NEW.total, visit_count + 1, points + NEW.points_earned - COALESCE(NEW.points_redeemed, 0), 
+                             calculate_customer_tier(total_spent + NEW.total, visit_count + 1, points + NEW.points_earned - COALESCE(NEW.points_redeemed, 0)))
+    INTO new_tier, new_calculation_number
+    FROM customers 
+    WHERE id = NEW.customer_id;
+    
+    -- Update tier and calculation number
+    UPDATE customers 
+    SET 
+        customer_tier = new_tier,
+        tier_calculation_number = new_calculation_number
+    WHERE id = NEW.customer_id;
+    
+    -- Log the purchase activity
+    PERFORM log_customer_activity(
+        NEW.customer_id,
+        'purchase',
+        'Purchase transaction #' || NEW.id || ' - Tier: ' || new_tier,
+        NEW.points_earned - COALESCE(NEW.points_redeemed, 0),
+        NEW.id,
+        'pos_system'
+    );
+    
+    -- Log tier change if applicable
+    IF EXISTS (
+        SELECT 1 FROM customers 
+        WHERE id = NEW.customer_id 
+        AND customer_tier != new_tier
+    ) THEN
+        PERFORM log_customer_activity(
+            NEW.customer_id,
+            'tier_change',
+            'Customer tier updated to ' || new_tier,
+            0,
+            NEW.id,
+            'auto_calculation'
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update the trigger
+DROP TRIGGER IF EXISTS trigger_update_customer_stats ON transactions;
+DROP TRIGGER IF EXISTS trigger_update_customer_stats_enhanced ON transactions;
+CREATE TRIGGER trigger_update_customer_tier_and_stats
+    AFTER INSERT ON transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_customer_tier_and_stats();
+
+-- Function to recalculate all customer tiers (useful for maintenance)
+CREATE OR REPLACE FUNCTION recalculate_all_customer_tiers() RETURNS INTEGER AS $$
+DECLARE
+    customer_record RECORD;
+    updated_count INTEGER := 0;
+    new_tier VARCHAR(20);
+    new_calculation_number DECIMAL;
+BEGIN
+    FOR customer_record IN 
+        SELECT id, total_spent, visit_count, points 
+        FROM customers 
+        WHERE member_status = 'Active'
+    LOOP
+        -- Calculate new tier
+        new_tier := calculate_customer_tier(
+            customer_record.total_spent, 
+            customer_record.visit_count, 
+            customer_record.points
+        );
+        
+        -- Calculate new tier number
+        new_calculation_number := calculate_tier_number(
+            customer_record.total_spent, 
+            customer_record.visit_count, 
+            customer_record.points,
+            new_tier
+        );
+        
+        -- Update customer
+        UPDATE customers 
+        SET 
+            customer_tier = new_tier,
+            tier_calculation_number = new_calculation_number,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = customer_record.id;
+        
+        updated_count := updated_count + 1;
+    END LOOP;
+    
+    RETURN updated_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update indexes for new fields
+CREATE INDEX IF NOT EXISTS idx_customers_member_status ON customers(member_status);
+CREATE INDEX IF NOT EXISTS idx_customers_member_type ON customers(member_type);
+CREATE INDEX IF NOT EXISTS idx_customers_customer_tier ON customers(customer_tier);
+CREATE INDEX IF NOT EXISTS idx_customers_enrollment_date ON customers(enrollment_date);
+CREATE INDEX IF NOT EXISTS idx_customers_tier_calculation_number ON customers(tier_calculation_number);
+CREATE INDEX IF NOT EXISTS idx_customers_sf_id ON customers(sf_id);
+
+-- Enhanced customer management dashboard view
+CREATE OR REPLACE VIEW enhanced_customer_dashboard AS
+SELECT 
+    c.id,
+    c.loyalty_number,
+    c.name,
+    c.email,
+    c.phone,
+    c.points,
+    c.total_spent,
+    c.visit_count,
+    c.last_visit,
+    c.created_at,
+    c.member_status,
+    c.enrollment_date,
+    c.member_type,
+    c.customer_tier,
+    c.tier_calculation_number,
+    c.notes,
+    
+    -- Days since enrollment (fixed casting)
+    EXTRACT(DAY FROM CURRENT_DATE - c.enrollment_date::DATE) as days_since_enrollment,
+    
+    -- Member for (years/months) - fixed casting
+    CASE 
+        WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, c.enrollment_date::DATE)) >= 1 THEN
+            EXTRACT(YEAR FROM AGE(CURRENT_DATE, c.enrollment_date::DATE))::TEXT || ' years'
+        ELSE
+            EXTRACT(MONTH FROM AGE(CURRENT_DATE, c.enrollment_date::DATE))::TEXT || ' months'
+    END as member_duration,
+    
+    -- Activity status based on member_status and last_visit
+    CASE 
+        WHEN c.member_status != 'Active' THEN c.member_status
+        WHEN c.last_visit >= CURRENT_DATE - INTERVAL '30 days' THEN 'Recently Active'
+        WHEN c.last_visit >= CURRENT_DATE - INTERVAL '90 days' THEN 'Moderately Active'
+        WHEN c.last_visit IS NULL THEN 'Never Purchased'
+        ELSE 'Dormant'
+    END as activity_status,
+    
+    -- Days since last visit (fixed casting)
+    CASE 
+        WHEN c.last_visit IS NOT NULL 
+        THEN EXTRACT(DAY FROM CURRENT_DATE - c.last_visit::DATE)
+        ELSE NULL 
+    END as days_since_last_visit,
+    
+    -- Average transaction value
+    CASE 
+        WHEN c.visit_count > 0 
+        THEN ROUND(c.total_spent / c.visit_count, 2)
+        ELSE 0 
+    END as avg_transaction_value,
+    
+    -- Tier benefits
+    ctr.benefits as tier_benefits,
+    ctr.calculation_multiplier as tier_multiplier,
+    
+    -- Next tier information
+    (
+        SELECT tier_name 
+        FROM customer_tier_rules 
+        WHERE min_spending > c.total_spent 
+        ORDER BY min_spending ASC 
+        LIMIT 1
+    ) as next_tier,
+    
+    (
+        SELECT min_spending - c.total_spent 
+        FROM customer_tier_rules 
+        WHERE min_spending > c.total_spent 
+        ORDER BY min_spending ASC 
+        LIMIT 1
+    ) as amount_to_next_tier
+
+FROM customers c
+LEFT JOIN customer_tier_rules ctr ON c.customer_tier = ctr.tier_name
+ORDER BY c.tier_calculation_number DESC, c.total_spent DESC;
+
+-- Update existing customers with new fields
+UPDATE customers 
+SET 
+    member_status = 'Active',
+    enrollment_date = created_at::DATE,
+    member_type = 'Individual';
+
+-- Recalculate all customer tiers for existing customers
+SELECT recalculate_all_customer_tiers() as updated_customers;
+
+-- Create some sample corporate customers
+INSERT INTO customers (loyalty_number, name, email, phone, member_type, member_status, enrollment_date, notes) VALUES
+('CRP001', 'TechCorp Solutions', 'purchasing@techcorp.com', '(555) 987-6543', 'Corporate', 'Active', CURRENT_DATE - INTERVAL '6 months', 'Corporate account for bulk purchases'),
+('CRP002', 'Global Industries LLC', 'admin@globalindustries.com', '(555) 876-5432', 'Corporate', 'Active', CURRENT_DATE - INTERVAL '1 year', 'Large enterprise customer, quarterly orders')
+ON CONFLICT (loyalty_number) DO NOTHING;
+
+-- Update some existing customers with different statuses for testing
+UPDATE customers 
+SET member_status = CASE 
+    WHEN loyalty_number = 'LOY003' THEN 'Inactive'
+    WHEN loyalty_number = 'LOY004' THEN 'Under Fraud Investigation'
+    ELSE member_status
+END
+WHERE loyalty_number IN ('LOY003', 'LOY004');
+
+-- Function to get customer tier summary
+CREATE OR REPLACE FUNCTION get_customer_tier_summary()
+RETURNS TABLE (
+    tier_name VARCHAR(20),
+    customer_count BIGINT,
+    total_spending DECIMAL,
+    avg_spending DECIMAL,
+    total_points BIGINT,
+    avg_points DECIMAL
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        c.customer_tier,
+        COUNT(*) as customer_count,
+        COALESCE(SUM(c.total_spent), 0) as total_spending,
+        COALESCE(AVG(c.total_spent), 0) as avg_spending,
+        COALESCE(SUM(c.points), 0) as total_points,
+        COALESCE(AVG(c.points), 0) as avg_points
+    FROM customers c
+    WHERE c.member_status = 'Active'
+    GROUP BY c.customer_tier
+    ORDER BY 
+        CASE c.customer_tier
+            WHEN 'Platinum' THEN 4
+            WHEN 'Gold' THEN 3
+            WHEN 'Silver' THEN 2
+            WHEN 'Bronze' THEN 1
+        END DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+

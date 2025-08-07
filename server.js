@@ -190,6 +190,728 @@ app.get('/api/customers/search/:query', async (req, res) => {
 
 
 // Loyalty-specific endpoints
+// Update existing customer by ID
+app.put('/api/customers/:id', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    const { 
+      name, email, phone, points, notes, member_status, 
+      member_type, enrollment_date, customer_tier 
+    } = req.body;
+    
+    // Validate required fields
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Customer name is required' });
+    }
+    
+    // Validate email format if provided
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate member_status
+    const validStatuses = ['Active', 'Inactive', 'Under Fraud Investigation', 'Merged', 'Fraudulent Member'];
+    if (member_status && !validStatuses.includes(member_status)) {
+      return res.status(400).json({ 
+        error: 'Invalid member status. Must be one of: ' + validStatuses.join(', ') 
+      });
+    }
+
+    // Validate customer_tier
+    const validTiers = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+    if (customer_tier && !validTiers.includes(customer_tier)) {
+      return res.status(400).json({ 
+        error: 'Invalid customer tier. Must be one of: ' + validTiers.join(', ') 
+      });
+    }
+
+    // Get current customer data to check for changes
+    const currentCustomer = await client.query('SELECT * FROM customers WHERE id = $1', [id]);
+    if (currentCustomer.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const current = currentCustomer.rows[0];
+    const pointsChanged = parseInt(points) !== current.points;
+    const statusChanged = member_status !== current.member_status;
+    const tierChanged = customer_tier !== current.customer_tier;
+
+    // Calculate new tier calculation number if tier changed or points changed
+    let newTierCalcNumber = current.tier_calculation_number || 0;
+    if (pointsChanged || tierChanged) {
+      try {
+        const tierCalcResult = await client.query(
+          'SELECT calculate_tier_number($1, $2, $3, $4) as calc_number',
+          [current.total_spent || 0, current.visit_count || 0, parseInt(points) || 0, customer_tier || current.customer_tier]
+        );
+        newTierCalcNumber = parseFloat(tierCalcResult.rows[0].calc_number) || 0;
+      } catch (calcError) {
+        console.warn('Tier calculation function not available, using default value');
+        newTierCalcNumber = ((current.total_spent || 0) * 0.5) + ((current.visit_count || 0) * 10) + ((parseInt(points) || 0) * 0.1);
+      }
+    }
+    
+    const result = await client.query(`
+      UPDATE customers 
+      SET name = $1, email = $2, phone = $3, points = $4, notes = $5, 
+          member_status = $6, member_type = $7, enrollment_date = $8, 
+          customer_tier = $9, tier_calculation_number = $10, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $11 RETURNING *
+    `, [
+      name.trim(), 
+      email || null, 
+      phone || null, 
+      parseInt(points) || 0, 
+      notes || null,
+      member_status || current.member_status,
+      member_type || current.member_type,
+      enrollment_date ? new Date(enrollment_date) : current.enrollment_date,
+      customer_tier || current.customer_tier,
+      newTierCalcNumber,
+      id
+    ]);
+
+    // Log activities for significant changes (only if log function exists)
+    try {
+      if (pointsChanged) {
+        const pointsDiff = parseInt(points) - current.points;
+        await client.query(
+          'SELECT log_customer_activity($1, $2, $3, $4, $5, $6)',
+          [
+            id,
+            pointsDiff > 0 ? 'points_adjustment_add' : 'points_adjustment_subtract',
+            `Points manually adjusted by ${pointsDiff > 0 ? '+' : ''}${pointsDiff}`,
+            pointsDiff,
+            null,
+            'admin_adjustment'
+          ]
+        );
+      }
+
+      if (statusChanged) {
+        await client.query(
+          'SELECT log_customer_activity($1, $2, $3, $4, $5, $6)',
+          [
+            id,
+            'status_change',
+            `Member status changed from ${current.member_status} to ${member_status}`,
+            0,
+            null,
+            'admin_update'
+          ]
+        );
+      }
+
+      if (tierChanged) {
+        await client.query(
+          'SELECT log_customer_activity($1, $2, $3, $4, $5, $6)',
+          [
+            id,
+            'tier_change',
+            `Customer tier manually changed from ${current.customer_tier} to ${customer_tier}`,
+            0,
+            null,
+            'admin_override'
+          ]
+        );
+      }
+    } catch (logError) {
+      console.warn('Activity logging not available:', logError.message);
+    }
+
+    await client.query('COMMIT');
+    res.json(result.rows[0]);
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error updating customer:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Delete customer
+app.delete('/api/customers/:id', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    
+    // Check if customer exists
+    const customerCheck = await client.query('SELECT name FROM customers WHERE id = $1', [id]);
+    if (customerCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    
+    // Check if customer has transactions
+    const transactionCheck = await client.query(
+      'SELECT COUNT(*) as count FROM transactions WHERE customer_id = $1', 
+      [id]
+    );
+    
+    const hasTransactions = parseInt(transactionCheck.rows[0].count) > 0;
+    
+    if (hasTransactions) {
+      // If customer has transactions, we should soft delete or prevent deletion
+      await client.query('DELETE FROM customers WHERE id = $1', [id]);
+      res.json({ 
+        message: 'Customer deleted successfully',
+        warning: 'Transaction history was also removed'
+      });
+    } else {
+      // Safe to delete customer with no transactions
+      await client.query('DELETE FROM customers WHERE id = $1', [id]);
+      res.json({ message: 'Customer deleted successfully' });
+    }
+    
+    await client.query('COMMIT');
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error deleting customer:', err);
+    
+    if (err.code === '23503') { // Foreign key constraint violation
+      res.status(400).json({ 
+        error: 'Cannot delete customer with existing transactions',
+        suggestion: 'Consider deactivating the customer instead'
+      });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  } finally {
+    client.release();
+  }
+});
+
+// Enhanced create customer endpoint
+app.post('/api/customers/enhanced', async (req, res) => {
+  try {
+    const { 
+      name, email, phone, loyalty_number, points, notes, 
+      member_status, member_type, enrollment_date, customer_tier 
+    } = req.body;
+    
+    // Validate required fields
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Customer name is required' });
+    }
+    
+    // Validate email format if provided
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Validate loyalty number format if provided
+    if (loyalty_number && !/^[A-Z]{3}\d{3}$/.test(loyalty_number)) {
+      return res.status(400).json({ 
+        error: 'Invalid loyalty number format. Use format like LOY001' 
+      });
+    }
+
+    // Validate member_status
+    const validStatuses = ['Active', 'Inactive', 'Under Fraud Investigation', 'Merged', 'Fraudulent Member'];
+    if (member_status && !validStatuses.includes(member_status)) {
+      return res.status(400).json({ 
+        error: 'Invalid member status. Must be one of: ' + validStatuses.join(', ') 
+      });
+    }
+
+    // Validate member_type
+    const validMemberTypes = ['Individual', 'Corporate'];
+    if (member_type && !validMemberTypes.includes(member_type)) {
+      return res.status(400).json({ 
+        error: 'Invalid member type. Must be either Individual or Corporate' 
+      });
+    }
+
+    // Validate customer_tier
+    const validTiers = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+    if (customer_tier && !validTiers.includes(customer_tier)) {
+      return res.status(400).json({ 
+        error: 'Invalid customer tier. Must be one of: ' + validTiers.join(', ') 
+      });
+    }
+    
+    let finalLoyaltyNumber = loyalty_number;
+    
+    // Generate loyalty number if not provided
+    if (!finalLoyaltyNumber) {
+      try {
+        const loyaltyResult = await pool.query('SELECT generate_loyalty_number() as loyalty_number');
+        finalLoyaltyNumber = loyaltyResult.rows[0].loyalty_number;
+      } catch (genError) {
+        // Fallback loyalty number generation
+        const count = await pool.query('SELECT COUNT(*) as count FROM customers');
+        const nextNum = parseInt(count.rows[0].count) + 1;
+        finalLoyaltyNumber = 'LOY' + String(nextNum).padStart(3, '0');
+      }
+    } else {
+      // Check if loyalty number already exists
+      const existingCustomer = await pool.query(
+        'SELECT id FROM customers WHERE loyalty_number = $1',
+        [finalLoyaltyNumber]
+      );
+      
+      if (existingCustomer.rows.length > 0) {
+        return res.status(400).json({ error: 'Loyalty number already exists' });
+      }
+    }
+
+    // Parse enrollment date or use current date
+    const finalEnrollmentDate = enrollment_date ? new Date(enrollment_date) : new Date();
+    
+    // Calculate initial tier calculation number
+    const initialPoints = parseInt(points) || 0;
+    let tierCalcNumber = 0;
+    
+    try {
+      const tierCalcResult = await pool.query(
+        'SELECT calculate_tier_number($1, $2, $3, $4) as calc_number',
+        [0, 0, initialPoints, customer_tier || 'Bronze']
+      );
+      tierCalcNumber = parseFloat(tierCalcResult.rows[0].calc_number);
+    } catch (calcError) {
+      // Fallback calculation
+      tierCalcNumber = (initialPoints * 0.1);
+    }
+    
+    const result = await pool.query(`
+      INSERT INTO customers (
+        loyalty_number, name, email, phone, points, notes, 
+        member_status, member_type, enrollment_date, customer_tier, tier_calculation_number
+      ) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+      RETURNING *
+    `, [
+      finalLoyaltyNumber, 
+      name.trim(), 
+      email || null, 
+      phone || null, 
+      initialPoints, 
+      notes || null,
+      member_status || 'Active',
+      member_type || 'Individual',
+      finalEnrollmentDate,
+      customer_tier || 'Bronze',
+      tierCalcNumber
+    ]);
+    
+    // Log customer creation activity (optional, won't fail if function doesn't exist)
+    try {
+      await pool.query(
+        'SELECT log_customer_activity($1, $2, $3, $4, $5, $6)',
+        [
+          result.rows[0].id,
+          'account_created',
+          'Customer account created with tier: ' + (customer_tier || 'Bronze'),
+          initialPoints,
+          null,
+          'pos_system'
+        ]
+      );
+    } catch (logError) {
+      console.warn('Activity logging not available:', logError.message);
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating customer:', err);
+    
+    if (err.code === '23505') { // Unique constraint violation
+      if (err.constraint === 'customers_loyalty_number_key') {
+        res.status(400).json({ error: 'Loyalty number already exists' });
+      } else {
+        res.status(400).json({ error: 'Customer with this information already exists' });
+      }
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+// Get customer statistics
+app.get('/api/customers/stats', async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_customers,
+        COUNT(CASE WHEN visit_count > 0 THEN 1 END) as active_customers,
+        COUNT(CASE WHEN visit_count = 0 THEN 1 END) as new_customers,
+        COALESCE(SUM(points), 0) as total_points_issued,
+        COALESCE(SUM(total_spent), 0) as total_customer_spending,
+        COALESCE(AVG(total_spent), 0) as avg_customer_spending,
+        COUNT(CASE WHEN last_visit >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_customers
+      FROM customers
+    `);
+    
+    const topCustomers = await pool.query(`
+      SELECT name, loyalty_number, points, total_spent, visit_count
+      FROM customers 
+      WHERE visit_count > 0
+      ORDER BY total_spent DESC 
+      LIMIT 5
+    `);
+    
+    res.json({
+      ...stats.rows[0],
+      total_customer_spending: parseFloat(stats.rows[0].total_customer_spending),
+      avg_customer_spending: parseFloat(stats.rows[0].avg_customer_spending),
+      top_customers: topCustomers.rows
+    });
+  } catch (err) {
+    console.error('Error fetching customer stats:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Advanced customer search with filters
+app.get('/api/customers/advanced-search', async (req, res) => {
+  try {
+    const { 
+      q, // general search term
+      min_points, 
+      max_points, 
+      min_spent, 
+      max_spent,
+      min_visits,
+      max_visits,
+      has_email,
+      has_phone,
+      last_visit_days, // customers who visited in last X days
+      sort_by = 'name',
+      sort_order = 'asc',
+      limit = 50,
+      offset = 0
+    } = req.query;
+    
+    let query = `
+      SELECT 
+        id, loyalty_number, name, email, phone, points, 
+        total_spent, visit_count, last_visit, created_at,
+        member_status, enrollment_date, member_type, customer_tier, tier_calculation_number
+      FROM customers 
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let paramCount = 0;
+    
+    // General search
+    if (q) {
+      paramCount++;
+      query += ` AND (
+        LOWER(name) LIKE LOWER($${paramCount}) OR 
+        LOWER(COALESCE(email, '')) LIKE LOWER($${paramCount}) OR 
+        LOWER(loyalty_number) LIKE LOWER($${paramCount}) OR
+        COALESCE(phone, '') LIKE $${paramCount}
+      )`;
+      params.push(`%${q}%`);
+    }
+    
+    // Points range
+    if (min_points) {
+      paramCount++;
+      query += ` AND points >= $${paramCount}`;
+      params.push(parseInt(min_points));
+    }
+    if (max_points) {
+      paramCount++;
+      query += ` AND points <= $${paramCount}`;
+      params.push(parseInt(max_points));
+    }
+    
+    // Spending range
+    if (min_spent) {
+      paramCount++;
+      query += ` AND total_spent >= $${paramCount}`;
+      params.push(parseFloat(min_spent));
+    }
+    if (max_spent) {
+      paramCount++;
+      query += ` AND total_spent <= $${paramCount}`;
+      params.push(parseFloat(max_spent));
+    }
+    
+    // Visit count range
+    if (min_visits) {
+      paramCount++;
+      query += ` AND visit_count >= $${paramCount}`;
+      params.push(parseInt(min_visits));
+    }
+    if (max_visits) {
+      paramCount++;
+      query += ` AND visit_count <= $${paramCount}`;
+      params.push(parseInt(max_visits));
+    }
+    
+    // Contact information filters
+    if (has_email === 'true') {
+      query += ` AND email IS NOT NULL AND email != ''`;
+    } else if (has_email === 'false') {
+      query += ` AND (email IS NULL OR email = '')`;
+    }
+    
+    if (has_phone === 'true') {
+      query += ` AND phone IS NOT NULL AND phone != ''`;
+    } else if (has_phone === 'false') {
+      query += ` AND (phone IS NULL OR phone = '')`;
+    }
+    
+    // Recent activity filter
+    if (last_visit_days) {
+      const days = parseInt(last_visit_days);
+      query += ` AND last_visit >= CURRENT_DATE - INTERVAL '${days} days'`;
+    }
+    
+    // Sorting
+    const allowedSortFields = ['name', 'loyalty_number', 'points', 'total_spent', 'visit_count', 'created_at', 'last_visit', 'member_status', 'customer_tier'];
+    const sortField = allowedSortFields.includes(sort_by) ? sort_by : 'name';
+    const sortDirection = sort_order.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+    
+    query += ` ORDER BY ${sortField} ${sortDirection}`;
+    
+    // Pagination
+    paramCount++;
+    query += ` LIMIT $${paramCount}`;
+    params.push(parseInt(limit));
+    
+    paramCount++;
+    query += ` OFFSET $${paramCount}`;
+    params.push(parseInt(offset));
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = query.split('ORDER BY')[0].replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM');
+    const countResult = await pool.query(countQuery, params.slice(0, -2)); // Remove LIMIT and OFFSET params
+    
+    res.json({
+      customers: result.rows,
+      total: parseInt(countResult.rows[0].count),
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      has_more: parseInt(offset) + result.rows.length < parseInt(countResult.rows[0].count)
+    });
+    
+  } catch (err) {
+    console.error('Error in advanced customer search:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get customer tier summary
+app.get('/api/customers/tier-summary', async (req, res) => {
+  try {
+    // Get tier breakdown
+    const tierBreakdown = await pool.query(`
+      SELECT 
+        customer_tier as tier_name,
+        COUNT(*) as customer_count,
+        COALESCE(SUM(total_spent), 0) as total_spending,
+        COALESCE(AVG(total_spent), 0) as avg_spending,
+        COALESCE(SUM(points), 0) as total_points,
+        COALESCE(AVG(points), 0) as avg_points
+      FROM customers
+      WHERE member_status = 'Active'
+      GROUP BY customer_tier
+      ORDER BY 
+        CASE customer_tier
+          WHEN 'Platinum' THEN 4
+          WHEN 'Gold' THEN 3
+          WHEN 'Silver' THEN 2
+          WHEN 'Bronze' THEN 1
+          ELSE 0
+        END DESC
+    `);
+    
+    // Also get overall stats
+    const overallStats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_customers,
+        COUNT(CASE WHEN member_status = 'Active' THEN 1 END) as active_customers,
+        COUNT(CASE WHEN member_status != 'Active' THEN 1 END) as inactive_customers,
+        COUNT(CASE WHEN member_type = 'Corporate' THEN 1 END) as corporate_customers,
+        COUNT(CASE WHEN member_type = 'Individual' THEN 1 END) as individual_customers,
+        COALESCE(AVG(tier_calculation_number), 0) as avg_tier_score
+      FROM customers
+    `);
+    
+    res.json({
+      tier_breakdown: tierBreakdown.rows,
+      overall_stats: {
+        ...overallStats.rows[0],
+        avg_tier_score: parseFloat(overallStats.rows[0].avg_tier_score).toFixed(2)
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching customer tier summary:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get customer tier rules
+app.get('/api/customers/tier-rules', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM customer_tier_rules 
+      ORDER BY 
+        CASE tier_name
+          WHEN 'Bronze' THEN 1
+          WHEN 'Silver' THEN 2
+          WHEN 'Gold' THEN 3
+          WHEN 'Platinum' THEN 4
+        END
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching customer tier rules:', err);
+    // If tier rules table doesn't exist, return default rules
+    res.json([
+      { tier_name: 'Bronze', min_spending: 0, benefits: 'Basic loyalty benefits, 1x points earning' },
+      { tier_name: 'Silver', min_spending: 250, benefits: 'Enhanced benefits, 1.25x points earning' },
+      { tier_name: 'Gold', min_spending: 750, benefits: 'Premium benefits, 1.5x points earning' },
+      { tier_name: 'Platinum', min_spending: 2000, benefits: 'VIP benefits, 2x points earning' }
+    ]);
+  }
+});
+
+// Recalculate customer tiers (admin function)
+app.post('/api/customers/recalculate-tiers', async (req, res) => {
+  try {
+    // Try using the database function first
+    try {
+      const result = await pool.query('SELECT recalculate_all_customer_tiers_fixed() as updated_count');
+      res.json({ 
+        message: 'Customer tiers recalculated successfully',
+        updated_customers: parseInt(result.rows[0].updated_count)
+      });
+    } catch (funcError) {
+      // Fallback: manual recalculation
+      const customers = await pool.query('SELECT id, total_spent, visit_count, points FROM customers WHERE member_status = \'Active\'');
+      let updatedCount = 0;
+      
+      for (const customer of customers.rows) {
+        let newTier = 'Bronze';
+        const spending = parseFloat(customer.total_spent) || 0;
+        const visits = parseInt(customer.visit_count) || 0;
+        const points = parseInt(customer.points) || 0;
+        
+        // Simple tier calculation
+        if (spending >= 2000 && visits >= 30 && points >= 1500) {
+          newTier = 'Platinum';
+        } else if (spending >= 750 && visits >= 15 && points >= 500) {
+          newTier = 'Gold';
+        } else if (spending >= 250 && visits >= 5 && points >= 100) {
+          newTier = 'Silver';
+        }
+        
+        // Calculate tier score
+        const tierScore = (spending * 0.5) + (visits * 10) + (points * 0.1);
+        
+        await pool.query(
+          'UPDATE customers SET customer_tier = $1, tier_calculation_number = $2 WHERE id = $3',
+          [newTier, tierScore, customer.id]
+        );
+        
+        updatedCount++;
+      }
+      
+      res.json({ 
+        message: 'Customer tiers recalculated successfully (fallback method)',
+        updated_customers: updatedCount
+      });
+    }
+  } catch (err) {
+    console.error('Error recalculating customer tiers:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Bulk operations on customers
+app.post('/api/customers/bulk-action', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { action, customer_ids, data } = req.body;
+    
+    if (!customer_ids || !Array.isArray(customer_ids) || customer_ids.length === 0) {
+      return res.status(400).json({ error: 'Customer IDs array is required' });
+    }
+    
+    let result;
+    
+    switch (action) {
+      case 'delete':
+        result = await client.query(
+          'DELETE FROM customers WHERE id = ANY($1) RETURNING name, loyalty_number',
+          [customer_ids]
+        );
+        break;
+        
+      case 'add_points':
+        if (!data.points || isNaN(data.points)) {
+          return res.status(400).json({ error: 'Points amount is required for add_points action' });
+        }
+        result = await client.query(
+          `UPDATE customers 
+           SET points = points + $1, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = ANY($2) 
+           RETURNING name, loyalty_number, points`,
+          [parseInt(data.points), customer_ids]
+        );
+        break;
+        
+      case 'set_points':
+        if (data.points === undefined || isNaN(data.points)) {
+          return res.status(400).json({ error: 'Points amount is required for set_points action' });
+        }
+        result = await client.query(
+          `UPDATE customers 
+           SET points = $1, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = ANY($2) 
+           RETURNING name, loyalty_number, points`,
+          [parseInt(data.points), customer_ids]
+        );
+        break;
+        
+      case 'update_notes':
+        result = await client.query(
+          `UPDATE customers 
+           SET notes = $1, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = ANY($2) 
+           RETURNING name, loyalty_number`,
+          [data.notes || '', customer_ids]
+        );
+        break;
+        
+      default:
+        return res.status(400).json({ error: 'Invalid action. Supported actions: delete, add_points, set_points, update_notes' });
+    }
+    
+    await client.query('COMMIT');
+    
+    res.json({
+      message: `Successfully performed ${action} on ${result.rows.length} customers`,
+      affected_customers: result.rows
+    });
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error in bulk customer action:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
 
 // Get customer loyalty details with recent transactions
 app.get('/api/loyalty/:loyaltyNumber', async (req, res) => {

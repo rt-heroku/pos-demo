@@ -100,5 +100,29 @@ window.API = {
     // Analytics
     analytics: {
         get: () => window.API.call('/analytics')
-    }
+    },
+
+};
+
+window.API.customers.update = (id, customerData) => window.API.call(`/customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(customerData)
+});
+
+window.API.customers.delete = (id) => window.API.call(`/customers/${id}`, {
+    method: 'DELETE'
+});
+
+window.API.customers.createEnhanced = (customerData) => window.API.call('/customers/enhanced', {
+    method: 'POST',
+    body: JSON.stringify(customerData)
+});
+
+window.API.customers.getStats = () => window.API.call('/customers/stats');
+
+window.API.customers.advancedSearch = (filters) => {
+    const queryString = new URLSearchParams(
+        Object.entries(filters).filter(([_, value]) => value !== undefined && value !== '')
+    ).toString();
+    return window.API.call(`/customers/advanced-search?${queryString}`);
 };

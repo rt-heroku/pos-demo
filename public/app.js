@@ -63,6 +63,14 @@ const POSApp = () => {
     const [currentProduct, setCurrentProduct] = useState(null);
     const [productViewMode, setProductViewMode] = useState('grid');
 
+
+    //Customer Management
+    const [showCustomerFormModal, setShowCustomerFormModal] = useState(false);
+    const [showCustomerDeleteModal, setShowCustomerDeleteModal] = useState(false);
+    const [currentCustomer, setCurrentCustomer] = useState(null);
+    const [customerToDelete, setCustomerToDelete] = useState(null);
+
+
     // Generate user identifier for settings
     const getUserId = () => {
         let userId = localStorage.getItem('pos_user_id');
@@ -819,6 +827,190 @@ const POSApp = () => {
         ])
     );
 
+    // Customer management functions - add these to your POSApp component
+
+    const refreshCustomers = async () => {
+        try {
+            setLoading(true);
+            const data = await window.API.customers.getAll();
+            setCustomers(data);
+        } catch (error) {
+            console.error('Failed to load customers:', error);
+            alert('Failed to load customers. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddNewCustomer = () => {
+        setCurrentCustomer(null);
+        setShowCustomerFormModal(true);
+    };
+
+    const handleEditCustomer = (customer) => {
+        setCurrentCustomer(customer);
+        setShowCustomerFormModal(true);
+    };
+
+    const handleSaveCustomer = async (customerData) => {
+        try {
+            setLoading(true);
+            
+            if (currentCustomer) {
+                // Update existing customer
+                await window.API.customers.update(currentCustomer.id, customerData);
+                alert('Customer updated successfully!');
+            } else {
+                // Create new customer
+                await window.API.customers.createEnhanced(customerData);
+                alert('Customer created successfully!');
+            }
+            
+            // Refresh customer list
+            await refreshCustomers();
+            
+            // Close modal
+            setShowCustomerFormModal(false);
+            setCurrentCustomer(null);
+            
+        } catch (error) {
+            console.error('Failed to save customer:', error);
+            
+            // Show specific error message if available
+            if (error.message.includes('already exists')) {
+                alert('A customer with this loyalty number already exists.');
+            } else if (error.message.includes('Invalid email')) {
+                alert('Please enter a valid email address.');
+            } else if (error.message.includes('required')) {
+                alert('Please fill in all required fields.');
+            } else {
+                alert('Failed to save customer. Please check your information and try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteCustomer = (customerId) => {
+        const customer = customers.find(c => c.id === customerId);
+        if (customer) {
+            setCustomerToDelete(customer);
+            setShowCustomerDeleteModal(true);
+        }
+    };
+
+    const handleConfirmDeleteCustomer = async (customerId) => {
+        try {
+            setLoading(true);
+            
+            await window.API.customers.delete(customerId);
+            
+            // Refresh customer list
+            await refreshCustomers();
+            
+            // Close modal
+            setShowCustomerDeleteModal(false);
+            setCustomerToDelete(null);
+            
+            alert('Customer deleted successfully!');
+            
+        } catch (error) {
+            console.error('Failed to delete customer:', error);
+            
+            if (error.message.includes('existing transactions')) {
+                alert('Cannot delete customer with existing purchase history. Consider deactivating instead.');
+            } else {
+                alert('Failed to delete customer. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCloseCustomerModal = () => {
+        setShowCustomerFormModal(false);
+        setCurrentCustomer(null);
+    };
+
+    const handleCloseDeleteModal = () => {
+        setShowCustomerDeleteModal(false);
+        setCustomerToDelete(null);
+    };
+
+    // Enhanced loyalty search with customer management
+    const searchCustomersByLoyalty = async (loyaltyNum) => {
+        if (!loyaltyNum.trim()) {
+            setCustomerSearchResults([]);
+            return;
+        }
+        
+        try {
+            setLoading(true);
+            
+            // Try exact loyalty number match first
+            try {
+                const customer = await window.API.customers.getByLoyalty(loyaltyNum);
+                setCustomerSearchResults([customer]);
+                return;
+            } catch (loyaltyError) {
+                // If not found, do a general search
+                if (loyaltyError.message.includes('404')) {
+                    const results = await window.API.customers.search(loyaltyNum);
+                    setCustomerSearchResults(results);
+                    
+                    if (results.length === 0) {
+                        // Offer to create new customer
+                        setNewCustomerForm({ 
+                            ...newCustomerForm, 
+                            loyalty_number: loyaltyNum.toUpperCase() 
+                        });
+                        setShowNewCustomerForm(true);
+                    }
+                } else {
+                    throw loyaltyError;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to search customers:', error);
+            alert('Error searching for customers');
+            setCustomerSearchResults([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+
+    // Optional: Add customer stats to your analytics or create a new dashboard section
+    const loadCustomerStats = async () => {
+        try {
+            const stats = await window.API.customers.getStats();
+            // You can use these stats in your dashboard or analytics view
+            console.log('Customer Stats:', stats);
+            return stats;
+        } catch (error) {
+            console.error('Failed to load customer stats:', error);
+            return null;
+        }
+    };
+
+    // Enhanced customer search for advanced filtering (optional)
+    const performAdvancedCustomerSearch = async (filters) => {
+        try {
+            setLoading(true);
+            const results = await window.API.customers.advancedSearch(filters);
+            setCustomers(results.customers);
+            return results;
+        } catch (error) {
+            console.error('Failed to perform advanced customer search:', error);
+            alert('Failed to search customers');
+            return { customers: [], total: 0 };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     // Get icons
     const { ShoppingCart, Award, Package, BarChart3, Settings } = window.Icons;
 
@@ -941,7 +1133,25 @@ const POSApp = () => {
                         })
                     ])
                 ])
-            ])
+            ]),
+            React.createElement(window.Modals.CustomerFormModal, {
+    key: 'customer-form-modal',
+    show: showCustomerFormModal,
+    onClose: handleCloseCustomerModal,
+    customer: currentCustomer,
+    onSave: handleSaveCustomer,
+    loading
+}),
+
+React.createElement(window.Modals.CustomerDeleteModal, {
+    key: 'customer-delete-modal',
+    show: showCustomerDeleteModal,
+    onClose: handleCloseDeleteModal,
+    customer: customerToDelete,
+    onConfirm: handleConfirmDeleteCustomer,
+    loading
+})
+
         ]),
 
         // Main Content
@@ -972,16 +1182,34 @@ const POSApp = () => {
                 loading
             }),
             
+            // currentView === 'loyalty' && React.createElement(window.Views.LoyaltyView, { 
+            //     key: 'loyalty-view',
+            //     loyaltyNumber, setLoyaltyNumber,
+            //     onSearchByLoyalty: searchCustomerByLoyalty,
+            //     loyaltySearchTerm, setLoyaltySearchTerm: handleLoyaltySearch,
+            //     customerSearchResults,
+            //     onLoadCustomerHistory: loadCustomerHistory,
+            //     loading
+            // }),
+            
             currentView === 'loyalty' && React.createElement(window.Views.LoyaltyView, { 
                 key: 'loyalty-view',
-                loyaltyNumber, setLoyaltyNumber,
-                onSearchByLoyalty: searchCustomerByLoyalty,
-                loyaltySearchTerm, setLoyaltySearchTerm: handleLoyaltySearch,
+                loyaltyNumber, 
+                setLoyaltyNumber,
+                onSearchByLoyalty: searchCustomersByLoyalty, // Updated function
+                loyaltySearchTerm, 
+                setLoyaltySearchTerm: handleLoyaltySearch,
                 customerSearchResults,
                 onLoadCustomerHistory: loadCustomerHistory,
+                // New customer management props
+                customers,
+                onRefreshCustomers: refreshCustomers,
+                onEditCustomer: handleEditCustomer,
+                onDeleteCustomer: handleDeleteCustomer,
+                onAddNewCustomer: handleAddNewCustomer,
                 loading
             }),
-            
+
             currentView === 'inventory' && React.createElement(window.Views.InventoryView, { 
                 key: 'inventory-view',
                 products: detailedProducts, filters: productFilters, loading,
@@ -1097,6 +1325,7 @@ const POSApp = () => {
             ])
         ])
     ]);
+
 };
 
 // Initialize the app when DOM is loaded
