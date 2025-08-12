@@ -2080,6 +2080,184 @@ app.get('/api/setup/status', async (req, res) => {
     }
 });
 
+
+// Add these to your server.js file after the other API routes
+
+// System Settings API Routes
+app.get('/api/system-settings', async (req, res) => {
+    try {
+        const { category } = req.query;
+        
+        let query = 'SELECT * FROM system_settings WHERE is_active = true';
+        const params = [];
+        
+        if (category) {
+            query += ' AND category = $1';
+            params.push(category);
+        }
+        
+        query += ' ORDER BY category, setting_key';
+        
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching system settings:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/system-settings/:key', async (req, res) => {
+    try {
+        const { key } = req.params;
+        const result = await pool.query(
+            'SELECT * FROM system_settings WHERE setting_key = $1 AND is_active = true',
+            [key]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Setting not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching system setting:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.post('/api/system-settings', async (req, res) => {
+    try {
+        const { setting_key, setting_value, description, category, setting_type } = req.body;
+        
+        if (!setting_key || !setting_value) {
+            return res.status(400).json({ error: 'Setting key and value are required' });
+        }
+        
+        const result = await pool.query(
+            `INSERT INTO system_settings 
+            (setting_key, setting_value, description, category, setting_type, created_by, updated_by) 
+            VALUES ($1, $2, $3, $4, $5, $6, $6) 
+            RETURNING *`,
+            [
+                setting_key,
+                setting_value,
+                description || null,
+                category || 'general',
+                setting_type || 'text',
+                'admin' // You can replace this with actual user when you have auth
+            ]
+        );
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error creating system setting:', err);
+        if (err.code === '23505') { // Unique constraint violation
+            res.status(400).json({ error: 'Setting key already exists' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+});
+
+app.put('/api/system-settings/:key', async (req, res) => {
+    try {
+        const { key } = req.params;
+        const { setting_value, description, category, setting_type, is_active } = req.body;
+        
+        const result = await pool.query(
+            `UPDATE system_settings 
+            SET setting_value = $1, 
+                description = COALESCE($2, description),
+                category = COALESCE($3, category),
+                setting_type = COALESCE($4, setting_type),
+                is_active = COALESCE($5, is_active),
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by = $6
+            WHERE setting_key = $7
+            RETURNING *`,
+            [
+                setting_value,
+                description,
+                category,
+                setting_type,
+                is_active,
+                'admin', // Replace with actual user
+                key
+            ]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Setting not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating system setting:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.delete('/api/system-settings/:key', async (req, res) => {
+    try {
+        const { key } = req.params;
+        
+        // Some settings should not be deleted
+        const protectedSettings = ['company_name', 'currency_symbol', 'points_per_dollar'];
+        if (protectedSettings.includes(key)) {
+            return res.status(400).json({ error: 'This setting cannot be deleted' });
+        }
+        
+        const result = await pool.query(
+            'DELETE FROM system_settings WHERE setting_key = $1 RETURNING *',
+            [key]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Setting not found' });
+        }
+        
+        res.json({ message: 'Setting deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting system setting:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Database connection info endpoint
+app.get('/api/system-settings/database/info', async (req, res) => {
+    try {
+        const dbUrl = process.env.DATABASE_URL;
+        
+        if (!dbUrl) {
+            return res.status(404).json({ error: 'Database URL not configured' });
+        }
+        
+        // Parse PostgreSQL URL to JDBC format
+        const urlPattern = /postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:\/]+):(\d+)\/(.+)/;
+        const match = dbUrl.match(urlPattern);
+        
+        let jdbcUrl = '';
+        let maskedUrl = '';
+        
+        if (match) {
+            const [, username, password, host, port, database] = match;
+            jdbcUrl = `jdbc:postgresql://${host}:${port}/${database}`;
+            // Mask the password for security
+            maskedUrl = `postgresql://${username}:****@${host}:${port}/${database}`;
+        }
+        
+        res.json({
+            database_url: maskedUrl,
+            jdbc_format: jdbcUrl,
+            ssl_mode: process.env.NODE_ENV === 'production' ? 'require' : 'disable'
+        });
+    } catch (err) {
+        console.error('Error getting database info:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
 // Transactions
 // app.get('/api/transactions', async (req, res) => {
 //   try {

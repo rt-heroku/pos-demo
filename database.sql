@@ -1196,3 +1196,120 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+-- System Settings Table
+CREATE TABLE IF NOT EXISTS system_settings (
+    id SERIAL PRIMARY KEY,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value TEXT,
+    setting_type VARCHAR(50) DEFAULT 'text', -- 'text', 'number', 'boolean', 'json'
+    description TEXT,
+    category VARCHAR(50) DEFAULT 'general', -- 'general', 'pos', 'loyalty', 'inventory', 'email', 'integration'
+    is_encrypted BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100)
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_system_settings_key ON system_settings(setting_key);
+CREATE INDEX IF NOT EXISTS idx_system_settings_category ON system_settings(category);
+CREATE INDEX IF NOT EXISTS idx_system_settings_active ON system_settings(is_active);
+
+-- Function to get system setting by key
+CREATE OR REPLACE FUNCTION get_system_setting(p_key VARCHAR(100)) 
+RETURNS TEXT AS $$
+DECLARE
+    v_value TEXT;
+BEGIN
+    SELECT setting_value INTO v_value
+    FROM system_settings
+    WHERE setting_key = p_key
+    AND is_active = true
+    LIMIT 1;
+    
+    RETURN v_value;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get system setting with default value
+CREATE OR REPLACE FUNCTION get_system_setting_or_default(
+    p_key VARCHAR(100),
+    p_default TEXT DEFAULT NULL
+) RETURNS TEXT AS $$
+DECLARE
+    v_value TEXT;
+BEGIN
+    v_value := get_system_setting(p_key);
+    
+    IF v_value IS NULL THEN
+        RETURN p_default;
+    END IF;
+    
+    RETURN v_value;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to set system setting
+CREATE OR REPLACE FUNCTION set_system_setting(
+    p_key VARCHAR(100),
+    p_value TEXT,
+    p_description TEXT DEFAULT NULL,
+    p_category VARCHAR(50) DEFAULT 'general',
+    p_user VARCHAR(100) DEFAULT 'system'
+) RETURNS BOOLEAN AS $$
+BEGIN
+    INSERT INTO system_settings (setting_key, setting_value, description, category, created_by, updated_by)
+    VALUES (p_key, p_value, p_description, p_category, p_user, p_user)
+    ON CONFLICT (setting_key) 
+    DO UPDATE SET 
+        setting_value = EXCLUDED.setting_value,
+        description = COALESCE(EXCLUDED.description, system_settings.description),
+        category = EXCLUDED.category,
+        updated_at = CURRENT_TIMESTAMP,
+        updated_by = EXCLUDED.updated_by;
+    
+    RETURN true;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Insert default system settings
+INSERT INTO system_settings (setting_key, setting_value, description, category) VALUES
+('company_name', 'TUMI Store', 'Company name displayed on receipts and reports', 'general'),
+('currency_symbol', '$', 'Currency symbol for displaying prices', 'general'),
+('currency_code', 'USD', 'ISO currency code', 'general'),
+('date_format', 'MM/DD/YYYY', 'Date format for display', 'general'),
+('time_format', '12h', 'Time format (12h or 24h)', 'general'),
+('tax_inclusive', 'false', 'Whether prices include tax', 'pos'),
+('default_tax_rate', '0.08', 'Default tax rate for new locations', 'pos'),
+('points_per_dollar', '1', 'Loyalty points earned per dollar spent', 'loyalty'),
+('points_redemption_rate', '100', 'Points needed for $1 discount', 'loyalty'),
+('low_stock_threshold', '5', 'Stock level to trigger low stock warning', 'inventory'),
+('receipt_footer_text', 'Thank you for your business!', 'Text shown at bottom of receipts', 'pos'),
+('enable_work_orders', 'true', 'Enable work order management system', 'general'),
+('enable_multi_location', 'true', 'Enable multi-location support', 'general'),
+('session_timeout_minutes', '30', 'Session timeout in minutes', 'general'),
+('max_discount_percentage', '50', 'Maximum discount percentage allowed', 'pos'),
+('require_customer_email', 'false', 'Require email for new customers', 'loyalty'),
+('auto_generate_sku', 'true', 'Automatically generate SKUs for new products', 'inventory'),
+('enable_barcode_scanning', 'false', 'Enable barcode scanning support', 'pos'),
+('smtp_host', '', 'SMTP server for sending emails', 'email'),
+('smtp_port', '587', 'SMTP port', 'email'),
+('smtp_user', '', 'SMTP username', 'email'),
+('smtp_from_email', '', 'From email address', 'email'),
+('backup_enabled', 'false', 'Enable automatic backups', 'general'),
+('backup_frequency_hours', '24', 'Backup frequency in hours', 'general'),
+('journal_type_id', '0lEHo000000E5sgMAC' , 'Journal Type', 'Loyalty'),
+('journal_subtype_id', '0lSHo000000E107MAC' , 'Journal Sub-Type', 'Loyalty'),
+('loyalty_program_id', '0lpHo000000xTCMIA2' , 'JLoyalty Program Id', 'Loyalty' ,
+)
+ON CONFLICT (setting_key) DO NOTHING;
+
+-- Example of using the function in a query
+-- SELECT 
+--     *,
+--     get_system_setting('points_per_dollar')::INTEGER as points_multiplier,
+--     get_system_setting_or_default('company_name', 'Default Store') as store_name
+-- FROM transactions;
