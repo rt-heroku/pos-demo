@@ -130,6 +130,7 @@ ADD COLUMN IF NOT EXISTS main_image_url TEXT,
 ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,
 ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+ALTER TABLE public.products ADD sf_id varchar NULL;
 
 -- Create product images table for multiple images
 CREATE TABLE IF NOT EXISTS product_images (
@@ -189,44 +190,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Update existing products with enhanced data (sample data based on Tumi examples)
-UPDATE products SET 
-    sku = 'TUM-LUG-001',
-    product_type = 'Luggage',
-    brand = 'TUMI',
-    collection = '19 Degree',
-    material = 'Polycarbonate',
-    gender = 'Unisex',
-    color = 'Black',
-    description = 'International Expandable 4 Wheeled Carry-On with signature 19 Degree design',
-    dimensions = '22" x 14" x 9"',
-    weight = 7.5,
-    warranty_info = '5-year warranty against manufacturing defects',
-    main_image_url = 'https://example.com/luggage1.jpg'
-WHERE name = 'Coffee';
-
-UPDATE products SET 
-    sku = 'TUM-BAG-001',
-    product_type = 'Backpack',
-    brand = 'TUMI',
-    collection = 'Alpha',
-    material = 'Ballistic Nylon',
-    gender = 'Unisex',
-    color = 'Black',
-    description = 'Business backpack with laptop compartment and organizational features',
-    dimensions = '17" x 12" x 6"',
-    weight = 3.2,
-    laptop_size = '15"',
-    warranty_info = '5-year warranty against manufacturing defects',
-    main_image_url = 'https://example.com/backpack1.jpg'
-WHERE name = 'Sandwich';
-
--- Insert sample products
-INSERT INTO public.products ("name",price,category,stock,image,created_at,updated_at,sku,product_type,laptop_size,brand,collection,material,gender,color,description,dimensions,weight,warranty_info,care_instructions,main_image_url,is_active,featured,sort_order) VALUES
-     ('Harrison Nylon Portfolio',225.00,'Accessories',24,'💼','2025-08-01 14:57:51.790811','2025-08-04 17:51:04.211511','TUM-ACC-001','Portfolio','12"','TUMI','Harrison','Nylon','Unisex','Navy','Carry what you need in style for daily commutes or as a personal item when you fly. This elevated messenger includes thoughtfully placed pockets to carry and organize your laptop, work documents, and more','13" x 10" x 1"',0.80,'','','https://tumi.scene7.com/is/image/Tumi/1524241041_main?wid=1020&hei=1238',true,false,0),
-     ('Alpha Bravo Business Backpack',395.00,'Backpacks',14,'🎒','2025-08-01 14:57:51.790811','2025-08-04 16:50:21.345291','TUM-BAG-002','Backpack','15"','TUMI','Alpha Bravo','Ballistic Nylon','Unisex','Anthracite','This compact backpack with a streamlined silhouette has smart organization for commuting and travel gear, as well as a dedicated padded laptop compartment.','17.5" x 12.5" x 7"',3.80,'','','https://tumi.scene7.com/is/image/Tumi/1426141041_main?wid=1020&hei=1238',true,true,0),
-     ('Alpha Continental Carry-On',1050.00,'Luggage',11,'🧳','2025-08-01 14:57:51.790811','2025-08-04 17:47:48.574674','TUM-LUG-003','Luggage','','TUMI','Alpha','Ballistic Nylon','Unisex','Black','Versatile and compact, this case makes taking your business on the road a breeze. With the option of being carried or wheeled, it gives you flexibility wherever you need to travel.','22" x 14" x 9"',8.90,'','','https://tumi.scene7.com/is/image/Tumi/1171571041_main?wid=1020&hei=1238',true,false,0),
-     ('19 Degree Extended Trip Case',950.00,'Luggage',6,'🧳','2025-08-01 14:57:51.790811','2025-08-04 16:49:57.71472','','','','TUMI','','','Unisex','','','',NULL,'','','https://tumi.scene7.com/is/image/Tumi/1171611041_main?wid=1020&hei=1238',true,false,0),
-     ('Voyageur Celina Backpack',275.00,'Backpacks',16,'🎒','2025-08-01 14:57:51.790811','2025-08-04 17:56:14.077857','TUM-BAG-003','Backpack','13"','TUMI','Voyageur','Nylon','Women','Black','Lightweight everyday backpack with modern design','15" x 11" x 5"',2.10,'','','https://tumi.scene7.com/is/image/Tumi/146566T522_main?wid=1020&hei=1238',true,false,0);
+INSERT INTO public.products ("name",price,category,stock,image,created_at,updated_at,sku,product_type,laptop_size,brand,collection,material,gender,color,description,dimensions,weight,warranty_info,care_instructions,main_image_url,is_active,featured,sort_order,sf_id) VALUES
+     ('Alpha Bravo Business Backpack',395.00,'Backpacks',14,'🎒','2025-08-01 14:57:51.790811','2025-08-04 16:50:21.345291','TUM-BAG-002','Backpack','15"','TUMI','Alpha Bravo','Ballistic Nylon','Unisex','Anthracite','This compact backpack with a streamlined silhouette has smart organization for commuting and travel gear, as well as a dedicated padded laptop compartment.','17.5" x 12.5" x 7"',3.80,'','','https://tumi.scene7.com/is/image/Tumi/1426141041_main?wid=1020&hei=1238',true,true,0,'01tHo000004zTtgIAE'),
+     ('Voyageur Celina Backpack',275.00,'Backpacks',16,'🎒','2025-08-01 14:57:51.790811','2025-08-04 17:56:14.077857','TUM-BAG-003','Backpack','13"','TUMI','Voyageur','Nylon','Women','Black','Lightweight everyday backpack with modern design','15" x 11" x 5"',2.10,'','','https://tumi.scene7.com/is/image/Tumi/146566T522_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtvIAE'),
+     ('Alpha Continental Carry-On',1050.00,'Carry-On',11,'🧳','2025-08-01 14:57:51.790811','2025-08-08 14:25:17.900774','TUM-LUG-003','Luggage','','TUMI','Alpha','Ballistic Nylon','Unisex','Black','Versatile and compact, this case makes taking your business on the road a breeze. With the option of being carried or wheeled, it gives you flexibility wherever you need to travel.','22" x 14" x 9"',8.90,'','','https://tumi.scene7.com/is/image/Tumi/1171571041_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtWIAU'),
+     ('19 Degree Extended Trip Case',950.00,'Luggage',6,'🧳','2025-08-01 14:57:51.790811','2025-08-08 14:28:36.550216','TUM-CASE-01','Luggage','','TUMI','','','Unisex','','','',NULL,'','','https://tumi.scene7.com/is/image/Tumi/1171611041_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtlIAE'),
+     ('Harrison Nylon Portfolio',225.00,'Accessories',24,'💼','2025-08-01 14:57:51.790811','2025-08-04 17:51:04.211511','TUM-ACC-001','Portfolio','12"','TUMI','Harrison','Nylon','Unisex','Navy','Carry what you need in style for daily commutes or as a personal item when you fly. This elevated messenger includes thoughtfully placed pockets to carry and organize your laptop, work documents, and more','13" x 10" x 1"',0.80,'','','https://tumi.scene7.com/is/image/Tumi/1524241041_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtqIAE');
 
 
 -- Insert sample customers with loyalty numbers
@@ -1226,6 +1195,4 @@ BEGIN
         END DESC;
 END;
 $$ LANGUAGE plpgsql;
-
-
 

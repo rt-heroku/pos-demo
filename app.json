@@ -1,0 +1,12 @@
+{
+  "name": "POS Demo App",
+  "description": "A complete full-stack Point of Sale system with customer loyalty features, built with React, Express.js, and PostgreSQL.",
+  "repository": "https://github.com/rt-heroku/pos-demo",
+  "keywords": ["mule", "pos", "loyalty"],
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "scripts": {
+        "postdeploy": "heroku run psql -f database.sql"
+  },
+}
