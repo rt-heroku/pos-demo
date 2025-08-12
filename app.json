@@ -8,5 +8,5 @@
   ],
   "scripts": {
         "postdeploy": "heroku run psql -f database.sql"
-  },
+  }
 }
