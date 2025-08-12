@@ -2464,10 +2464,6 @@ SettingsView : ({
                             React.createElement('input', {
                                 type: 'text',
                                 value: newLocationForm.store_name,
-                                onChange: (e) => handleInputChange('store_name
-
-// Continuing the LocationFormModal inside SettingsView...
-
                                 onChange: (e) => handleInputChange('store_name', e.target.value),
                                 className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
                                 placeholder: 'Manhattan Flagship'
@@ -2958,10 +2954,7 @@ SettingsView : ({
                                 React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Category'),
                                 React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Type'),
                                 React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Description'),
-                                React.createElement('th', { className: 'text-center p-3 font-medium
-// Continuing the System Settings table...
-
-                               React.createElement('th', { className: 'text-center p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Actions')
+                                React.createElement('th', { className: 'text-center p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Actions')
                            ])
                        ]),
                        React.createElement('tbody', { key: 'tbody' }, 
