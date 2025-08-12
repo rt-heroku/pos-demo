@@ -7,6 +7,6 @@
     "heroku-postgresql"
   ],
   "scripts": {
-        "postdeploy": "heroku run psql -f database.sql"
+        "postdeploy": "psql $DATABASE_URL -f database.sql"
   }
 }
