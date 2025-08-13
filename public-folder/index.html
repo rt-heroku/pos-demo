@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS System with Loyalty</title>
+  <!-- Dev builds for easier debugging; switch to production for deployment -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    .loading-spinner { border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; }
+    body { background-color: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="display:flex;justify-content:center;align-items:center;height:100vh;">
+      <div style="text-align:center;">
+        <div class="loading-spinner" style="margin:0 auto 16px;"></div>
+        <p style="color:#6b7280;">Loading POS System...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global error handler to surface issues
+    window.addEventListener('error', function(e) {
+      console.error('Error loading app:', e.error || e.message);
+    });
+  </script>
+
+  <!-- App scripts: order matters -->
+  <script src="/public/icons.js"></script>
+  <script src="/public/modals.js"></script>
+  <script src="/public/views.js"></script>
+  <script src="/public/enhanced-pos.js"></script>
+  <script src="/public/api.js"></script>
+  <script src="/public/app.js"></script>
+
+  <script>
+    // Mount the app when ready
+    (function mount() {
+      try {
+        const rootEl = document.getElementById('root');
+        if (!rootEl) return console.error('Root element not found');
+        if (typeof POSApp !== 'function') {
+          return console.error('POSApp is not defined yet. Check script order.');
+        }
+        const root = ReactDOM.createRoot(rootEl);
+        root.render(React.createElement(POSApp));
+      } catch (err) {
+        console.error('Failed to mount POSApp:', err);
+      }
+    })();
+  </script>
+</body>
+</html>
