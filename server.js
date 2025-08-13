@@ -2241,9 +2241,9 @@ app.get('/api/system-settings/database/info', async (req, res) => {
         
         if (match) {
             const [, username, password, host, port, database] = match;
-            jdbcUrl = `jdbc:postgresql://${host}:${port}/${database}`;
+            jdbcUrl = `jdbc:postgresql://${username}:${password}@${host}:${port}/${database}`;
             // Mask the password for security
-            maskedUrl = `postgresql://${username}:****@${host}:${port}/${database}`;
+            maskedUrl = `postgresql://${username}:${password}@${host}:${port}/${database}`;
         }
         
         res.json({
