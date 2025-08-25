@@ -5,15 +5,31 @@ window.API = {
     // Generic API call function
     call: async function(endpoint, options = {}) {
         try {
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            };
+
+            // Add authorization header if token exists
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${this.BASE_URL}${endpoint}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers,
-                },
+                headers,
                 ...options,
             });
             
             if (!response.ok) {
+                if (response.status === 401) {
+                    // Token expired or invalid, redirect to login
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_data');
+                    localStorage.removeItem('token_expires');
+                    window.location.reload();
+                    throw new Error('Authentication required');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             

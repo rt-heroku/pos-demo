@@ -266,5 +266,18 @@ window.Icons = {
         React.createElement('circle', { key: 'circle', cx: "7.5", cy: "15.5", r: "5.5" }),
         React.createElement('path', { key: 'path', d: "m21 2-9.6 9.6" }),
         React.createElement('path', { key: 'path2', d: "M15.5 7.5l6-6" })
+    ]),
+
+    Users: (props) => React.createElement('svg', { ...iconProps, ...props }, [
+        React.createElement('path', { key: 'path1', d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }),
+        React.createElement('circle', { key: 'circle1', cx: "9", cy: "7", r: "4" }),
+        React.createElement('path', { key: 'path2', d: "M23 21v-2a4 4 0 0 0-3-3.87" }),
+        React.createElement('path', { key: 'path3', d: "M16 3.13a4 4 0 0 1 0 7.75" })
+    ]),
+
+    LogOut: (props) => React.createElement('svg', { ...iconProps, ...props }, [
+        React.createElement('path', { key: 'path1', d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }),
+        React.createElement('polyline', { key: 'polyline', points: "16,17 21,12 16,7" }),
+        React.createElement('line', { key: 'line', x1: "21", x2: "9", y1: "12", y2: "12" })
     ])
 };

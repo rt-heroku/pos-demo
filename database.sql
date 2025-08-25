@@ -1313,3 +1313,231 @@ ON CONFLICT (setting_key) DO NOTHING;
 --     get_system_setting('points_per_dollar')::INTEGER as points_multiplier,
 --     get_system_setting_or_default('company_name', 'Default Store') as store_name
 -- FROM transactions;
+
+-- Authentication and User Management System
+-- Add these tables to your existing database schema
+
+-- Create roles table
+CREATE TABLE IF NOT EXISTS roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    permissions JSONB DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    role_id INTEGER REFERENCES roles(id),
+    is_active BOOLEAN DEFAULT true,
+    is_locked BOOLEAN DEFAULT false,
+    failed_login_attempts INTEGER DEFAULT 0,
+    last_login TIMESTAMP,
+    password_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    password_expires_at TIMESTAMP,
+    must_change_password BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES users(id),
+    updated_by INTEGER REFERENCES users(id)
+);
+
+-- Create user_sessions table for session management
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    ip_address INET,
+    user_agent TEXT,
+    is_active BOOLEAN DEFAULT true,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create user_activity_log table for audit trail
+CREATE TABLE IF NOT EXISTS user_activity_log (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    activity_type VARCHAR(50) NOT NULL,
+    description TEXT,
+    ip_address INET,
+    user_agent TEXT,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create password_reset_tokens table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
+CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_activity_log_user_id ON user_activity_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_log_created_at ON user_activity_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
+
+-- Insert default roles
+INSERT INTO roles (name, description, permissions) VALUES
+('admin', 'Full system access with all permissions', 
+ '{"pos": {"read": true, "write": true, "delete": true}, 
+   "inventory": {"read": true, "write": true, "delete": true}, 
+   "customers": {"read": true, "write": true, "delete": true}, 
+   "transactions": {"read": true, "write": true, "delete": true}, 
+   "reports": {"read": true, "write": true}, 
+   "settings": {"read": true, "write": true, "delete": true}, 
+   "users": {"read": true, "write": true, "delete": true}, 
+   "locations": {"read": true, "write": true, "delete": true}}'),
+('manager', 'Store management with limited admin access', 
+ '{"pos": {"read": true, "write": true}, 
+   "inventory": {"read": true, "write": true}, 
+   "customers": {"read": true, "write": true}, 
+   "transactions": {"read": true, "write": true}, 
+   "reports": {"read": true, "write": true}, 
+   "settings": {"read": true}, 
+   "users": {"read": true}, 
+   "locations": {"read": true, "write": true}}'),
+('cashier', 'Basic POS operations and customer service', 
+ '{"pos": {"read": true, "write": true}, 
+   "inventory": {"read": true}, 
+   "customers": {"read": true, "write": true}, 
+   "transactions": {"read": true, "write": true}, 
+   "reports": {"read": true}, 
+   "settings": {"read": true}, 
+   "users": {"read": true}, 
+   "locations": {"read": true}}'),
+('viewer', 'Read-only access for reporting and monitoring', 
+ '{"pos": {"read": true}, 
+   "inventory": {"read": true}, 
+   "customers": {"read": true}, 
+   "transactions": {"read": true}, 
+   "reports": {"read": true}, 
+   "settings": {"read": true}, 
+   "users": {"read": true}, 
+   "locations": {"read": true}}')
+ON CONFLICT (name) DO NOTHING;
+
+-- Function to hash passwords (using bcrypt simulation)
+CREATE OR REPLACE FUNCTION hash_password(password TEXT) RETURNS TEXT AS $$
+BEGIN
+    -- In production, use proper bcrypt library
+    -- For demo purposes, we'll use a simple hash
+    RETURN 'hashed_' || encode(sha256(password::bytea), 'hex');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to verify password
+CREATE OR REPLACE FUNCTION verify_password(password TEXT, hash TEXT) RETURNS BOOLEAN AS $$
+BEGIN
+    -- In production, use proper bcrypt verification
+    -- For demo purposes, we'll use simple comparison
+    RETURN hash = 'hashed_' || encode(sha256(password::bytea), 'hex');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to log user activity
+CREATE OR REPLACE FUNCTION log_user_activity(
+    p_user_id INTEGER,
+    p_activity_type VARCHAR(50),
+    p_description TEXT DEFAULT NULL,
+    p_ip_address INET DEFAULT NULL,
+    p_user_agent TEXT DEFAULT NULL,
+    p_metadata JSONB DEFAULT '{}'
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO user_activity_log 
+    (user_id, activity_type, description, ip_address, user_agent, metadata)
+    VALUES 
+    (p_user_id, p_activity_type, p_description, p_ip_address, p_user_agent, p_metadata);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to create session token
+CREATE OR REPLACE FUNCTION create_session_token() RETURNS TEXT AS $$
+BEGIN
+    RETURN encode(gen_random_bytes(32), 'hex');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Insert default admin user (password: P@$$word1)
+INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active) 
+SELECT 
+    'admin',
+    'admin@pos-system.com',
+    hash_password('P@$$word1'),
+    'System',
+    'Administrator',
+    r.id,
+    true
+FROM roles r 
+WHERE r.name = 'admin'
+ON CONFLICT (username) DO NOTHING;
+
+-- Add user_id to existing tables for audit trail
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user INTEGER REFERENCES users(id);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_by_user INTEGER REFERENCES users(id);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS created_by_user INTEGER REFERENCES users(id);
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS created_by_user INTEGER REFERENCES users(id);
+
+-- Update existing records to have admin as creator
+UPDATE transactions SET created_by_user = (SELECT id FROM users WHERE username = 'admin' LIMIT 1) WHERE created_by_user IS NULL;
+UPDATE customers SET created_by_user = (SELECT id FROM users WHERE username = 'admin' LIMIT 1) WHERE created_by_user IS NULL;
+UPDATE products SET created_by_user = (SELECT id FROM users WHERE username = 'admin' LIMIT 1) WHERE created_by_user IS NULL;
+UPDATE locations SET created_by_user = (SELECT id FROM users WHERE username = 'admin' LIMIT 1) WHERE created_by_user IS NULL;
+
+-- Create view for user permissions
+CREATE OR REPLACE VIEW user_permissions AS
+SELECT 
+    u.id as user_id,
+    u.username,
+    u.email,
+    u.first_name,
+    u.last_name,
+    r.name as role_name,
+    r.permissions,
+    u.is_active as user_active,
+    r.is_active as role_active
+FROM users u
+JOIN roles r ON u.role_id = r.id
+WHERE u.is_active = true AND r.is_active = true;
+
+-- Function to check user permission
+CREATE OR REPLACE FUNCTION check_user_permission(
+    p_user_id INTEGER,
+    p_module VARCHAR(50),
+    p_action VARCHAR(20)
+) RETURNS BOOLEAN AS $$
+DECLARE
+    user_perms JSONB;
+BEGIN
+    SELECT permissions INTO user_perms
+    FROM user_permissions
+    WHERE user_id = p_user_id;
+    
+    IF user_perms IS NULL THEN
+        RETURN FALSE;
+    END IF;
+    
+    RETURN COALESCE(user_perms->p_module->>p_action, 'false')::BOOLEAN;
+END;
+$$ LANGUAGE plpgsql;

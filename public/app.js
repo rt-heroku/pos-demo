@@ -4,6 +4,11 @@
 const { useState, useEffect } = React;
 
 const POSApp = () => {
+    // Authentication state
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
     // Enhanced state management
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
@@ -81,10 +86,55 @@ const POSApp = () => {
         return userId;
     };
 
+    // Check authentication on app load
+    useEffect(() => {
+        checkAuthentication();
+    }, []);
+
+    // Check if user is authenticated
+    const checkAuthentication = () => {
+        const token = localStorage.getItem('auth_token');
+        const userData = localStorage.getItem('user_data');
+        const tokenExpires = localStorage.getItem('token_expires');
+
+        if (token && userData && tokenExpires) {
+            const expiresAt = new Date(tokenExpires);
+            if (expiresAt > new Date()) {
+                setCurrentUser(JSON.parse(userData));
+                setIsAuthenticated(true);
+                // Don't call initializeApp here, let the useEffect handle it
+            } else {
+                // Token expired, clear storage
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                localStorage.removeItem('token_expires');
+            }
+        }
+        setAuthLoading(false);
+    };
+
+    // Handle successful login
+    const handleLoginSuccess = (authData) => {
+        setCurrentUser(authData.user);
+        setIsAuthenticated(true);
+        // Don't call initializeApp here, let the useEffect handle it
+    };
+
+    // Handle logout
+    const handleLogout = () => {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        setCart([]);
+        setSelectedLocation(null);
+        setCurrentView('pos');
+    };
+
     // Initial app setup
     useEffect(() => {
-        initializeApp();
-    }, []);
+        if (isAuthenticated) {
+            initializeApp();
+        }
+    }, [isAuthenticated]);
 
     // Apply theme when settings change
     useEffect(() => {
@@ -100,35 +150,40 @@ const POSApp = () => {
         try {
             setAppLoading(true);
             
-            // Check if setup is required
+            // Check if setup is required (this endpoint doesn't require auth)
             const setupStatus = await fetch('/api/setup/status').then(r => r.json());
             setIsFirstTimeSetup(setupStatus.setupRequired);
             
-            // Load initial data
-            await Promise.all([
-                loadLocations(),
-                loadUserSettings(),
-                loadCustomers(),
-                loadDetailedProducts(),
-                loadProductFilters()
-            ]);
-            
-            // If not first-time setup, load location-specific data
-            if (!setupStatus.setupRequired) {
-                const userSettings = await loadUserSettings();
-                if (userSettings.selected_location_id) {
-                    const locations = await loadLocations();
-                    const selectedLoc = locations.find(l => l.id === userSettings.selected_location_id);
-                    if (selectedLoc) {
-                        setSelectedLocation(selectedLoc);
-                        await loadLocationSpecificData(selectedLoc.id);
-                        setCurrentView('pos'); // Switch to POS view after setup
+            // Load initial data only if authenticated
+            if (isAuthenticated && currentUser) {
+                await Promise.all([
+                    loadLocations(),
+                    loadUserSettings(),
+                    loadCustomers(),
+                    loadDetailedProducts(),
+                    loadProductFilters()
+                ]);
+                
+                // If not first-time setup, load location-specific data
+                if (!setupStatus.setupRequired) {
+                    const userSettings = await loadUserSettings();
+                    if (userSettings.selected_location_id) {
+                        const locations = await loadLocations();
+                        const selectedLoc = locations.find(l => l.id === userSettings.selected_location_id);
+                        if (selectedLoc) {
+                            setSelectedLocation(selectedLoc);
+                            await loadLocationSpecificData(selectedLoc.id);
+                            setCurrentView('pos'); // Switch to POS view after setup
+                        }
                     }
                 }
             }
         } catch (error) {
             console.error('Failed to initialize app:', error);
-            alert('Failed to initialize application. Please refresh the page.');
+            // Don't show alert for auth errors, just log them
+            if (!error.message.includes('Authentication required')) {
+                alert('Failed to initialize application. Please refresh the page.');
+            }
         } finally {
             setAppLoading(false);
         }
@@ -137,7 +192,7 @@ const POSApp = () => {
     // Data loading functions
     const loadLocations = async () => {
         try {
-            const data = await fetch('/api/locations').then(r => r.json());
+            const data = await window.API.call('/locations');
             setLocations(data);
             return data;
         } catch (error) {
@@ -149,7 +204,7 @@ const POSApp = () => {
     const loadUserSettings = async () => {
         try {
             const userId = getUserId();
-            const data = await fetch(`/api/settings/${userId}`).then(r => r.json());
+            const data = await window.API.call(`/settings/${userId}`);
             setUserSettings(data);
             return data;
         } catch (error) {
@@ -172,28 +227,38 @@ const POSApp = () => {
 
     const loadProducts = async (locationId) => {
         try {
-            const data = await fetch('/api/products').then(r => r.json());
+            const data = await window.API.call('/products');
             setProducts(data);
         } catch (error) {
             console.error('Failed to load products:', error);
+            setProducts([]); // Set empty array on error
         }
     };
 
     const loadTransactions = async (locationId) => {
         try {
-            const data = await fetch(`/api/transactions/location/${locationId}`).then(r => r.json());
+            const data = await window.API.call(`/transactions/location/${locationId}`);
             setTransactions(data);
         } catch (error) {
             console.error('Failed to load transactions:', error);
+            setTransactions([]); // Set empty array on error
         }
     };
 
     const loadAnalytics = async (locationId) => {
         try {
-            const data = await fetch(`/api/analytics/${locationId}`).then(r => r.json());
+            const data = await window.API.call(`/analytics/${locationId}`);
             setAnalytics(data);
         } catch (error) {
             console.error('Failed to load analytics:', error);
+            setAnalytics({
+                totalSales: 0,
+                todaySales: 0,
+                transactionCount: 0,
+                lowStockCount: 0,
+                totalCustomers: 0,
+                activeCustomers: 0
+            }); // Set default values on error
         }
     };
 
@@ -203,6 +268,7 @@ const POSApp = () => {
             setCustomers(data);
         } catch (error) {
             console.error('Failed to load customers:', error);
+            setCustomers([]); // Set empty array on error
         }
     };
 
@@ -239,6 +305,7 @@ const POSApp = () => {
             const filters = await window.API.products.getFilters();
             setProductFilters(filters);
         } catch (error) {
+            console.error('Failed to load product filters:', error);
             setProductFilters({
                 collections: [], brands: [], materials: [], productTypes: [], colors: []
             });
@@ -813,8 +880,16 @@ const POSApp = () => {
     };
 
     // Navigation Component
-    const NavButton = ({ view, icon: Icon, label, active }) => (
-        React.createElement('button', {
+    const NavButton = ({ view, icon: Icon, label, active, requiredPermission }) => {
+        // Check if user has permission for this view
+        if (requiredPermission && currentUser) {
+            const [module, action] = requiredPermission.split(':');
+            if (!currentUser.permissions[module] || !currentUser.permissions[module][action]) {
+                return null; // Don't render button if no permission
+            }
+        }
+
+        return React.createElement('button', {
             onClick: () => setCurrentView(view),
             className: `flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
                 active 
@@ -824,8 +899,8 @@ const POSApp = () => {
         }, [
             React.createElement(Icon, { key: 'icon', size: 20 }),
             React.createElement('span', { key: 'label', className: 'font-medium' }, label)
-        ])
-    );
+        ]);
+    };
 
     // Customer management functions - add these to your POSApp component
 
@@ -1014,6 +1089,31 @@ const POSApp = () => {
     // Get icons
     const { ShoppingCart, Award, Package, BarChart3, Settings } = window.Icons;
 
+    // Authentication loading screen
+    if (authLoading) {
+        return React.createElement('div', { 
+            className: 'min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center' 
+        }, [
+            React.createElement('div', { key: 'loading', className: 'text-center' }, [
+                React.createElement('div', { 
+                    key: 'spinner',
+                    className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4' 
+                }),
+                React.createElement('p', { 
+                    key: 'text',
+                    className: 'text-gray-600 dark:text-gray-300 text-lg' 
+                }, 'Checking Authentication...')
+            ])
+        ]);
+    }
+
+    // Show login screen if not authenticated
+    if (!isAuthenticated) {
+        return React.createElement(window.Auth.LoginView, {
+            onLoginSuccess: handleLoginSuccess
+        });
+    }
+
     // Loading screen for initial app load
     if (appLoading) {
         return React.createElement('div', { 
@@ -1076,8 +1176,8 @@ const POSApp = () => {
             key: 'header', 
             className: 'bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700' 
         }, [
-            React.createElement('div', { className: 'max-w-7xl mx-auto px-6 py-4' }, [
-                React.createElement('div', { className: 'flex items-center justify-between' }, [
+            React.createElement('div', { key: 'header-container', className: 'max-w-7xl mx-auto px-6 py-4' }, [
+                React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between' }, [
                     React.createElement('div', { key: 'logo-section', className: 'flex items-center gap-3' }, [
                         // Location logo
                         selectedLocation?.logo_base64 && React.createElement('img', {
@@ -1088,11 +1188,17 @@ const POSApp = () => {
                         }),
                         React.createElement('div', { key: 'titles' }, [
                             React.createElement('h1', { 
+                                key: 'main-title',
                                 className: 'text-2xl font-bold text-gray-900 dark:text-white' 
                             }, 'POS System'),
                             selectedLocation && React.createElement('p', { 
+                                key: 'location-info',
                                 className: 'text-sm text-gray-600 dark:text-gray-300' 
-                            }, `${selectedLocation.store_name} • ${selectedLocation.store_code}`)
+                            }, `${selectedLocation.store_name} • ${selectedLocation.store_code}`),
+                            currentUser && React.createElement('p', { 
+                                key: 'user-info',
+                                className: 'text-xs text-gray-500 dark:text-gray-400' 
+                            }, `Logged in as: ${currentUser.first_name} ${currentUser.last_name} (${currentUser.role})`)
                         ])
                     ]),
                     React.createElement('div', { key: 'nav', className: 'flex items-center gap-4' }, [
@@ -1101,36 +1207,42 @@ const POSApp = () => {
                             view: 'pos', 
                             icon: ShoppingCart, 
                             label: 'POS', 
-                            active: currentView === 'pos' 
+                            active: currentView === 'pos',
+                            requiredPermission: 'pos:read'
                         }),
                         React.createElement(NavButton, { 
                             key: 'loyalty-nav',
                             view: 'loyalty', 
                             icon: Award, 
                             label: 'Loyalty', 
-                            active: currentView === 'loyalty' 
+                            active: currentView === 'loyalty',
+                            requiredPermission: 'customers:read'
                         }),
                         React.createElement(NavButton, { 
                             key: 'inventory-nav',
                             view: 'inventory', 
                             icon: Package, 
                             label: 'Inventory', 
-                            active: currentView === 'inventory' 
+                            active: currentView === 'inventory',
+                            requiredPermission: 'inventory:read'
                         }),
                         React.createElement(NavButton, { 
                             key: 'sales-nav',
                             view: 'sales', 
                             icon: BarChart3, 
                             label: 'Sales', 
-                            active: currentView === 'sales' 
+                            active: currentView === 'sales',
+                            requiredPermission: 'reports:read'
                         }),
                         React.createElement(NavButton, { 
                             key: 'settings-nav',
                             view: 'settings', 
                             icon: Settings, 
                             label: 'Settings', 
-                            active: currentView === 'settings' 
-                        })
+                            active: currentView === 'settings',
+                            requiredPermission: 'settings:read'
+                        }),
+
                     ])
                 ])
             ]),
@@ -1236,8 +1348,12 @@ React.createElement(window.Modals.CustomerDeleteModal, {
                 onUpdateLocation: handleUpdateLocation,
                 onThemeToggle: handleThemeToggle,
                 onLogoUpload: handleLogoUpload,
-                loading
+                loading,
+                currentUser,
+                onLogout: handleLogout
             }),
+
+
 
             // Show message if no location selected for POS/Sales views
             (currentView === 'pos' || currentView === 'sales') && !selectedLocation && 
@@ -1331,8 +1447,10 @@ React.createElement(window.Modals.CustomerDeleteModal, {
 // Initialize the app when DOM is loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        ReactDOM.render(React.createElement(POSApp), document.getElementById('root'));
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(POSApp));
     });
 } else {
-    ReactDOM.render(React.createElement(POSApp), document.getElementById('root'));
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(POSApp));
 }

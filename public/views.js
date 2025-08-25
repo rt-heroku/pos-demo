@@ -232,7 +232,7 @@ window.Views = {
                 }`
             }, [
                 React.createElement('div', { key: 'image-container', className: 'relative mb-3' }, [
-                    React.createElement('div', { className: 'w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
+                    React.createElement('div', { key: 'image-wrapper', className: 'w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
                         productImage.type === 'url' ? (
                             React.createElement('img', {
                                 key: 'product-img',
@@ -294,8 +294,8 @@ window.Views = {
             React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700' }, [
                 React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
                     React.createElement('div', { key: 'title', className: 'mb-4' }, [
-                        React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 'Products'),
-                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm' }, `${products.length} products available`)
+                        React.createElement('h2', { key: 'products-title', className: 'text-xl font-bold dark:text-white' }, 'Products'),
+                        React.createElement('p', { key: 'products-count', className: 'text-gray-600 dark:text-gray-300 text-sm' }, `${products.length} products available`)
                     ]),
                     React.createElement('div', { key: 'controls', className: 'flex flex-col sm:flex-row gap-4' }, [
                         React.createElement('div', { key: 'search', className: 'relative flex-1' }, [
@@ -334,107 +334,122 @@ window.Views = {
             // Enhanced Cart Section with Discount System
             React.createElement('div', { key: 'cart', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
                 React.createElement('div', { key: 'cart-header', className: 'p-6 border-b dark:border-gray-700' }, [
-                    React.createElement('h2', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                    React.createElement('h2', { key: 'cart-title', className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
                         React.createElement(ShoppingCart, { key: 'cart-icon', size: 24 }),
                         `Cart (${cart.length})`
                     ])
                 ]),
                 React.createElement('div', { key: 'cart-content', className: 'flex-1 p-6' }, [
                     // Enhanced customer info section
-                    selectedCustomer ? (
-                        React.createElement('div', { key: 'customer-info', className: 'mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg' }, [
-                            React.createElement('div', { className: 'flex justify-between items-start' }, [
-                                React.createElement('div', { key: 'customer-details' }, [
-                                    React.createElement('div', { className: 'font-semibold text-green-800 dark:text-green-200 text-lg' }, selectedCustomer.name),
-                                    React.createElement('div', { className: 'text-sm text-green-700 dark:text-green-300 font-mono' }, selectedCustomer.loyalty_number),
-                                    React.createElement('div', { className: 'text-sm text-green-600 dark:text-green-400 flex items-center gap-1' }, [
-                                        React.createElement('span', { key: 'points-icon' }, '⭐'),
-                                        React.createElement('span', { key: 'points-text' }, `${selectedCustomer.points} points available`)
+                    React.createElement(React.Fragment, { key: 'customer-section' }, [
+                        selectedCustomer ? (
+                            React.createElement('div', { key: 'customer-info', className: 'mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg' }, [
+                                React.createElement('div', { key: 'customer-header', className: 'flex justify-between items-start' }, [
+                                    React.createElement('div', { key: 'customer-details' }, [
+                                        React.createElement('div', { key: 'customer-name', className: 'font-semibold text-green-800 dark:text-green-200 text-lg' }, selectedCustomer.name),
+                                        React.createElement('div', { key: 'customer-loyalty', className: 'text-sm text-green-700 dark:text-green-300 font-mono' }, selectedCustomer.loyalty_number),
+                                        React.createElement('div', { key: 'customer-points', className: 'text-sm text-green-600 dark:text-green-400 flex items-center gap-1' }, [
+                                            React.createElement('span', { key: 'points-icon' }, '⭐'),
+                                            React.createElement('span', { key: 'points-text' }, `${selectedCustomer.points} points available`)
+                                        ])
+                                    ]),
+                                    React.createElement('div', { key: 'customer-actions', className: 'flex gap-2' }, [
+                                        React.createElement('button', {
+                                            key: 'history-btn',
+                                            onClick: () => onLoadCustomerHistory(selectedCustomer.id),
+                                            className: 'text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors'
+                                        }, 'History'),
+                                        React.createElement('button', {
+                                            key: 'remove-btn',
+                                            onClick: onRemoveCustomer,
+                                            className: 'text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-3 py-1 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors'
+                                        }, 'Remove')
                                     ])
-                                ]),
-                                React.createElement('div', { key: 'customer-actions', className: 'flex gap-2' }, [
-                                    React.createElement('button', {
-                                        onClick: () => onLoadCustomerHistory(selectedCustomer.id),
-                                        className: 'text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors'
-                                    }, 'History'),
-                                    React.createElement('button', {
-                                        onClick: onRemoveCustomer,
-                                        className: 'text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-3 py-1 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors'
-                                    }, 'Remove')
                                 ])
                             ])
-                        ])
-                    ) : (
-                        React.createElement('button', {
-                            key: 'add-customer-btn',
-                            onClick: onShowLoyaltyModal,
-                            className: 'mb-4 w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center gap-2'
-                        }, [
-                            React.createElement(Users, { key: 'users-icon', size: 20 }),
-                            'Add Loyalty Customer'
-                        ])
-                    ),
+                        ) : (
+                            React.createElement('button', {
+                                key: 'add-customer-btn',
+                                onClick: onShowLoyaltyModal,
+                                className: 'mb-4 w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center gap-2'
+                            }, [
+                                React.createElement(Users, { key: 'users-icon', size: 20 }),
+                                'Add Loyalty Customer'
+                            ])
+                        )
+                    ]),
 
                     // Enhanced cart items display
-                    cart.length === 0 ? (
-                        React.createElement('div', { className: 'text-center text-gray-400 py-12' }, [
-                            React.createElement(ShoppingCart, { key: 'empty-icon', size: 64, className: 'mx-auto mb-4 opacity-30' }),
-                            React.createElement('p', { key: 'empty-text', className: 'text-lg' }, 'Cart is empty'),
-                            React.createElement('p', { key: 'empty-subtext', className: 'text-sm mt-2' }, 'Add products to get started')
-                        ])
-                    ) : (
-                        React.createElement('div', { className: 'space-y-3 mb-6' }, cart.map(item => {
-                            const itemImage = getProductImage(item);
-                            return React.createElement('div', { 
-                                key: item.id,
-                                className: 'flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600' 
-                            }, [
-                                React.createElement('div', { key: 'item-image', className: 'w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0' }, [
-                                    itemImage.type === 'url' ? (
-                                        React.createElement('img', {
-                                            key: 'img',
-                                            src: itemImage.src,
-                                            alt: itemImage.alt,
-                                            className: 'w-full h-full object-cover',
-                                            onError: (e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.nextSibling.style.display = 'flex';
-                                            }
-                                        })
-                                    ) : null,
-                                    React.createElement('div', { 
-                                        key: 'fallback',
-                                        className: 'w-full h-full flex items-center justify-center text-lg',
-                                        style: { display: itemImage.type === 'url' ? 'none' : 'flex' }
-                                    }, itemImage.src)
-                                ]),
-                                
-                                React.createElement('div', { key: 'item-info', className: 'flex-1 min-w-0' }, [
-                                    React.createElement('div', { className: 'font-medium truncate dark:text-white' }, item.name),
-                                    React.createElement('div', { className: 'text-sm text-gray-600 dark:text-gray-400' }, `$${parseFloat(item.price).toFixed(2)} each`),
-                                    (item.brand || item.material) && React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400' }, 
-                                        [item.brand, item.material].filter(Boolean).join(' • ')
-                                    )
-                                ]),
-                                
-                                React.createElement('div', { key: 'item-controls', className: 'flex items-center gap-2' }, [
-                                    React.createElement('button', {
-                                        onClick: () => onUpdateQuantity(item.id, item.quantity - 1),
-                                        className: 'w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors'
-                                    }, React.createElement(Minus, { size: 16 })),
-                                    React.createElement('span', { className: 'w-8 text-center font-medium dark:text-white' }, item.quantity),
-                                    React.createElement('button', {
-                                        onClick: () => onUpdateQuantity(item.id, item.quantity + 1),
-                                        className: 'w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors'
-                                    }, React.createElement(Plus, { size: 16 })),
-                                    React.createElement('button', {
-                                        onClick: () => onRemoveFromCart(item.id),
-                                        className: 'w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-800 ml-2 transition-colors'
-                                    }, React.createElement(X, { size: 16 }))
-                                ])
-                            ]);
-                        }))
-                    ),
+                    React.createElement(React.Fragment, { key: 'cart-items-section' }, [
+                        cart.length === 0 ? (
+                            React.createElement('div', { className: 'text-center text-gray-400 py-12' }, [
+                                React.createElement(ShoppingCart, { key: 'empty-icon', size: 64, className: 'mx-auto mb-4 opacity-30' }),
+                                React.createElement('p', { key: 'empty-text', className: 'text-lg' }, 'Cart is empty'),
+                                React.createElement('p', { key: 'empty-subtext', className: 'text-sm mt-2' }, 'Add products to get started')
+                            ])
+                        ) : (
+                            React.createElement('div', { className: 'space-y-3 mb-6' }, cart.map(item => {
+                                const itemImage = getProductImage(item);
+                                return React.createElement('div', { 
+                                    key: item.id,
+                                    className: 'flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600' 
+                                }, [
+                                    React.createElement('div', { key: 'item-image', className: 'w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0' }, [
+                                        itemImage.type === 'url' ? (
+                                            React.createElement('img', {
+                                                key: 'img',
+                                                src: itemImage.src,
+                                                alt: itemImage.alt,
+                                                className: 'w-full h-full object-cover',
+                                                onError: (e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }
+                                            })
+                                        ) : null,
+                                        React.createElement('div', { 
+                                            key: 'fallback',
+                                            className: 'w-full h-full flex items-center justify-center text-lg',
+                                            style: { display: itemImage.type === 'url' ? 'none' : 'flex' }
+                                        }, itemImage.src)
+                                    ]),
+                                    
+                                    React.createElement('div', { key: 'item-info', className: 'flex-1 min-w-0' }, [
+                                        React.createElement('div', { key: 'item-name', className: 'font-medium truncate dark:text-white' }, item.name),
+                                        React.createElement('div', { key: 'item-price', className: 'text-sm text-gray-600 dark:text-gray-400' }, `$${parseFloat(item.price).toFixed(2)} each`),
+                                        (item.brand || item.material) && React.createElement('div', { key: 'item-details', className: 'text-xs text-gray-500 dark:text-gray-400' }, 
+                                            [item.brand, item.material].filter(Boolean).join(' • ')
+                                        )
+                                    ])
+                                    ,
+                                    React.createElement('div', { key: 'item-controls', className: 'flex items-center gap-2' }, [
+                                        React.createElement('button', {
+                                                key: 'decrease-btn',
+                                                onClick: () => onUpdateQuantity(item.id, item.quantity - 1),
+                                                className: 'w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors'
+                                            }, 
+                                            React.createElement(Minus, { size: 16 })
+                                        ),
+                                        React.createElement('span', { key: 'quantity', className: 'w-8 text-center font-medium dark:text-white' }, item.quantity),
+                                        React.createElement('button', {
+                                                key: 'increase-btn',
+                                                onClick: () => onUpdateQuantity(item.id, item.quantity + 1),
+                                                className: 'w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors'
+                                            }, 
+                                            React.createElement(Plus, { size: 16 })
+                                        ),
+                                        React.createElement('button', {
+                                                key: 'remove-btn',
+                                                onClick: () => onRemoveFromCart(item.id),
+                                                className: 'w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-800 ml-2 transition-colors'
+                                            }, 
+                                            React.createElement(X, { size: 16 })
+                                        )
+                                    ])
+                                ]);
+                            })
+                        ))
+                    ]),
 
                     cart.length > 0 && [
                         // Discount Section
@@ -749,139 +764,139 @@ window.Views = {
         ])
     );
 
-const CustomerCard = ({ customer }) => {
-    // Status styling
-    const getStatusStyle = (status) => {
-        switch (status) {
-            case 'Active':
-                return 'bg-green-100 text-green-800 border-green-200';
-            case 'Inactive':
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-            case 'Under Fraud Investigation':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'Merged':
-                return 'bg-purple-100 text-purple-800 border-purple-200';
-            case 'Fraudulent Member':
-                return 'bg-red-100 text-red-800 border-red-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
+    const CustomerCard = ({ customer }) => {
+        // Status styling
+        const getStatusStyle = (status) => {
+            switch (status) {
+                case 'Active':
+                    return 'bg-green-100 text-green-800 border-green-200';
+                case 'Inactive':
+                    return 'bg-gray-100 text-gray-800 border-gray-200';
+                case 'Under Fraud Investigation':
+                    return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                case 'Merged':
+                    return 'bg-purple-100 text-purple-800 border-purple-200';
+                case 'Fraudulent Member':
+                    return 'bg-red-100 text-red-800 border-red-200';
+                default:
+                    return 'bg-gray-100 text-gray-800 border-gray-200';
+            }
+        };
 
-    // Tier styling
-    const getTierStyle = (tier) => {
-        switch (tier) {
-            case 'Bronze':
-                return { bg: 'bg-amber-100', text: 'text-amber-800', icon: '🥉' };
-            case 'Silver':
-                return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '🥈' };
-            case 'Gold':
-                return { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '🥇' };
-            case 'Platinum':
-                return { bg: 'bg-purple-100', text: 'text-purple-800', icon: '💎' };
-            default:
-                return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '🥉' };
-        }
-    };
+        // Tier styling
+        const getTierStyle = (tier) => {
+            switch (tier) {
+                case 'Bronze':
+                    return { bg: 'bg-amber-100', text: 'text-amber-800', icon: '🥉' };
+                case 'Silver':
+                    return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '🥈' };
+                case 'Gold':
+                    return { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '🥇' };
+                case 'Platinum':
+                    return { bg: 'bg-purple-100', text: 'text-purple-800', icon: '💎' };
+                default:
+                    return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '🥉' };
+            }
+        };
 
-    const tierStyle = getTierStyle(customer.customer_tier);
-    const memberSince = customer.enrollment_date ? new Date(customer.enrollment_date) : new Date(customer.created_at);
-    const daysSinceMember = Math.floor((new Date() - memberSince) / (1000 * 60 * 60 * 24));
-    
-    return React.createElement('div', { 
-        className: `bg-white border rounded-lg p-4 hover:shadow-md transition-shadow ${
-            customer.member_status !== 'Active' ? 'opacity-75' : ''
-        }` 
-    }, [
-        React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
-            React.createElement('div', { key: 'info' }, [
-                React.createElement('div', { className: 'flex items-center gap-2 mb-1' }, [
-                    React.createElement('h3', { className: 'font-semibold text-lg' }, customer.name),
-                    React.createElement('span', { 
-                        className: `px-2 py-1 text-xs rounded-full ${
-                            customer.member_type === 'Corporate' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                        }`
-                    }, customer.member_type === 'Corporate' ? '🏢 Corp' : '👤 Ind')
-                ]),
-                React.createElement('p', { className: 'text-sm text-blue-600 font-mono mb-1' }, customer.loyalty_number),
-                customer.email && React.createElement('p', { className: 'text-sm text-gray-600' }, customer.email),
-                customer.phone && React.createElement('p', { className: 'text-sm text-gray-600' }, customer.phone),
-                
-                // Status and Tier badges
-                React.createElement('div', { className: 'flex flex-wrap gap-2 mt-2' }, [
-                    React.createElement('span', { 
-                        key: 'status',
-                        className: `px-2 py-1 text-xs rounded-full border ${getStatusStyle(customer.member_status)}`
-                    }, customer.member_status),
-                    React.createElement('span', { 
-                        key: 'tier',
-                        className: `px-2 py-1 text-xs rounded-full ${tierStyle.bg} ${tierStyle.text}`
-                    }, [
-                        React.createElement('span', { key: 'icon' }, tierStyle.icon + ' '),
-                        React.createElement('span', { key: 'text' }, customer.customer_tier)
+        const tierStyle = getTierStyle(customer.customer_tier);
+        const memberSince = customer.enrollment_date ? new Date(customer.enrollment_date) : new Date(customer.created_at);
+        const daysSinceMember = Math.floor((new Date() - memberSince) / (1000 * 60 * 60 * 24));
+        
+        return React.createElement('div', { 
+            className: `bg-white border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                customer.member_status !== 'Active' ? 'opacity-75' : ''
+            }` 
+        }, [
+            React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
+                React.createElement('div', { key: 'info' }, [
+                    React.createElement('div', { className: 'flex items-center gap-2 mb-1' }, [
+                        React.createElement('h3', { className: 'font-semibold text-lg' }, customer.name),
+                        React.createElement('span', { 
+                            className: `px-2 py-1 text-xs rounded-full ${
+                                customer.member_type === 'Corporate' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                            }`
+                        }, customer.member_type === 'Corporate' ? '🏢 Corp' : '👤 Ind')
+                    ]),
+                    React.createElement('p', { className: 'text-sm text-blue-600 font-mono mb-1' }, customer.loyalty_number),
+                    customer.email && React.createElement('p', { className: 'text-sm text-gray-600' }, customer.email),
+                    customer.phone && React.createElement('p', { className: 'text-sm text-gray-600' }, customer.phone),
+                    
+                    // Status and Tier badges
+                    React.createElement('div', { className: 'flex flex-wrap gap-2 mt-2' }, [
+                        React.createElement('span', { 
+                            key: 'status',
+                            className: `px-2 py-1 text-xs rounded-full border ${getStatusStyle(customer.member_status)}`
+                        }, customer.member_status),
+                        React.createElement('span', { 
+                            key: 'tier',
+                            className: `px-2 py-1 text-xs rounded-full ${tierStyle.bg} ${tierStyle.text}`
+                        }, [
+                            React.createElement('span', { key: 'icon' }, tierStyle.icon + ' '),
+                            React.createElement('span', { key: 'text' }, customer.customer_tier)
+                        ])
                     ])
-                ])
-            ]),
-            React.createElement('div', { key: 'actions', className: 'flex gap-1' }, [
-                React.createElement('button', {
-                    onClick: () => onLoadCustomerHistory(customer.id),
-                    className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
-                    title: 'View History'
-                }, React.createElement(Eye, { size: 16 })),
-                React.createElement('button', {
-                    onClick: () => onEditCustomer(customer),
-                    className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
-                    title: 'Edit Customer'
-                }, React.createElement(Edit, { size: 16 })),
-                React.createElement('button', {
-                    onClick: () => onDeleteCustomer(customer.id),
-                    className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
-                    title: 'Delete Customer',
-                    disabled: customer.member_status === 'Under Fraud Investigation'
-                }, React.createElement(Trash2, { size: 16 }))
-            ])
-        ]),
-        
-        React.createElement('div', { key: 'stats', className: 'grid grid-cols-3 gap-4 pt-3 border-t' }, [
-            React.createElement('div', { key: 'points', className: 'text-center' }, [
-                React.createElement('div', { className: 'font-bold text-xl text-green-600' }, customer.points || 0),
-                React.createElement('div', { className: 'text-xs text-gray-500 uppercase tracking-wide' }, 'Points')
-            ]),
-            React.createElement('div', { key: 'spent', className: 'text-center' }, [
-                React.createElement('div', { className: 'font-bold text-xl text-blue-600' }, 
-                    `$${parseFloat(customer.total_spent || 0).toFixed(0)}`
-                ),
-                React.createElement('div', { className: 'text-xs text-gray-500 uppercase tracking-wide' }, 'Total Spent')
-            ]),
-            React.createElement('div', { key: 'visits', className: 'text-center' }, [
-                React.createElement('div', { className: 'font-bold text-xl text-purple-600' }, customer.visit_count || 0),
-                React.createElement('div', { className: 'text-xs text-gray-500 uppercase tracking-wide' }, 'Visits')
-            ])
-        ]),
-        
-        // Enhanced info section
-        React.createElement('div', { key: 'enhanced-info', className: 'mt-3 pt-3 border-t space-y-1' }, [
-            React.createElement('div', { className: 'flex justify-between text-xs text-gray-500' }, [
-                React.createElement('span', { key: 'member-since' }, [
-                    React.createElement('span', { key: 'label' }, 'Member: '),
-                    React.createElement('span', { key: 'duration' }, 
-                        daysSinceMember < 30 ? `${daysSinceMember} days` :
-                        daysSinceMember < 365 ? `${Math.floor(daysSinceMember / 30)} months` :
-                        `${Math.floor(daysSinceMember / 365)} years`
-                    )
                 ]),
-                customer.tier_calculation_number && React.createElement('span', { key: 'tier-score' }, [
-                    React.createElement('span', { key: 'label' }, 'Score: '),
-                    React.createElement('span', { key: 'score' }, parseFloat(customer.tier_calculation_number).toFixed(0))
+                React.createElement('div', { key: 'actions', className: 'flex gap-1' }, [
+                    React.createElement('button', {
+                        onClick: () => onLoadCustomerHistory(customer.id),
+                        className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
+                        title: 'View History'
+                    }, React.createElement(Eye, { size: 16 })),
+                    React.createElement('button', {
+                        onClick: () => onEditCustomer(customer),
+                        className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
+                        title: 'Edit Customer'
+                    }, React.createElement(Edit, { size: 16 })),
+                    React.createElement('button', {
+                        onClick: () => onDeleteCustomer(customer.id),
+                        className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
+                        title: 'Delete Customer',
+                        disabled: customer.member_status === 'Under Fraud Investigation'
+                    }, React.createElement(Trash2, { size: 16 }))
                 ])
             ]),
-            customer.last_visit && React.createElement('div', { className: 'text-xs text-gray-500' }, [
-                React.createElement('span', { key: 'label' }, 'Last Visit: '),
-                React.createElement('span', { key: 'date' }, new Date(customer.last_visit).toLocaleDateString())
+            
+            React.createElement('div', { key: 'stats', className: 'grid grid-cols-3 gap-4 pt-3 border-t' }, [
+                React.createElement('div', { key: 'points', className: 'text-center' }, [
+                    React.createElement('div', { className: 'font-bold text-xl text-green-600' }, customer.points || 0),
+                    React.createElement('div', { className: 'text-xs text-gray-500 uppercase tracking-wide' }, 'Points')
+                ]),
+                React.createElement('div', { key: 'spent', className: 'text-center' }, [
+                    React.createElement('div', { className: 'font-bold text-xl text-blue-600' }, 
+                        `$${parseFloat(customer.total_spent || 0).toFixed(0)}`
+                    ),
+                    React.createElement('div', { className: 'text-xs text-gray-500 uppercase tracking-wide' }, 'Total Spent')
+                ]),
+                React.createElement('div', { key: 'visits', className: 'text-center' }, [
+                    React.createElement('div', { className: 'font-bold text-xl text-purple-600' }, customer.visit_count || 0),
+                    React.createElement('div', { className: 'text-xs text-gray-500 uppercase tracking-wide' }, 'Visits')
+                ])
+            ]),
+            
+            // Enhanced info section
+            React.createElement('div', { key: 'enhanced-info', className: 'mt-3 pt-3 border-t space-y-1' }, [
+                React.createElement('div', { className: 'flex justify-between text-xs text-gray-500' }, [
+                    React.createElement('span', { key: 'member-since' }, [
+                        React.createElement('span', { key: 'label' }, 'Member: '),
+                        React.createElement('span', { key: 'duration' }, 
+                            daysSinceMember < 30 ? `${daysSinceMember} days` :
+                            daysSinceMember < 365 ? `${Math.floor(daysSinceMember / 30)} months` :
+                            `${Math.floor(daysSinceMember / 365)} years`
+                        )
+                    ]),
+                    customer.tier_calculation_number && React.createElement('span', { key: 'tier-score' }, [
+                        React.createElement('span', { key: 'label' }, 'Score: '),
+                        React.createElement('span', { key: 'score' }, parseFloat(customer.tier_calculation_number).toFixed(0))
+                    ])
+                ]),
+                customer.last_visit && React.createElement('div', { className: 'text-xs text-gray-500' }, [
+                    React.createElement('span', { key: 'label' }, 'Last Visit: '),
+                    React.createElement('span', { key: 'date' }, new Date(customer.last_visit).toLocaleDateString())
+                ])
             ])
-        ])
-    ]);
-};
+        ]);
+    };
 
     return React.createElement('div', { className: 'space-y-6' }, [
         // Header with tabs
@@ -1358,66 +1373,187 @@ const CustomerCard = ({ customer }) => {
 
         const sortedProducts = sortProducts(products);
 
-const ProductCard = ({ product }) => {
-    const stockInfo = getStockStatus(product.stock);
-    const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
-    
-    // Priority order for images: 1) Primary image from images array, 2) main_image_url, 3) emoji fallback
-    const getProductImage = () => {
-        if (primaryImage?.url) {
-            return { type: 'url', src: primaryImage.url, alt: primaryImage.alt || product.name };
-        }
-        if (product.main_image_url) {
-            return { type: 'url', src: product.main_image_url, alt: product.name };
-        }
-        return { type: 'emoji', src: product.image || '📦', alt: product.name };
-    };
+    const ProductCard = ({ product }) => {
+        const stockInfo = getStockStatus(product.stock);
+        const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
+        
+        // Priority order for images: 1) Primary image from images array, 2) main_image_url, 3) emoji fallback
+        const getProductImage = () => {
+            if (primaryImage?.url) {
+                return { type: 'url', src: primaryImage.url, alt: primaryImage.alt || product.name };
+            }
+            if (product.main_image_url) {
+                return { type: 'url', src: product.main_image_url, alt: product.name };
+            }
+            return { type: 'emoji', src: product.image || '📦', alt: product.name };
+        };
 
-    const productImage = getProductImage();
-    
-    return React.createElement('div', { 
-        className: `bg-white rounded-lg border hover:shadow-lg transition-all duration-200 overflow-hidden ${
-            selectedProducts.includes(product.id) ? 'ring-2 ring-blue-500' : ''
-        }` 
-    }, [
-        // Product Image
-        React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-100 items-center justify-center' }, [
-            // Show actual image if available centered
-            productImage.type === 'url' ? (
-                React.createElement('img', {
-                    key: 'product-img',
-                    src: productImage.src,
-                    alt: productImage.alt,
-                    className: 'h-full items-center justify-center object-cover',
-                    onError: (e) => {
-                        // If image fails to load, show emoji fallback
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                    }
-                })
-            ) : null,
+        const productImage = getProductImage();
+        
+        return React.createElement('div', { 
+            className: `bg-white rounded-lg border hover:shadow-lg transition-all duration-200 overflow-hidden ${
+                selectedProducts.includes(product.id) ? 'ring-2 ring-blue-500' : ''
+            }` 
+        }, [
+            // Product Image
+            React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-100 items-center justify-center' }, [
+                // Show actual image if available centered
+                productImage.type === 'url' ? (
+                    React.createElement('img', {
+                        key: 'product-img',
+                        src: productImage.src,
+                        alt: productImage.alt,
+                        className: 'h-full items-center justify-center object-cover',
+                        onError: (e) => {
+                            // If image fails to load, show emoji fallback
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                        }
+                    })
+                ) : null,
+                
+                // Emoji fallback (only shown if no URL image or if URL image fails)
+                React.createElement('div', { 
+                    key: 'fallback',
+                    className: 'w-full h-full flex items-center justify-center text-6xl',
+                    style: { display: productImage.type === 'url' ? 'none' : 'flex' }
+                }, productImage.src),
+                
+                // Stock badge
+                React.createElement('div', { 
+                    key: 'stock-badge',
+                    className: `absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` 
+                }, stockInfo.text),
+                
+                // Featured badge
+                product.featured && React.createElement('div', { 
+                    key: 'featured-badge',
+                    className: 'absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
+                }, '⭐ Featured'),
+                
+                // Selection checkbox
+                React.createElement('div', { key: 'checkbox', className: 'absolute bottom-2 left-2' }, [
+                    React.createElement('input', {
+                        type: 'checkbox',
+                        checked: selectedProducts.includes(product.id),
+                        onChange: (e) => onProductSelect(product.id, e.target.checked),
+                        className: 'w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500'
+                    })
+                ]),
+
+                // Active/Inactive indicator
+                !product.is_active && React.createElement('div', { 
+                    key: 'inactive-overlay',
+                    className: 'absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center' 
+                }, [
+                    React.createElement('span', { 
+                        className: 'text-white font-medium px-3 py-1 bg-gray-800 rounded' 
+                    }, 'Inactive')
+                ])
+            ]),
             
-            // Emoji fallback (only shown if no URL image or if URL image fails)
-            React.createElement('div', { 
-                key: 'fallback',
-                className: 'w-full h-full flex items-center justify-center text-6xl',
-                style: { display: productImage.type === 'url' ? 'none' : 'flex' }
-            }, productImage.src),
-            
-            // Stock badge
-            React.createElement('div', { 
-                key: 'stock-badge',
-                className: `absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` 
-            }, stockInfo.text),
-            
-            // Featured badge
-            product.featured && React.createElement('div', { 
-                key: 'featured-badge',
-                className: 'absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
-            }, '⭐ Featured'),
-            
-            // Selection checkbox
-            React.createElement('div', { key: 'checkbox', className: 'absolute bottom-2 left-2' }, [
+            // Product Info (rest remains the same)
+            React.createElement('div', { key: 'info', className: 'p-4' }, [
+                React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-2' }, [
+                    React.createElement('div', { key: 'title-section', className: 'flex-1 pr-2' }, [
+                        React.createElement('h3', { className: 'font-semibold text-lg line-clamp-2 mb-1' }, product.name),
+                        React.createElement('p', { className: 'text-sm text-gray-600 font-mono' }, product.sku),
+                        product.brand && React.createElement('p', { className: 'text-sm text-blue-600 font-medium' }, 
+                            `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
+                        )
+                    ]),
+                    React.createElement('div', { key: 'quick-actions', className: 'flex flex-col gap-1' }, [
+                        React.createElement('button', {
+                            onClick: () => onEditProduct(product),
+                            className: 'p-1 text-gray-400 hover:text-blue-600 transition-colors rounded',
+                            title: 'Edit Product'
+                        }, React.createElement(Edit, { size: 16 })),
+                        React.createElement('button', {
+                            onClick: () => onDuplicateProduct(product.id),
+                            className: 'p-1 text-gray-400 hover:text-green-600 transition-colors rounded',
+                            title: 'Duplicate Product'
+                        }, React.createElement(Copy, { size: 16 })),
+                        React.createElement('button', {
+                            onClick: () => onDeleteProduct(product.id),
+                            className: 'p-1 text-gray-400 hover:text-red-600 transition-colors rounded',
+                            title: 'Delete Product'
+                        }, React.createElement(Trash2, { size: 16 }))
+                    ])
+                ]),
+                
+                React.createElement('div', { key: 'details', className: 'space-y-3' }, [
+                    React.createElement('div', { className: 'flex justify-between items-center' }, [
+                        React.createElement('span', { className: 'text-2xl font-bold text-green-600' }, 
+                            `$${parseFloat(product.price).toFixed(2)}`
+                        ),
+                        React.createElement('div', { className: 'text-right' }, [
+                            React.createElement('div', { className: 'text-sm font-medium' }, 
+                                `Stock: ${product.stock}`
+                            ),
+                            React.createElement('div', { className: 'text-xs text-gray-500' }, 
+                                product.category
+                            )
+                        ])
+                    ]),
+                    
+                    product.description && React.createElement('p', { 
+                        className: 'text-sm text-gray-600 line-clamp-2' 
+                    }, product.description),
+                    
+                    // Product attributes
+                    React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
+                        product.material && React.createElement('span', { 
+                            key: 'material',
+                            className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
+                        }, product.material),
+                        product.color && React.createElement('span', { 
+                            key: 'color',
+                            className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
+                        }, product.color),
+                        product.laptop_size && React.createElement('span', { 
+                            key: 'laptop',
+                            className: 'px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded' 
+                        }, `💻 ${product.laptop_size}`),
+                        product.gender && product.gender !== 'Unisex' && React.createElement('span', { 
+                            key: 'gender',
+                            className: 'px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded' 
+                        }, product.gender)
+                    ]),
+                    
+                    // Features preview
+                    product.features && product.features.length > 0 && React.createElement('div', { 
+                        className: 'text-xs text-gray-500 flex items-center gap-1' 
+                    }, [
+                        React.createElement('span', { key: 'features-icon' }, '✨'),
+                        React.createElement('span', { key: 'features-count' }, `${product.features.length} features`)
+                    ])
+                ])
+            ])
+        ]);
+    };
+    const ProductRow = ({ product }) => {
+        const stockInfo = getStockStatus(product.stock);
+        const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
+        
+        // Priority order for images: 1) Primary image from images array, 2) main_image_url, 3) emoji fallback
+        const getProductImage = () => {
+            if (primaryImage?.url) {
+                return { type: 'url', src: primaryImage.url, alt: primaryImage.alt || product.name };
+            }
+            if (product.main_image_url) {
+                return { type: 'url', src: product.main_image_url, alt: product.name };
+            }
+            return { type: 'emoji', src: product.image || '📦', alt: product.name };
+        };
+
+        const productImage = getProductImage();
+        
+        return React.createElement('tr', { 
+            className: `hover:bg-gray-50 border-b transition-colors ${
+                selectedProducts.includes(product.id) ? 'bg-blue-50' : ''
+            } ${!product.is_active ? 'opacity-60' : ''}` 
+        }, [
+            React.createElement('td', { key: 'select', className: 'p-4' }, [
                 React.createElement('input', {
                     type: 'checkbox',
                     checked: selectedProducts.includes(product.id),
@@ -1425,67 +1561,48 @@ const ProductCard = ({ product }) => {
                     className: 'w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500'
                 })
             ]),
-
-            // Active/Inactive indicator
-            !product.is_active && React.createElement('div', { 
-                key: 'inactive-overlay',
-                className: 'absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center' 
-            }, [
-                React.createElement('span', { 
-                    className: 'text-white font-medium px-3 py-1 bg-gray-800 rounded' 
-                }, 'Inactive')
-            ])
-        ]),
-        
-        // Product Info (rest remains the same)
-        React.createElement('div', { key: 'info', className: 'p-4' }, [
-            React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-2' }, [
-                React.createElement('div', { key: 'title-section', className: 'flex-1 pr-2' }, [
-                    React.createElement('h3', { className: 'font-semibold text-lg line-clamp-2 mb-1' }, product.name),
-                    React.createElement('p', { className: 'text-sm text-gray-600 font-mono' }, product.sku),
-                    product.brand && React.createElement('p', { className: 'text-sm text-blue-600 font-medium' }, 
-                        `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
-                    )
-                ]),
-                React.createElement('div', { key: 'quick-actions', className: 'flex flex-col gap-1' }, [
-                    React.createElement('button', {
-                        onClick: () => onEditProduct(product),
-                        className: 'p-1 text-gray-400 hover:text-blue-600 transition-colors rounded',
-                        title: 'Edit Product'
-                    }, React.createElement(Edit, { size: 16 })),
-                    React.createElement('button', {
-                        onClick: () => onDuplicateProduct(product.id),
-                        className: 'p-1 text-gray-400 hover:text-green-600 transition-colors rounded',
-                        title: 'Duplicate Product'
-                    }, React.createElement(Copy, { size: 16 })),
-                    React.createElement('button', {
-                        onClick: () => onDeleteProduct(product.id),
-                        className: 'p-1 text-gray-400 hover:text-red-600 transition-colors rounded',
-                        title: 'Delete Product'
-                    }, React.createElement(Trash2, { size: 16 }))
-                ])
-            ]),
-            
-            React.createElement('div', { key: 'details', className: 'space-y-3' }, [
-                React.createElement('div', { className: 'flex justify-between items-center' }, [
-                    React.createElement('span', { className: 'text-2xl font-bold text-green-600' }, 
-                        `$${parseFloat(product.price).toFixed(2)}`
-                    ),
-                    React.createElement('div', { className: 'text-right' }, [
-                        React.createElement('div', { className: 'text-sm font-medium' }, 
-                            `Stock: ${product.stock}`
-                        ),
-                        React.createElement('div', { className: 'text-xs text-gray-500' }, 
-                            product.category
+            React.createElement('td', { key: 'product', className: 'p-4' }, [
+                React.createElement('div', { className: 'flex items-center gap-3' }, [
+                    React.createElement('div', { className: 'w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0' }, [
+                        // Show actual image if available
+                        productImage.type === 'url' ? (
+                            React.createElement('img', {
+                                key: 'product-img',
+                                src: productImage.src,
+                                alt: productImage.alt,
+                                className: 'w-full h-full object-cover',
+                                onError: (e) => {
+                                    // If image fails to load, show emoji fallback
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'block';
+                                }
+                            })
+                        ) : null,
+                        
+                        // Emoji fallback
+                        React.createElement('span', { 
+                            key: 'fallback',
+                            className: 'text-xl',
+                            style: { display: productImage.type === 'url' ? 'none' : 'block' }
+                        }, productImage.src)
+                    ]),
+                    React.createElement('div', { className: 'min-w-0 flex-1' }, [
+                        React.createElement('div', { className: 'font-medium truncate' }, product.name),
+                        React.createElement('div', { className: 'text-sm text-gray-600 font-mono' }, product.sku),
+                        product.brand && React.createElement('div', { className: 'text-sm text-blue-600' }, 
+                            `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
                         )
                     ])
-                ]),
-                
-                product.description && React.createElement('p', { 
-                    className: 'text-sm text-gray-600 line-clamp-2' 
-                }, product.description),
-                
-                // Product attributes
+                ])
+            ]),
+            React.createElement('td', { key: 'category', className: 'p-4' }, [
+                React.createElement('div', { className: 'text-sm' }, product.category),
+                product.product_type && React.createElement('div', { className: 'text-xs text-gray-500' }, product.product_type)
+            ]),
+            React.createElement('td', { key: 'price', className: 'p-4 font-medium text-green-600' }, 
+                `$${parseFloat(product.price).toFixed(2)}`
+            ),
+            React.createElement('td', { key: 'attributes', className: 'p-4' }, [
                 React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
                     product.material && React.createElement('span', { 
                         key: 'material',
@@ -1494,155 +1611,53 @@ const ProductCard = ({ product }) => {
                     product.color && React.createElement('span', { 
                         key: 'color',
                         className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
-                    }, product.color),
-                    product.laptop_size && React.createElement('span', { 
-                        key: 'laptop',
-                        className: 'px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded' 
-                    }, `💻 ${product.laptop_size}`),
-                    product.gender && product.gender !== 'Unisex' && React.createElement('span', { 
-                        key: 'gender',
-                        className: 'px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded' 
-                    }, product.gender)
-                ]),
-                
-                // Features preview
-                product.features && product.features.length > 0 && React.createElement('div', { 
-                    className: 'text-xs text-gray-500 flex items-center gap-1' 
-                }, [
-                    React.createElement('span', { key: 'features-icon' }, '✨'),
-                    React.createElement('span', { key: 'features-count' }, `${product.features.length} features`)
+                    }, product.color)
                 ])
-            ])
-        ])
-    ]);
-};
-const ProductRow = ({ product }) => {
-    const stockInfo = getStockStatus(product.stock);
-    const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
-    
-    // Priority order for images: 1) Primary image from images array, 2) main_image_url, 3) emoji fallback
-    const getProductImage = () => {
-        if (primaryImage?.url) {
-            return { type: 'url', src: primaryImage.url, alt: primaryImage.alt || product.name };
-        }
-        if (product.main_image_url) {
-            return { type: 'url', src: product.main_image_url, alt: product.name };
-        }
-        return { type: 'emoji', src: product.image || '📦', alt: product.name };
-    };
+            ]),
 
-    const productImage = getProductImage();
-    
-    return React.createElement('tr', { 
-        className: `hover:bg-gray-50 border-b transition-colors ${
-            selectedProducts.includes(product.id) ? 'bg-blue-50' : ''
-        } ${!product.is_active ? 'opacity-60' : ''}` 
-    }, [
-        React.createElement('td', { key: 'select', className: 'p-4' }, [
-            React.createElement('input', {
-                type: 'checkbox',
-                checked: selectedProducts.includes(product.id),
-                onChange: (e) => onProductSelect(product.id, e.target.checked),
-                className: 'w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500'
-            })
-        ]),
-        React.createElement('td', { key: 'product', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex items-center gap-3' }, [
-                React.createElement('div', { className: 'w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0' }, [
-                    // Show actual image if available
-                    productImage.type === 'url' ? (
-                        React.createElement('img', {
-                            key: 'product-img',
-                            src: productImage.src,
-                            alt: productImage.alt,
-                            className: 'w-full h-full object-cover',
-                            onError: (e) => {
-                                // If image fails to load, show emoji fallback
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'block';
-                            }
-                        })
-                    ) : null,
-                    
-                    // Emoji fallback
+            React.createElement('td', { key: 'stock', className: 'p-4' }, [
+                React.createElement('div', { className: 'flex items-center gap-2' }, [
+                    React.createElement('span', { className: `px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` }, 
+                        product.stock
+                    ),
+                    React.createElement('span', { className: 'text-xs text-gray-500' }, stockInfo.text)
+                ])
+            ]),
+
+            React.createElement('td', { key: 'status', className: 'p-4' }, [
+                React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
                     React.createElement('span', { 
-                        key: 'fallback',
-                        className: 'text-xl',
-                        style: { display: productImage.type === 'url' ? 'none' : 'block' }
-                    }, productImage.src)
-                ]),
-                React.createElement('div', { className: 'min-w-0 flex-1' }, [
-                    React.createElement('div', { className: 'font-medium truncate' }, product.name),
-                    React.createElement('div', { className: 'text-sm text-gray-600 font-mono' }, product.sku),
-                    product.brand && React.createElement('div', { className: 'text-sm text-blue-600' }, 
-                        `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
-                    )
+                        className: `px-2 py-1 rounded-full text-xs font-medium ${
+                            product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }` 
+                    }, product.is_active ? 'Active' : 'Inactive'),
+                    product.featured && React.createElement('span', { 
+                        key: 'featured',
+                        className: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
+                    }, '⭐ Featured')
+                ])
+            ]),
+            React.createElement('td', { key: 'actions', className: 'p-4' }, [
+                React.createElement('div', { className: 'flex gap-1' }, [
+                    React.createElement('button', {
+                        onClick: () => onEditProduct(product),
+                        className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
+                        title: 'Edit'
+                    }, React.createElement(Edit, { size: 16 })),
+                    React.createElement('button', {
+                        onClick: () => onDuplicateProduct(product.id),
+                        className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
+                        title: 'Duplicate'
+                    }, React.createElement(Copy, { size: 16 })),
+                    React.createElement('button', {
+                        onClick: () => onDeleteProduct(product.id),
+                        className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
+                        title: 'Delete'
+                    }, React.createElement(Trash2, { size: 16 }))
                 ])
             ])
-        ]),
-        React.createElement('td', { key: 'category', className: 'p-4' }, [
-            React.createElement('div', { className: 'text-sm' }, product.category),
-            product.product_type && React.createElement('div', { className: 'text-xs text-gray-500' }, product.product_type)
-        ]),
-        React.createElement('td', { key: 'price', className: 'p-4 font-medium text-green-600' }, 
-            `$${parseFloat(product.price).toFixed(2)}`
-        ),
-        React.createElement('td', { key: 'attributes', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
-                product.material && React.createElement('span', { 
-                    key: 'material',
-                    className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
-                }, product.material),
-                product.color && React.createElement('span', { 
-                    key: 'color',
-                    className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
-                }, product.color)
-            ])
-        ]),
-
-        React.createElement('td', { key: 'stock', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex items-center gap-2' }, [
-                React.createElement('span', { className: `px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` }, 
-                    product.stock
-                ),
-                React.createElement('span', { className: 'text-xs text-gray-500' }, stockInfo.text)
-            ])
-        ]),
-
-        React.createElement('td', { key: 'status', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
-                React.createElement('span', { 
-                    className: `px-2 py-1 rounded-full text-xs font-medium ${
-                        product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }` 
-                }, product.is_active ? 'Active' : 'Inactive'),
-                product.featured && React.createElement('span', { 
-                    key: 'featured',
-                    className: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
-                }, '⭐ Featured')
-            ])
-        ]),
-        React.createElement('td', { key: 'actions', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex gap-1' }, [
-                React.createElement('button', {
-                    onClick: () => onEditProduct(product),
-                    className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
-                    title: 'Edit'
-                }, React.createElement(Edit, { size: 16 })),
-                React.createElement('button', {
-                    onClick: () => onDuplicateProduct(product.id),
-                    className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
-                    title: 'Duplicate'
-                }, React.createElement(Copy, { size: 16 })),
-                React.createElement('button', {
-                    onClick: () => onDeleteProduct(product.id),
-                    className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
-                    title: 'Delete'
-                }, React.createElement(Trash2, { size: 16 }))
-            ])
-        ])
-    ]);
-};
+        ]);
+    };
         const EmptyState = () => React.createElement('div', { 
             className: 'bg-white rounded-xl shadow-sm border p-12 text-center' 
         }, [
@@ -1988,7 +2003,7 @@ const ProductRow = ({ product }) => {
                         React.createElement('div', { className: 'overflow-x-auto' }, [
                             React.createElement('table', { className: 'w-full min-w-[800px]' }, [
                                 React.createElement('thead', { key: 'thead', className: 'bg-gray-50 border-b' }, [
-                                    React.createElement('tr', {}, [
+                                    React.createElement('tr', { key: 'header-row' }, [
                                         React.createElement('th', { key: 'select', className: 'p-4 text-left w-16' }, [
                                             React.createElement('input', {
                                                 type: 'checkbox',
@@ -2031,9 +2046,11 @@ const ProductRow = ({ product }) => {
         onUpdateLocation,
         onThemeToggle,
         onLogoUpload,
-        loading
+        loading,
+        currentUser,
+        onLogout
     }) => {
-        const { Settings, Plus, Upload, Moon, Sun, MapPin, Edit, Save, X, Image, Trash2, Database, Key, Copy, CheckCircle } = window.Icons;
+        const { Settings, Plus, Upload, Moon, Sun, MapPin, Edit, Save, X, Image, Trash2, Database, Key, Copy, CheckCircle, Users, LogOut } = window.Icons;
         
         const [activeTab, setActiveTab] = React.useState('locations');
         const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
@@ -2086,6 +2103,180 @@ const ProductRow = ({ product }) => {
             }
         }, [activeTab]);
 
+        // Users state
+        const [users, setUsers] = React.useState([]);
+        const [roles, setRoles] = React.useState([]);
+        const [showCreateUserForm, setShowCreateUserForm] = React.useState(false);
+        const [createUserForm, setCreateUserForm] = React.useState({
+            username: '',
+            email: '',
+            password: '',
+            first_name: '',
+            last_name: '',
+            role_id: ''
+        });
+
+        // User editing state
+        const [showEditUserForm, setShowEditUserForm] = React.useState(false);
+        const [editingUser, setEditingUser] = React.useState(null);
+        const [editUserForm, setEditUserForm] = React.useState({
+            username: '',
+            email: '',
+            first_name: '',
+            last_name: '',
+            role_id: '',
+            is_active: true
+        });
+
+        // Password change state
+        const [showPasswordModal, setShowPasswordModal] = React.useState(false);
+        const [passwordForm, setPasswordForm] = React.useState({
+            new_password: '',
+            confirm_password: ''
+        });
+        const [changingPasswordFor, setChangingPasswordFor] = React.useState(null);
+
+        // Load users when users tab is active
+        React.useEffect(() => {
+            if (activeTab === 'users' && currentUser?.permissions?.users?.read) {
+                loadUsers();
+                loadRoles();
+            }
+        }, [activeTab, currentUser]);
+
+        const loadUsers = async () => {
+            try {
+                const data = await window.API.call('/users');
+                setUsers(data);
+            } catch (err) {
+                console.error('Failed to load users:', err);
+                setUsers([]);
+            }
+        };
+
+        const loadRoles = async () => {
+            try {
+                const data = await window.API.call('/roles');
+                setRoles(data);
+            } catch (err) {
+                console.error('Failed to load roles:', err);
+                setRoles([]);
+            }
+        };
+
+        const handleCreateUser = async (e) => {
+            e.preventDefault();
+            try {
+                await window.API.call('/users', {
+                    method: 'POST',
+                    body: JSON.stringify(createUserForm)
+                });
+
+                await loadUsers();
+                setShowCreateUserForm(false);
+                setCreateUserForm({
+                    username: '',
+                    email: '',
+                    password: '',
+                    first_name: '',
+                    last_name: '',
+                    role_id: ''
+                });
+                alert('User created successfully!');
+            } catch (err) {
+                alert(err.message || 'Failed to create user');
+            }
+        };
+
+        const handleEditUser = async (e) => {
+            e.preventDefault();
+            try {
+                await window.API.call(`/users/${editingUser.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(editUserForm)
+                });
+
+                await loadUsers();
+                setShowEditUserForm(false);
+                setEditingUser(null);
+                setEditUserForm({
+                    username: '',
+                    email: '',
+                    first_name: '',
+                    last_name: '',
+                    role_id: '',
+                    is_active: true
+                });
+                alert('User updated successfully!');
+            } catch (err) {
+                alert(err.message || 'Failed to update user');
+            }
+        };
+
+        const handleDeleteUser = async (userId, username) => {
+            if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                await window.API.call(`/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                await loadUsers();
+                alert('User deleted successfully!');
+            } catch (err) {
+                alert(err.message || 'Failed to delete user');
+            }
+        };
+
+        const handleChangePassword = async (e) => {
+            e.preventDefault();
+            
+            if (passwordForm.new_password !== passwordForm.confirm_password) {
+                alert('Passwords do not match!');
+                return;
+            }
+
+            if (passwordForm.new_password.length < 6) {
+                alert('Password must be at least 6 characters long!');
+                return;
+            }
+
+            try {
+                await window.API.call(`/users/${changingPasswordFor.id}/password`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ new_password: passwordForm.new_password })
+                });
+
+                setShowPasswordModal(false);
+                setChangingPasswordFor(null);
+                setPasswordForm({ new_password: '', confirm_password: '' });
+                alert('Password changed successfully!');
+            } catch (err) {
+                alert(err.message || 'Failed to change password');
+            }
+        };
+
+        const openEditUser = (user) => {
+            setEditingUser(user);
+            setEditUserForm({
+                username: user.username,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                role_id: user.role_id,
+                is_active: user.is_active
+            });
+            setShowEditUserForm(true);
+        };
+
+        const openChangePassword = (user) => {
+            setChangingPasswordFor(user);
+            setPasswordForm({ new_password: '', confirm_password: '' });
+            setShowPasswordModal(true);
+        };
+
         // Filter settings by category
         React.useEffect(() => {
             if (selectedCategory === 'all') {
@@ -2097,22 +2288,23 @@ const ProductRow = ({ product }) => {
 
         const loadSystemSettings = async () => {
             try {
-                const response = await fetch('/api/system-settings');
-                const data = await response.json();
+                const data = await window.API.call('/system-settings');
                 setSystemSettings(data);
                 setFilteredSettings(data);
             } catch (error) {
                 console.error('Failed to load system settings:', error);
+                setSystemSettings([]);
+                setFilteredSettings([]);
             }
         };
 
         const loadDatabaseInfo = async () => {
             try {
-                const response = await fetch('/api/system-settings/database/info');
-                const data = await response.json();
+                const data = await window.API.call('/system-settings/database/info');
                 setDatabaseInfo(data);
             } catch (error) {
                 console.error('Failed to load database info:', error);
+                setDatabaseInfo(null);
             }
         };
 
@@ -2120,19 +2312,13 @@ const ProductRow = ({ product }) => {
             try {
                 const method = editingSetting ? 'PUT' : 'POST';
                 const url = editingSetting 
-                    ? `/api/system-settings/${editingSetting.setting_key}`
-                    : '/api/system-settings';
+                    ? `/system-settings/${editingSetting.setting_key}`
+                    : '/system-settings';
                 
-                const response = await fetch(url, {
+                const data = await window.API.call(url, {
                     method,
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settingForm)
                 });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to save setting');
-                }
                 
                 await loadSystemSettings();
                 setShowSettingModal(false);
@@ -2155,14 +2341,9 @@ const ProductRow = ({ product }) => {
             if (!confirm(`Are you sure you want to delete the setting "${key}"?`)) return;
             
             try {
-                const response = await fetch(`/api/system-settings/${key}`, {
+                await window.API.call(`/system-settings/${key}`, {
                     method: 'DELETE'
                 });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to delete setting');
-                }
                 
                 await loadSystemSettings();
                 alert('Setting deleted successfully!');
@@ -2780,7 +2961,25 @@ const ProductRow = ({ product }) => {
                         label: 'System Settings', 
                         icon: Settings,
                         active: activeTab === 'system' 
+                    }),
+                    currentUser?.permissions?.users?.read && React.createElement(TabButton, { 
+                        key: 'users-tab',
+                        tab: 'users', 
+                        label: 'Users', 
+                        icon: Users,
+                        active: activeTab === 'users' 
                     })
+                ]),
+                
+                // Logout Button
+                React.createElement('div', { key: 'logout-section', className: 'flex justify-end mt-4' }, [
+                    React.createElement('button', {
+                        onClick: onLogout,
+                        className: 'flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
+                    }, [
+                        React.createElement(LogOut, { key: 'icon', size: 18 }),
+                        React.createElement('span', { key: 'text' }, 'Logout')
+                    ])
                 ])
             ]),
 
@@ -3110,6 +3309,381 @@ const ProductRow = ({ product }) => {
                    ]) : React.createElement('div', { className: 'text-center py-8 text-gray-500 dark:text-gray-400' }, [
                        React.createElement('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4' }),
                        'Loading database information...'
+                   ])
+               ])
+           ]),
+
+           // Users Tab Content
+           activeTab === 'users' && currentUser?.permissions?.users?.read && React.createElement('div', { key: 'users-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+               React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
+                   React.createElement('div', { key: 'title' }, [
+                       React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                           React.createElement(Users, { key: 'icon', size: 24 }),
+                           'User Management'
+                       ]),
+                       React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                           `${users.length} users • Manage system access and permissions`
+                       )
+                   ]),
+                   currentUser?.permissions?.users?.write && React.createElement('button', {
+                       key: 'add-user-btn',
+                       onClick: () => setShowCreateUserForm(true),
+                       className: 'flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                   }, [
+                       React.createElement(Plus, { key: 'icon', size: 20 }),
+                       'Add User'
+                   ])
+               ]),
+
+                               // Users List
+                React.createElement('div', { key: 'users-list', className: 'space-y-4' }, 
+                    users.map(user => 
+                        React.createElement('div', {
+                            key: user.id,
+                            className: 'border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors'
+                        }, [
+                            React.createElement('div', { key: 'user-header', className: 'flex items-center justify-between mb-2' }, [
+                                React.createElement('div', { key: 'user-info' }, [
+                                    React.createElement('h4', { className: 'font-semibold dark:text-white' }, 
+                                        `${user.first_name} ${user.last_name}`
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                                        user.username
+                                    )
+                                ]),
+                                React.createElement('div', { key: 'user-status', className: 'flex items-center gap-2' }, [
+                                    React.createElement('span', { 
+                                        className: `px-2 py-1 rounded-full text-xs font-medium ${
+                                            user.is_active 
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                        }`
+                                    }, user.is_active ? 'Active' : 'Inactive'),
+                                    React.createElement('span', { 
+                                        className: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                    }, user.role_name || 'No Role')
+                                ])
+                            ]),
+                            React.createElement('div', { key: 'user-details', className: 'grid grid-cols-2 gap-4 text-sm mb-3' }, [
+                                React.createElement('div', { key: 'email' }, [
+                                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Email: '),
+                                    React.createElement('span', { className: 'dark:text-white' }, user.email)
+                                ]),
+                                React.createElement('div', { key: 'last-login' }, [
+                                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Last Login: '),
+                                    React.createElement('span', { className: 'dark:text-white' }, 
+                                        user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'
+                                    )
+                                ])
+                            ]),
+                            // Action buttons
+                            currentUser?.permissions?.users?.write && React.createElement('div', { 
+                                key: 'user-actions', 
+                                className: 'flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-600' 
+                            }, [
+                                React.createElement('button', {
+                                    key: 'edit-btn',
+                                    onClick: () => openEditUser(user),
+                                    className: 'flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'
+                                }, [
+                                    React.createElement(Edit, { key: 'icon', size: 14 }),
+                                    'Edit'
+                                ]),
+                                React.createElement('button', {
+                                    key: 'password-btn',
+                                    onClick: () => openChangePassword(user),
+                                    className: 'flex items-center gap-1 px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors'
+                                }, [
+                                    React.createElement(Key, { key: 'icon', size: 14 }),
+                                    'Password'
+                                ]),
+                                user.id !== currentUser?.id && React.createElement('button', {
+                                    key: 'delete-btn',
+                                    onClick: () => handleDeleteUser(user.id, user.username),
+                                    className: 'flex items-center gap-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors'
+                                }, [
+                                    React.createElement(Trash2, { key: 'icon', size: 14 }),
+                                    'Delete'
+                                ])
+                            ])
+                        ])
+                    )
+                ),
+
+               // No users message
+               users.length === 0 && React.createElement('div', { key: 'no-users', className: 'text-center py-12 text-gray-500 dark:text-gray-400' }, [
+                   React.createElement(Users, { key: 'icon', className: 'mx-auto mb-4', size: 48 }),
+                   React.createElement('p', { key: 'text', className: 'text-lg mb-2' }, 'No users found'),
+                   React.createElement('p', { key: 'subtext', className: 'text-sm' }, 'Create your first user to get started')
+               ])
+           ]),
+
+           // Create User Modal
+           showCreateUserForm && React.createElement('div', {
+               key: 'create-user-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 'Create New User'),
+                       React.createElement('button', {
+                           onClick: () => setShowCreateUserForm(false),
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, React.createElement(X, { size: 20 }))
+                   ]),
+                   React.createElement('form', { 
+                       key: 'form',
+                       onSubmit: handleCreateUser,
+                       className: 'px-6 py-4 space-y-4'
+                   }, [
+                       React.createElement('div', { key: 'username' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Username'),
+                           React.createElement('input', {
+                               type: 'text',
+                               value: createUserForm.username,
+                               onChange: (e) => setCreateUserForm(prev => ({ ...prev, username: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'email' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                           React.createElement('input', {
+                               type: 'email',
+                               value: createUserForm.email,
+                               onChange: (e) => setCreateUserForm(prev => ({ ...prev, email: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'password' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Password'),
+                           React.createElement('input', {
+                               type: 'password',
+                               value: createUserForm.password,
+                               onChange: (e) => setCreateUserForm(prev => ({ ...prev, password: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'first-name' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'First Name'),
+                           React.createElement('input', {
+                               type: 'text',
+                               value: createUserForm.first_name,
+                               onChange: (e) => setCreateUserForm(prev => ({ ...prev, first_name: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'last-name' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Last Name'),
+                           React.createElement('input', {
+                               type: 'text',
+                               value: createUserForm.last_name,
+                               onChange: (e) => setCreateUserForm(prev => ({ ...prev, last_name: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'role' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Role'),
+                           React.createElement('select', {
+                               value: createUserForm.role_id,
+                               onChange: (e) => setCreateUserForm(prev => ({ ...prev, role_id: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           }, [
+                               React.createElement('option', { key: 'empty', value: '' }, 'Select a role...'),
+                               ...roles.map(role => 
+                                   React.createElement('option', { key: role.id, value: role.id }, role.name)
+                               )
+                           ])
+                       ]),
+                       React.createElement('div', { key: 'footer', className: 'flex gap-3 justify-end pt-4' }, [
+                           React.createElement('button', {
+                               type: 'button',
+                               onClick: () => setShowCreateUserForm(false),
+                               className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+                           }, 'Cancel'),
+                           React.createElement('button', {
+                               type: 'submit',
+                               className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2'
+                           }, [
+                               React.createElement(Plus, { key: 'icon', size: 16 }),
+                               'Create User'
+                           ])
+                       ])
+                   ])
+               ])
+           ]),
+
+           // Edit User Modal
+           showEditUserForm && React.createElement('div', {
+               key: 'edit-user-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 'Edit User'),
+                       React.createElement('button', {
+                           onClick: () => setShowEditUserForm(false),
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, React.createElement(X, { size: 20 }))
+                   ]),
+                   React.createElement('form', { 
+                       key: 'form',
+                       onSubmit: handleEditUser,
+                       className: 'px-6 py-4 space-y-4'
+                   }, [
+                       React.createElement('div', { key: 'username' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Username'),
+                           React.createElement('input', {
+                               type: 'text',
+                               value: editUserForm.username,
+                               onChange: (e) => setEditUserForm(prev => ({ ...prev, username: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'email' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                           React.createElement('input', {
+                               type: 'email',
+                               value: editUserForm.email,
+                               onChange: (e) => setEditUserForm(prev => ({ ...prev, email: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'first-name' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'First Name'),
+                           React.createElement('input', {
+                               type: 'text',
+                               value: editUserForm.first_name,
+                               onChange: (e) => setEditUserForm(prev => ({ ...prev, first_name: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'last-name' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Last Name'),
+                           React.createElement('input', {
+                               type: 'text',
+                               value: editUserForm.last_name,
+                               onChange: (e) => setEditUserForm(prev => ({ ...prev, last_name: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'role' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Role'),
+                           React.createElement('select', {
+                               value: editUserForm.role_id,
+                               onChange: (e) => setEditUserForm(prev => ({ ...prev, role_id: e.target.value })),
+                               required: true,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           }, [
+                               React.createElement('option', { key: 'empty', value: '' }, 'Select a role...'),
+                               ...roles.map(role => 
+                                   React.createElement('option', { key: role.id, value: role.id }, role.name)
+                               )
+                           ])
+                       ]),
+                       React.createElement('div', { key: 'active-status' }, [
+                           React.createElement('label', { className: 'flex items-center gap-2 dark:text-white' }, [
+                               React.createElement('input', {
+                                   type: 'checkbox',
+                                   checked: editUserForm.is_active,
+                                   onChange: (e) => setEditUserForm(prev => ({ ...prev, is_active: e.target.checked })),
+                                   className: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                               }),
+                               React.createElement('span', { className: 'text-sm font-medium' }, 'Active Account')
+                           ])
+                       ]),
+                       React.createElement('div', { key: 'footer', className: 'flex gap-3 justify-end pt-4' }, [
+                           React.createElement('button', {
+                               type: 'button',
+                               onClick: () => setShowEditUserForm(false),
+                               className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+                           }, 'Cancel'),
+                           React.createElement('button', {
+                               type: 'submit',
+                               className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2'
+                           }, [
+                               React.createElement(Save, { key: 'icon', size: 16 }),
+                               'Update User'
+                           ])
+                       ])
+                   ])
+               ])
+           ]),
+
+           // Change Password Modal
+           showPasswordModal && React.createElement('div', {
+               key: 'password-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 
+                           `Change Password for ${changingPasswordFor?.username}`
+                       ),
+                       React.createElement('button', {
+                           onClick: () => setShowPasswordModal(false),
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, React.createElement(X, { size: 20 }))
+                   ]),
+                   React.createElement('form', { 
+                       key: 'form',
+                       onSubmit: handleChangePassword,
+                       className: 'px-6 py-4 space-y-4'
+                   }, [
+                       React.createElement('div', { key: 'new-password' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'New Password'),
+                           React.createElement('input', {
+                               type: 'password',
+                               value: passwordForm.new_password,
+                               onChange: (e) => setPasswordForm(prev => ({ ...prev, new_password: e.target.value })),
+                               required: true,
+                               minLength: 6,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'confirm-password' }, [
+                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Confirm Password'),
+                           React.createElement('input', {
+                               type: 'password',
+                               value: passwordForm.confirm_password,
+                               onChange: (e) => setPasswordForm(prev => ({ ...prev, confirm_password: e.target.value })),
+                               required: true,
+                               minLength: 6,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'footer', className: 'flex gap-3 justify-end pt-4' }, [
+                           React.createElement('button', {
+                               type: 'button',
+                               onClick: () => setShowPasswordModal(false),
+                               className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+                           }, 'Cancel'),
+                           React.createElement('button', {
+                               type: 'submit',
+                               className: 'px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2'
+                           }, [
+                               React.createElement(Key, { key: 'icon', size: 16 }),
+                               'Change Password'
+                           ])
+                       ])
                    ])
                ])
            ]),
