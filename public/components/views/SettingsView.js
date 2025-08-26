@@ -459,12 +459,13 @@ window.Views.SettingsView = ({
             };
             
             return React.createElement('span', {
+                key: 'category-badge',
                 className: `px-2 py-1 rounded-full text-xs font-medium ${colors[category] || colors.general}`
             }, category);
         };
 
         const LocationCard = ({ location, isSelected }) => (
-            React.createElement('div', {
+            React.createElement('div', {   key: 'location-card',
                 className: `border rounded-lg p-4 cursor-pointer transition-all ${
                     isSelected 
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
@@ -473,7 +474,7 @@ window.Views.SettingsView = ({
             }, [
                 React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
                     React.createElement('div', { key: 'info', className: 'flex-1' }, [
-                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' }, [
+                        React.createElement('div', { key: 'info-container', className: 'flex items-center gap-2 mb-2' }, [
                             location.logo_base64 && React.createElement('img', {
                                 key: 'logo',
                                 src: location.logo_base64,
@@ -488,10 +489,10 @@ window.Views.SettingsView = ({
                                 className: 'px-2 py-1 bg-blue-600 text-white text-xs rounded-full'
                             }, 'Selected')
                         ]),
-                        React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                        React.createElement('p', {key: 'brand-store-code', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
                             `${location.brand} • ${location.store_code}`
                         ),
-                        React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                        React.createElement('p', {key: 'address', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
                             `${location.address_line1}, ${location.city}, ${location.state}`
                         )
                     ]),
@@ -502,18 +503,18 @@ window.Views.SettingsView = ({
                             setEditingLocation(location);
                         },
                         className: 'p-2 text-gray-400 hover:text-blue-600 rounded transition-colors'
-                    }, React.createElement(Edit, { size: 16 }))
+                    }, React.createElement(Edit, {key: 'edit-icon', size: 16 }))
                 ]),
                 React.createElement('div', { key: 'details', className: 'grid grid-cols-2 gap-4 text-sm' }, [
                     React.createElement('div', { key: 'tax' }, [
-                        React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Tax Rate: '),
-                        React.createElement('span', { className: 'font-medium dark:text-white' }, 
+                        React.createElement('span', { key: 'tax-label', className: 'text-gray-500 dark:text-gray-400' }, 'Tax Rate: '),
+                        React.createElement('span', { key: 'tax-value', className: 'font-medium dark:text-white' }, 
                             `${(location.tax_rate * 100).toFixed(2)}%`
                         )
                     ]),
                     React.createElement('div', { key: 'manager' }, [
-                        React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Manager: '),
-                        React.createElement('span', { className: 'font-medium dark:text-white' }, 
+                        React.createElement('span', { key: 'manager-label', className: 'text-gray-500 dark:text-gray-400' }, 'Manager: '),
+                        React.createElement('span', { key: 'manager-value', className: 'font-medium dark:text-white' }, 
                             location.manager_name || 'Not assigned'
                         )
                     ])
@@ -527,7 +528,7 @@ window.Views.SettingsView = ({
         const LocationFormModal = ({ show, onClose, title, isEdit = false }) => {
             if (!show) return null;
 
-            return React.createElement('div', {
+            return React.createElement('div', {key: 'location-form-modal',
                 className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
             }, [
                 React.createElement('div', { 
@@ -535,8 +536,9 @@ window.Views.SettingsView = ({
                     className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto'
                 }, [
                     React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
-                        React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, title),
+                        React.createElement('h2', {key: 'title', className: 'text-xl font-bold dark:text-white' }, title),
                         React.createElement('button', {
+                            key: 'close-btn',
                             onClick: () => {
                                 setShowNewLocationModal(false);
                                 setLogoPreview(null);
@@ -559,15 +561,16 @@ window.Views.SettingsView = ({
                                 setNewLocationForm(formDataRef.current);
                             },
                             className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                        }, React.createElement(X, { size: 24 }))
+                        }, React.createElement(X, {key: 'close-icon', size: 24 }))
                     ]),
                     
                     React.createElement('div', { key: 'form', className: 'p-6 space-y-6' }, [
                         // Logo upload section
                         React.createElement('div', { key: 'logo-section' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Logo'),
-                            React.createElement('div', { className: 'flex items-center gap-4' }, [
+                            React.createElement('label', { key: 'logo-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Logo'),
+                            React.createElement('div', { key: 'logo-container', className: 'flex items-center gap-4' }, [
                                 React.createElement('div', { 
+                                    key: 'logo-preview',
                                     className: 'w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700' 
                                 }, [
                                     (logoPreview || newLocationForm.logo_base64) ? 
@@ -579,6 +582,7 @@ window.Views.SettingsView = ({
                                         React.createElement(Image, { size: 24, className: 'text-gray-400' })
                                 ]),
                                 React.createElement('input', {
+                                    key: 'logo-upload-input',
                                     type: 'file',
                                     accept: 'image/*',
                                     onChange: (e) => handleLogoUpload(e, true),
@@ -586,6 +590,7 @@ window.Views.SettingsView = ({
                                     id: 'logo-upload'
                                 }),
                                 React.createElement('label', {
+                                    key: 'logo-upload-label',
                                     htmlFor: 'logo-upload',
                                     className: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors'
                                 }, [
@@ -598,8 +603,9 @@ window.Views.SettingsView = ({
                         // Basic information - FIX: Using value from state and onChange updates ref
                         React.createElement('div', { key: 'basic-info', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
                             React.createElement('div', { key: 'store-code' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Code *'),
+                                React.createElement('label', { key: 'store-code-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Code *'),
                                 React.createElement('input', {
+                                    key: 'store-code-input',
                                     type: 'text',
                                     value: newLocationForm.store_code,
                                     onChange: (e) => handleInputChange('store_code', e.target.value.toUpperCase()),
@@ -609,8 +615,9 @@ window.Views.SettingsView = ({
                                 })
                             ]),
                             React.createElement('div', { key: 'store-name' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Name *'),
+                                React.createElement('label', { key: 'store-name-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Store Name *'),
                                 React.createElement('input', {
+                                    key: 'store-name-input',
                                     type: 'text',
                                     value: newLocationForm.store_name,
                                     onChange: (e) => handleInputChange('store_name', e.target.value),
@@ -619,8 +626,9 @@ window.Views.SettingsView = ({
                                 })
                             ]),
                             React.createElement('div', { key: 'brand' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Brand *'),
+                                React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Brand *'),
                                 React.createElement('input', {
+                                    key: 'brand-input',
                                     type: 'text',
                                     value: newLocationForm.brand,
                                     onChange: (e) => handleInputChange('brand', e.target.value),
@@ -629,8 +637,9 @@ window.Views.SettingsView = ({
                                 })
                             ]),
                             React.createElement('div', { key: 'manager' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Manager Name'),
+                                React.createElement('label', { key: 'manager-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Manager Name'),
                                 React.createElement('input', {
+                                    key: 'manager-input',
                                     type: 'text',
                                     value: newLocationForm.manager_name,
                                     onChange: (e) => handleInputChange('manager_name', e.target.value),
@@ -642,9 +651,10 @@ window.Views.SettingsView = ({
 
                         // Address information
                         React.createElement('div', { key: 'address-section' }, [
-                            React.createElement('h3', { className: 'text-lg font-semibold mb-4 dark:text-white' }, 'Address Information'),
-                            React.createElement('div', { className: 'space-y-4' }, [
+                            React.createElement('h3', { key: 'address-title', className: 'text-lg font-semibold mb-4 dark:text-white' }, 'Address Information'),
+                            React.createElement('div', { key: 'address-container', className: 'space-y-4' }, [
                                 React.createElement('input', {
+                                    key: 'address-line1-input',
                                     type: 'text',
                                     value: newLocationForm.address_line1,
                                     onChange: (e) => handleInputChange('address_line1', e.target.value),
@@ -652,14 +662,16 @@ window.Views.SettingsView = ({
                                     placeholder: 'Street Address *'
                                 }),
                                 React.createElement('input', {
+                                    key: 'address-line2-input',
                                     type: 'text',
                                     value: newLocationForm.address_line2,
                                     onChange: (e) => handleInputChange('address_line2', e.target.value),
                                     className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
                                     placeholder: 'Apartment, suite, etc. (optional)'
                                 }),
-                                React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 gap-4' }, [
+                                React.createElement('div', { key: 'address-city-state-zip-container', className: 'grid grid-cols-2 md:grid-cols-3 gap-4' }, [
                                     React.createElement('input', {
+                                        key: 'city-input',
                                         type: 'text',
                                         value: newLocationForm.city,
                                         onChange: (e) => handleInputChange('city', e.target.value),
@@ -667,6 +679,7 @@ window.Views.SettingsView = ({
                                         placeholder: 'City *'
                                     }),
                                     React.createElement('input', {
+                                        key: 'state-input',
                                         type: 'text',
                                         value: newLocationForm.state,
                                         onChange: (e) => handleInputChange('state', e.target.value),
@@ -675,6 +688,7 @@ window.Views.SettingsView = ({
                                         maxLength: 2
                                     }),
                                     React.createElement('input', {
+                                        key: 'zip-code-input',
                                         type: 'text',
                                         value: newLocationForm.zip_code,
                                         onChange: (e) => handleInputChange('zip_code', e.target.value),
@@ -688,8 +702,9 @@ window.Views.SettingsView = ({
                         // Contact and business information
                         React.createElement('div', { key: 'contact-section', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
                             React.createElement('div', { key: 'phone' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Phone'),
+                                React.createElement('label', { key: 'phone-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Phone'),
                                 React.createElement('input', {
+                                    key: 'phone-input',
                                     type: 'tel',
                                     value: newLocationForm.phone,
                                     onChange: (e) => handleInputChange('phone', e.target.value),
@@ -698,8 +713,9 @@ window.Views.SettingsView = ({
                                 })
                             ]),
                             React.createElement('div', { key: 'email' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                                React.createElement('label', { key: 'email-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
                                 React.createElement('input', {
+                                    key: 'email-input',
                                     type: 'email',
                                     value: newLocationForm.email,
                                     onChange: (e) => handleInputChange('email', e.target.value),
@@ -708,8 +724,9 @@ window.Views.SettingsView = ({
                                 })
                             ]),
                             React.createElement('div', { key: 'tax-rate', className: 'md:col-span-2' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Tax Rate (decimal) *'),
+                                React.createElement('label', { key: 'tax-rate-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Tax Rate (decimal) *'),
                                 React.createElement('input', {
+                                    key: 'tax-rate-input',
                                     type: 'number',
                                     step: '0.0001',
                                     min: '0',
@@ -719,7 +736,7 @@ window.Views.SettingsView = ({
                                     className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
                                     placeholder: '0.08'
                                 }),
-                                React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
+                                React.createElement('p', { key: 'tax-rate-subtext', className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
                                     'Enter as decimal: 0.08 for 8%, 0.10 for 10%'
                                 )
                             ])
@@ -728,6 +745,7 @@ window.Views.SettingsView = ({
 
                     React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
                         React.createElement('button', {
+                            key: 'cancel-btn',
                             onClick: () => {
                                 setShowNewLocationModal(false);
                                 setLogoPreview(null);
@@ -752,6 +770,7 @@ window.Views.SettingsView = ({
                             className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50'
                         }, 'Cancel'),
                         React.createElement('button', {
+                            key: 'save-btn',
                             onClick: handleCreateLocation,
                             disabled: loading,
                             className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
@@ -767,136 +786,24 @@ window.Views.SettingsView = ({
             ]);
         };
 
-        // System Settings Modal
-        const SystemSettingModal = ({ show, onClose }) => {
-            if (!show) return null;
 
-            return React.createElement('div', {
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
-            }, [
-                React.createElement('div', { 
-                    key: 'modal',
-                    className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-lg'
-                }, [
-                    React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
-                        React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 
-                            editingSetting ? 'Edit System Setting' : 'Add System Setting'
-                        ),
-                        React.createElement('button', {
-                            onClick: onClose,
-                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                        }, React.createElement(X, { size: 24 }))
-                    ]),
-                    
-                    React.createElement('div', { key: 'form', className: 'p-6 space-y-4' }, [
-                        React.createElement('div', { key: 'key' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Setting Key *'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: settingForm.setting_key,
-                                onChange: (e) => setSettingForm(prev => ({ ...prev, setting_key: e.target.value })),
-                                disabled: !!editingSetting,
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-600',
-                                placeholder: 'e.g., company_email'
-                            })
-                        ]),
-                        
-                        React.createElement('div', { key: 'value' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Setting Value *'),
-                            settingForm.setting_type === 'boolean' ? 
-                                React.createElement('select', {
-                                    value: settingForm.setting_value,
-                                    onChange: (e) => setSettingForm(prev => ({ ...prev, setting_value: e.target.value })),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
-                                }, [
-                                    React.createElement('option', { key: 'true', value: 'true' }, 'True'),
-                                    React.createElement('option', { key: 'false', value: 'false' }, 'False')
-                                ]) :
-                                React.createElement('input', {
-                                    type: settingForm.setting_type === 'number' ? 'number' : 'text',
-                                    value: settingForm.setting_value,
-                                    onChange: (e) => setSettingForm(prev => ({ ...prev, setting_value: e.target.value })),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                    placeholder: 'Setting value'
-                                })
-                        ]),
-                        
-                        React.createElement('div', { key: 'type', className: 'grid grid-cols-2 gap-4' }, [
-                            React.createElement('div', { key: 'category' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Category'),
-                                React.createElement('select', {
-                                    value: settingForm.category,
-                                    onChange: (e) => setSettingForm(prev => ({ ...prev, category: e.target.value })),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
-                                }, [
-                                    React.createElement('option', { key: 'general', value: 'general' }, 'General'),
-                                    React.createElement('option', { key: 'pos', value: 'pos' }, 'POS'),
-                                    React.createElement('option', { key: 'loyalty', value: 'loyalty' }, 'Loyalty'),
-                                    React.createElement('option', { key: 'inventory', value: 'inventory' }, 'Inventory'),
-                                    React.createElement('option', { key: 'email', value: 'email' }, 'Email'),
-                                    React.createElement('option', { key: 'integration', value: 'integration' }, 'Integration')
-                                ])
-                            ]),
-                            React.createElement('div', { key: 'type' }, [
-                                React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Type'),
-                                React.createElement('select', {
-                                    value: settingForm.setting_type,
-                                    onChange: (e) => setSettingForm(prev => ({ ...prev, setting_type: e.target.value })),
-                                    className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
-                                }, [
-                                    React.createElement('option', { key: 'text', value: 'text' }, 'Text'),
-                                    React.createElement('option', { key: 'number', value: 'number' }, 'Number'),
-                                    React.createElement('option', { key: 'boolean', value: 'boolean' }, 'Boolean'),
-                                    React.createElement('option', { key: 'json', value: 'json' }, 'JSON')
-                                ])
-                            ])
-                        ]),
-                        
-                        React.createElement('div', { key: 'description' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Description'),
-                            React.createElement('textarea', {
-                                value: settingForm.description,
-                                onChange: (e) => setSettingForm(prev => ({ ...prev, description: e.target.value })),
-                                rows: 3,
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                                placeholder: 'Describe what this setting controls'
-                            })
-                        ])
-                    ]),
-
-                    React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
-                        React.createElement('button', {
-                            onClick: onClose,
-                            className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
-                        }, 'Cancel'),
-                        React.createElement('button', {
-                            onClick: handleSaveSetting,
-                            className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2'
-                        }, [
-                            React.createElement(Save, { key: 'icon', size: 16 }),
-                            editingSetting ? 'Update Setting' : 'Create Setting'
-                        ])
-                    ])
-                ])
-            ]);
-        };
-
-        return React.createElement('div', { className: 'space-y-6 dark:text-white' }, [
+        return React.createElement('div', { key: 'settings-container', className: 'space-y-6 dark:text-white' }, [
             // Header
             React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
-                React.createElement('div', { className: 'flex items-center justify-between mb-6' }, [
+                React.createElement('div', { key: 'header-container', className: 'flex items-center justify-between mb-6' }, [
                     React.createElement('div', { key: 'title' }, [
-                        React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-3 dark:text-white' }, [
+                        React.createElement('h2', {key: 'title-header', className: 'text-2xl font-bold flex items-center gap-3 dark:text-white' }, [
                             React.createElement(Settings, { key: 'icon', size: 28 }),
                             'Settings'
                         ]),
-                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
+                        React.createElement('p', {key: 'title-subtext', className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
                             'Manage locations, system settings, and preferences'
                         )
                     ]),
                     React.createElement('div', { key: 'theme-toggle', className: 'flex items-center gap-4' }, [
-                        React.createElement('span', { className: 'text-sm font-medium dark:text-gray-300' }, 'Theme:'),
+                        React.createElement('span', {key: 'theme-label', className: 'text-sm font-medium dark:text-gray-300' }, 'Theme:'),
                         React.createElement('button', {
+                            key: 'theme-toggle-btn',
                             onClick: handleThemeToggle,
                             className: `flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                                 isDarkMode 
@@ -905,7 +812,7 @@ window.Views.SettingsView = ({
                             }`
                         }, [
                             React.createElement(isDarkMode ? Sun : Moon, { key: 'theme-icon', size: 20 }),
-                            React.createElement('span', { key: 'theme-text', className: 'font-medium' }, 
+                            React.createElement('span', { key: 'theme-label', className: 'font-medium' }, 
                                 isDarkMode ? 'Dark Mode' : 'Light Mode'
                             )
                         ])
@@ -921,7 +828,7 @@ window.Views.SettingsView = ({
                         icon: MapPin,
                         active: activeTab === 'locations' 
                     }),
-                    currentUser?.role_name === 'admin' && React.createElement(TabButton, { 
+                    currentUser?.role === 'admin' && React.createElement(TabButton, { 
                         key: 'system-tab',
                         tab: 'system', 
                         label: 'System Settings', 
@@ -940,6 +847,7 @@ window.Views.SettingsView = ({
                 // Logout Button
                 React.createElement('div', { key: 'logout-section', className: 'flex justify-end mt-4' }, [
                     React.createElement('button', {
+                        key: 'logout-btn',
                         onClick: onLogout,
                         className: 'flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
                     }, [
@@ -953,11 +861,11 @@ window.Views.SettingsView = ({
             activeTab === 'locations' && React.createElement('div', { key: 'locations-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                 React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
                     React.createElement('div', { key: 'title' }, [
-                        React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                        React.createElement('h3', {key: 'title-header', className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
                             React.createElement(MapPin, { key: 'icon', size: 24 }),
                             'Store Locations'
                         ]),
-                        React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                        React.createElement('p', {key: 'title-subtext', className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
                             `${locations.length} locations configured • Selected: ${selectedLocation?.store_name || 'None'}`
                         )
                     ]),
@@ -973,7 +881,7 @@ window.Views.SettingsView = ({
 
                 // Current location selector
                 selectedLocation && React.createElement('div', { key: 'current-location', className: 'mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
-                    React.createElement('div', { className: 'flex items-center justify-between' }, [
+                    React.createElement('div', {key: 'current-location-container', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'current-info', className: 'flex items-center gap-3' }, [
                             selectedLocation.logo_base64 && React.createElement('img', {
                                 key: 'logo',
@@ -982,16 +890,17 @@ window.Views.SettingsView = ({
                                 className: 'w-12 h-12 object-contain rounded'
                             }),
                             React.createElement('div', { key: 'details' }, [
-                                React.createElement('h4', { className: 'font-bold text-blue-900 dark:text-blue-100' }, 
+                                React.createElement('h4', {key: 'current-location-name', className: 'font-bold text-blue-900 dark:text-blue-100' }, 
                                     `Currently Operating: ${selectedLocation.store_name}`
                                 ),
-                                React.createElement('p', { className: 'text-sm text-blue-700 dark:text-blue-200' }, 
+                                React.createElement('p', {key: 'current-location-address', className: 'text-sm text-blue-700 dark:text-blue-200' }, 
                                     `${selectedLocation.address_line1}, ${selectedLocation.city} • Tax: ${(selectedLocation.tax_rate * 100).toFixed(2)}%`
                                 )
                             ])
                         ]),
                         React.createElement('div', { key: 'logo-upload', className: 'flex items-center gap-2' }, [
                             React.createElement('input', {
+                                key: 'current-logo-upload',
                                 type: 'file',
                                 accept: 'image/*',
                                 onChange: (e) => handleLogoUpload(e, false),
@@ -999,6 +908,7 @@ window.Views.SettingsView = ({
                                 id: 'current-logo-upload'
                             }),
                             React.createElement('label', {
+                                key: 'current-logo-upload-label',
                                 htmlFor: 'current-logo-upload',
                                 className: 'flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 cursor-pointer transition-colors'
                             }, [
@@ -1011,8 +921,9 @@ window.Views.SettingsView = ({
 
                 // Location selection dropdown
                 React.createElement('div', { key: 'location-selector', className: 'mb-6' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Select Active Location'),
+                    React.createElement('label', { key: 'location-selector-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Select Active Location'),
                     React.createElement('select', {
+                        key: 'location-selector-select',
                         value: selectedLocation?.id || '',
                         onChange: (e) => {
                             const locationId = parseInt(e.target.value);
@@ -1053,16 +964,16 @@ window.Views.SettingsView = ({
             ]),
 
             // System Settings Tab
-            activeTab === 'system' && currentUser?.role_name === 'admin' && React.createElement('div', { key: 'system-content', className: 'space-y-6' }, [
+            activeTab === 'system' && currentUser?.role === 'admin' && React.createElement('div', { key: 'system-content', className: 'space-y-6' }, [
                 // System Settings Section
                 React.createElement('div', { key: 'system-settings', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                     React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
                         React.createElement('div', { key: 'title' }, [
-                            React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                            React.createElement('h3', {key: 'title-header ', className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
                                 React.createElement(Key, { key: 'icon', size: 24 }),
                                 'System Settings'
                             ]),
-                            React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                            React.createElement('p', {key: 'title-subtext', className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
                                 `${systemSettings.length} settings configured`
                             )
                         ]),
@@ -1088,8 +999,9 @@ window.Views.SettingsView = ({
 
                     // Category Filter
                     React.createElement('div', { key: 'filters', className: 'mb-4' }, [
-                        React.createElement('div', { className: 'flex gap-2 flex-wrap' }, [
+                        React.createElement('div', {key: 'filters-container', className: 'flex gap-2 flex-wrap' }, [
                             React.createElement('button', {
+                                key: 'all-btn',
                                 onClick: () => setSelectedCategory('all'),
                                 className: `px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                                     selectedCategory === 'all' 
@@ -1113,28 +1025,29 @@ window.Views.SettingsView = ({
 
                     // Settings Table
                     React.createElement('div', { key: 'settings-table', className: 'overflow-x-auto' }, [
-                        React.createElement('table', { className: 'w-full' }, [
+                        React.createElement('table', { key: 'settings-table', className: 'w-full' }, [
                             React.createElement('thead', { key: 'thead' }, [
-                                React.createElement('tr', { className: 'border-b dark:border-gray-700' }, [
-                                    React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Key'),
-                                    React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Value'),
-                                    React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Category'),
-                                    React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Type'),
-                                    React.createElement('th', { className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Description'),
-                                    React.createElement('th', { className: 'text-center p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Actions')
+                                React.createElement('tr', { key: 'tr', className: 'border-b dark:border-gray-700' }, [
+                                    React.createElement('th', { key: 'key-header', className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Key'),
+                                    React.createElement('th', { key: 'value-header', className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Value'),
+                                    React.createElement('th', { key: 'category-header', className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Category'),
+                                    React.createElement('th', { key: 'type-header', className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Type'),
+                                    React.createElement('th', { key: 'description-header', className: 'text-left p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Description'),
+                                    React.createElement('th', { key: 'actions-header', className: 'text-center p-3 font-medium text-gray-700 dark:text-gray-300' }, 'Actions')
                                ])
                            ]),
                            React.createElement('tbody', { key: 'tbody' }, 
                                filteredSettings.map(setting =>
-                                   React.createElement('tr', { 
+                                   React.createElement('tr', { key: 'tr', 
                                        key: setting.setting_key,
                                        className: 'border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors'
                                    }, [
-                                       React.createElement('td', { className: 'p-3 font-mono text-sm dark:text-white' }, setting.setting_key),
-                                       React.createElement('td', { className: 'p-3' }, [
-                                           React.createElement('div', { className: 'max-w-xs truncate text-sm dark:text-gray-300' }, 
+                                       React.createElement('td', { key: 'key-cell', className: 'p-3 font-mono text-sm dark:text-white' }, setting.setting_key),
+                                       React.createElement('td', { key: 'value-cell', className: 'p-3' }, [
+                                           React.createElement('div', { key: 'value-div', className: 'max-w-xs truncate text-sm dark:text-gray-300' }, 
                                                setting.setting_type === 'boolean' 
                                                    ? React.createElement('span', {
+                                                       key: 'boolean-span',
                                                        className: `px-2 py-1 rounded text-xs font-medium ${
                                                            setting.setting_value === 'true' 
                                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
@@ -1144,25 +1057,27 @@ window.Views.SettingsView = ({
                                                    : setting.setting_value
                                            )
                                        ]),
-                                       React.createElement('td', { className: 'p-3' }, 
+                                       React.createElement('td', { key: 'category-cell', className: 'p-3' }, 
                                            React.createElement(CategoryBadge, { category: setting.category })
                                        ),
-                                       React.createElement('td', { className: 'p-3' }, [
-                                           React.createElement('span', { 
+                                       React.createElement('td', { key: 'type-cell', className: 'p-3' }, [
+                                           React.createElement('span', { key: 'type-span', 
                                                className: 'px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium' 
                                            }, setting.setting_type)
                                        ]),
-                                       React.createElement('td', { className: 'p-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate' }, 
+                                       React.createElement('td', { key: 'description-cell', className: 'p-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate' }, 
                                            setting.description
                                        ),
-                                       React.createElement('td', { className: 'p-3' }, [
-                                           React.createElement('div', { className: 'flex gap-1 justify-center' }, [
+                                       React.createElement('td', { key: 'actions-cell', className: 'p-3' }, [
+                                           React.createElement('div', { key: 'actions-div', className: 'flex gap-1 justify-center' }, [
                                                React.createElement('button', {
+                                                   key: 'edit-btn',
                                                    onClick: () => handleEditSetting(setting),
                                                    className: 'p-1 text-gray-400 hover:text-blue-600 rounded transition-colors',
                                                    title: 'Edit'
                                                }, React.createElement(Edit, { size: 16 })),
                                                React.createElement('button', {
+                                                   key: 'delete-btn',
                                                    onClick: () => handleDeleteSetting(setting.setting_key),
                                                    className: 'p-1 text-gray-400 hover:text-red-600 rounded transition-colors',
                                                    title: 'Delete'
@@ -1180,23 +1095,25 @@ window.Views.SettingsView = ({
                React.createElement('div', { key: 'database-info', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                    React.createElement('div', { key: 'section-header', className: 'flex items-center gap-2 mb-6' }, [
                        React.createElement(Database, { key: 'icon', size: 24, className: 'text-gray-700 dark:text-gray-300' }),
-                       React.createElement('h3', { className: 'text-xl font-bold dark:text-white' }, 'Database Connection')
+                       React.createElement('h3', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 'Database Connection')
                    ]),
 
-                   databaseInfo ? React.createElement('div', { className: 'space-y-4' }, [
+                   databaseInfo ? React.createElement('div', { key: 'database-info-container', className: 'space-y-4' }, [
                        // PostgreSQL URL
                        React.createElement('div', { key: 'postgres-url' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-gray-300' }, 
+                           React.createElement('label', { key: 'postgres-url-label', className: 'block text-sm font-medium mb-2 dark:text-gray-300' }, 
                                'PostgreSQL Connection URL ($DATABASE_URL)'
                            ),
-                           React.createElement('div', { className: 'flex gap-2' }, [
+                           React.createElement('div', { key: 'postgres-url-container', className: 'flex gap-2' }, [
                                React.createElement('input', {
+                                   key: 'postgres-url-input',
                                    type: 'text',
                                    value: databaseInfo.database_url,
                                    readOnly: true,
                                    className: 'flex-1 p-3 font-mono text-sm bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 rounded-lg dark:text-white'
                                }),
                                React.createElement('button', {
+                                   key: 'postgres-url-copy-btn',
                                    onClick: () => copyToClipboard(databaseInfo.database_url, 'postgres'),
                                    className: 'px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2'
                                }, [
@@ -1210,17 +1127,19 @@ window.Views.SettingsView = ({
 
                        // JDBC URL
                        React.createElement('div', { key: 'jdbc-url' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-gray-300' }, 
+                           React.createElement('label', { key: 'jdbc-url-label', className: 'block text-sm font-medium mb-2 dark:text-gray-300' }, 
                                'JDBC Connection String'
                            ),
-                           React.createElement('div', { className: 'flex gap-2' }, [
+                           React.createElement('div', { key: 'jdbc-url-container', className: 'flex gap-2' }, [
                                React.createElement('input', {
+                                   key: 'jdbc-url-input',
                                    type: 'text',
                                    value: databaseInfo.jdbc_format,
                                    readOnly: true,
                                    className: 'flex-1 p-3 font-mono text-sm bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 rounded-lg dark:text-white'
                                }),
                                React.createElement('button', {
+                                   key: 'jdbc-url-copy-btn',
                                    onClick: () => copyToClipboard(databaseInfo.jdbc_format, 'jdbc'),
                                    className: 'px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2'
                                }, [
@@ -1234,11 +1153,11 @@ window.Views.SettingsView = ({
 
                        // SSL Mode
                        React.createElement('div', { key: 'ssl-mode' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-gray-300' }, 'SSL Mode'),
-                           React.createElement('div', { 
+                           React.createElement('label', { key: 'ssl-mode-label', className: 'block text-sm font-medium mb-2 dark:text-gray-300' }, 'SSL Mode'),
+                           React.createElement('div', { key: 'ssl-mode-container', 
                                className: 'p-3 bg-gray-100 dark:bg-gray-700 rounded-lg' 
                            }, [
-                               React.createElement('span', { 
+                               React.createElement('span', { key: 'ssl-mode-span', 
                                    className: `px-2 py-1 rounded text-sm font-medium ${
                                        databaseInfo.ssl_mode === 'require' 
                                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
@@ -1250,10 +1169,10 @@ window.Views.SettingsView = ({
 
                        // Connection Example
                        React.createElement('div', { key: 'connection-example', className: 'mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg' }, [
-                           React.createElement('h4', { className: 'text-sm font-medium mb-2 dark:text-gray-300' }, 
+                           React.createElement('h4', { key: 'example-title', className: 'text-sm font-medium mb-2 dark:text-gray-300' }, 
                                'Example: Using System Settings in SQL Queries'
                            ),
-                           React.createElement('pre', { 
+                           React.createElement('pre', { key: 'example-pre', 
                                className: 'text-xs font-mono bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto' 
                            }, 
     `-- Get a system setting value in a query
@@ -1272,8 +1191,8 @@ window.Views.SettingsView = ({
     WHERE id = 1;`
                            )
                        ])
-                   ]) : React.createElement('div', { className: 'text-center py-8 text-gray-500 dark:text-gray-400' }, [
-                       React.createElement('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4' }),
+                   ]) : React.createElement('div', { key: 'loading-container', className: 'text-center py-8 text-gray-500 dark:text-gray-400' }, [
+                       React.createElement('div', { key: 'loading-div', className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4' }),
                        'Loading database information...'
                    ])
                ])
@@ -1283,11 +1202,11 @@ window.Views.SettingsView = ({
            activeTab === 'users' && currentUser?.permissions?.users?.read && React.createElement('div', { key: 'users-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
                    React.createElement('div', { key: 'title' }, [
-                       React.createElement('h3', { className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                       React.createElement('h3', { key: 'title-header', className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
                            React.createElement(Users, { key: 'icon', size: 24 }),
                            'User Management'
                        ]),
-                       React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                       React.createElement('p', { key: 'title-subtext', className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
                            `${users.length} users • Manage system access and permissions`
                        )
                    ]),
@@ -1310,34 +1229,34 @@ window.Views.SettingsView = ({
                         }, [
                             React.createElement('div', { key: 'user-header', className: 'flex items-center justify-between mb-2' }, [
                                 React.createElement('div', { key: 'user-info' }, [
-                                    React.createElement('h4', { className: 'font-semibold dark:text-white' }, 
+                                    React.createElement('h4', { key: 'user-name', className: 'font-semibold dark:text-white' }, 
                                         `${user.first_name} ${user.last_name}`
                                     ),
-                                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                                    React.createElement('p', { key: 'user-username', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
                                         user.username
                                     )
                                 ]),
                                 React.createElement('div', { key: 'user-status', className: 'flex items-center gap-2' }, [
-                                    React.createElement('span', { 
+                                    React.createElement('span', { key: 'user-status-span', 
                                         className: `px-2 py-1 rounded-full text-xs font-medium ${
                                             user.is_active 
                                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
                                                 : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                                         }`
                                     }, user.is_active ? 'Active' : 'Inactive'),
-                                    React.createElement('span', { 
+                                    React.createElement('span', { key: 'user-role-span', 
                                         className: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                    }, user.role_name || 'No Role')
+                                    }, user.role || 'No Role')
                                 ])
                             ]),
                             React.createElement('div', { key: 'user-details', className: 'grid grid-cols-2 gap-4 text-sm mb-3' }, [
                                 React.createElement('div', { key: 'email' }, [
-                                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Email: '),
-                                    React.createElement('span', { className: 'dark:text-white' }, user.email)
+                                    React.createElement('span', { key: 'email-label', className: 'text-gray-500 dark:text-gray-400' }, 'Email: '),
+                                    React.createElement('span', { key: 'email-value', className: 'dark:text-white' }, user.email)
                                 ]),
                                 React.createElement('div', { key: 'last-login' }, [
-                                    React.createElement('span', { className: 'text-gray-500 dark:text-gray-400' }, 'Last Login: '),
-                                    React.createElement('span', { className: 'dark:text-white' }, 
+                                    React.createElement('span', { key: 'last-login-label', className: 'text-gray-500 dark:text-gray-400' }, 'Last Login: '),
+                                    React.createElement('span', { key: 'last-login-value', className: 'dark:text-white' }, 
                                         user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'
                                     )
                                 ])
@@ -1394,8 +1313,9 @@ window.Views.SettingsView = ({
                    className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
                }, [
                    React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
-                       React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 'Create New User'),
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 'Create New User'),
                        React.createElement('button', {
+                           key: 'close-btn',
                            onClick: () => setShowCreateUserForm(false),
                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                        }, React.createElement(X, { size: 20 }))
@@ -1406,8 +1326,9 @@ window.Views.SettingsView = ({
                        className: 'px-6 py-4 space-y-4'
                    }, [
                        React.createElement('div', { key: 'username' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Username'),
+                           React.createElement('label', { key: 'username-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Username'),
                            React.createElement('input', {
+                               key: 'username-input',
                                type: 'text',
                                value: createUserForm.username,
                                onChange: (e) => setCreateUserForm(prev => ({ ...prev, username: e.target.value })),
@@ -1416,8 +1337,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'email' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                           React.createElement('label', { key: 'email-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
                            React.createElement('input', {
+                               key: 'email-input',
                                type: 'email',
                                value: createUserForm.email,
                                onChange: (e) => setCreateUserForm(prev => ({ ...prev, email: e.target.value })),
@@ -1426,8 +1348,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'password' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Password'),
+                           React.createElement('label', { key: 'password-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Password'),
                            React.createElement('input', {
+                               key: 'password-input',
                                type: 'password',
                                value: createUserForm.password,
                                onChange: (e) => setCreateUserForm(prev => ({ ...prev, password: e.target.value })),
@@ -1436,8 +1359,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'first-name' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'First Name'),
+                           React.createElement('label', { key: 'first-name-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'First Name'),
                            React.createElement('input', {
+                               key: 'first-name-input',
                                type: 'text',
                                value: createUserForm.first_name,
                                onChange: (e) => setCreateUserForm(prev => ({ ...prev, first_name: e.target.value })),
@@ -1446,8 +1370,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'last-name' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Last Name'),
+                           React.createElement('label', { key: 'last-name-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Last Name'),
                            React.createElement('input', {
+                               key: 'last-name-input',
                                type: 'text',
                                value: createUserForm.last_name,
                                onChange: (e) => setCreateUserForm(prev => ({ ...prev, last_name: e.target.value })),
@@ -1456,8 +1381,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'role' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Role'),
+                           React.createElement('label', { key: 'role-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Role'),
                            React.createElement('select', {
+                               key: 'role-select',
                                value: createUserForm.role_id,
                                onChange: (e) => setCreateUserForm(prev => ({ ...prev, role_id: e.target.value })),
                                required: true,
@@ -1471,11 +1397,13 @@ window.Views.SettingsView = ({
                        ]),
                        React.createElement('div', { key: 'footer', className: 'flex gap-3 justify-end pt-4' }, [
                            React.createElement('button', {
+                               key: 'cancel-btn',
                                type: 'button',
                                onClick: () => setShowCreateUserForm(false),
                                className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
                            }, 'Cancel'),
                            React.createElement('button', {
+                               key: 'create-btn',
                                type: 'submit',
                                className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2'
                            }, [
@@ -1497,8 +1425,9 @@ window.Views.SettingsView = ({
                    className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
                }, [
                    React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
-                       React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 'Edit User'),
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 'Edit User'),
                        React.createElement('button', {
+                           key: 'close-btn',
                            onClick: () => setShowEditUserForm(false),
                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                        }, React.createElement(X, { size: 20 }))
@@ -1509,8 +1438,9 @@ window.Views.SettingsView = ({
                        className: 'px-6 py-4 space-y-4'
                    }, [
                        React.createElement('div', { key: 'username' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Username'),
+                           React.createElement('label', { key: 'username-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Username'),
                            React.createElement('input', {
+                               key: 'username-input',
                                type: 'text',
                                value: editUserForm.username,
                                onChange: (e) => setEditUserForm(prev => ({ ...prev, username: e.target.value })),
@@ -1519,8 +1449,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'email' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
+                           React.createElement('label', { key: 'email-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Email'),
                            React.createElement('input', {
+                               key: 'email-input',
                                type: 'email',
                                value: editUserForm.email,
                                onChange: (e) => setEditUserForm(prev => ({ ...prev, email: e.target.value })),
@@ -1529,8 +1460,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'first-name' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'First Name'),
+                           React.createElement('label', { key: 'first-name-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'First Name'),
                            React.createElement('input', {
+                               key: 'first-name-input',
                                type: 'text',
                                value: editUserForm.first_name,
                                onChange: (e) => setEditUserForm(prev => ({ ...prev, first_name: e.target.value })),
@@ -1539,8 +1471,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'last-name' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Last Name'),
+                           React.createElement('label', { key: 'last-name-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Last Name'),
                            React.createElement('input', {
+                               key: 'last-name-input',
                                type: 'text',
                                value: editUserForm.last_name,
                                onChange: (e) => setEditUserForm(prev => ({ ...prev, last_name: e.target.value })),
@@ -1549,8 +1482,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'role' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Role'),
+                           React.createElement('label', { key: 'role-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Role'),
                            React.createElement('select', {
+                               key: 'role-select',
                                value: editUserForm.role_id,
                                onChange: (e) => setEditUserForm(prev => ({ ...prev, role_id: e.target.value })),
                                required: true,
@@ -1563,8 +1497,9 @@ window.Views.SettingsView = ({
                            ])
                        ]),
                        React.createElement('div', { key: 'active-status' }, [
-                           React.createElement('label', { className: 'flex items-center gap-2 dark:text-white' }, [
+                           React.createElement('label', { key: 'active-status-label', className: 'flex items-center gap-2 dark:text-white' }, [
                                React.createElement('input', {
+                                   key: 'active-status-input',
                                    type: 'checkbox',
                                    checked: editUserForm.is_active,
                                    onChange: (e) => setEditUserForm(prev => ({ ...prev, is_active: e.target.checked })),
@@ -1575,11 +1510,13 @@ window.Views.SettingsView = ({
                        ]),
                        React.createElement('div', { key: 'footer', className: 'flex gap-3 justify-end pt-4' }, [
                            React.createElement('button', {
+                               key: 'cancel-btn',
                                type: 'button',
                                onClick: () => setShowEditUserForm(false),
                                className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
                            }, 'Cancel'),
                            React.createElement('button', {
+                               key: 'update-btn',
                                type: 'submit',
                                className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2'
                            }, [
@@ -1601,10 +1538,11 @@ window.Views.SettingsView = ({
                    className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
                }, [
                    React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
-                       React.createElement('h2', { className: 'text-xl font-bold dark:text-white' }, 
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
                            `Change Password for ${changingPasswordFor?.username}`
                        ),
                        React.createElement('button', {
+                           key: 'close-btn',
                            onClick: () => setShowPasswordModal(false),
                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                        }, React.createElement(X, { size: 20 }))
@@ -1615,8 +1553,9 @@ window.Views.SettingsView = ({
                        className: 'px-6 py-4 space-y-4'
                    }, [
                        React.createElement('div', { key: 'new-password' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'New Password'),
+                           React.createElement('label', { key: 'new-password-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'New Password'),
                            React.createElement('input', {
+                               key: 'new-password-input',
                                type: 'password',
                                value: passwordForm.new_password,
                                onChange: (e) => setPasswordForm(prev => ({ ...prev, new_password: e.target.value })),
@@ -1626,8 +1565,9 @@ window.Views.SettingsView = ({
                            })
                        ]),
                        React.createElement('div', { key: 'confirm-password' }, [
-                           React.createElement('label', { className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Confirm Password'),
+                           React.createElement('label', { key: 'confirm-password-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Confirm Password'),
                            React.createElement('input', {
+                               key: 'confirm-password-input',
                                type: 'password',
                                value: passwordForm.confirm_password,
                                onChange: (e) => setPasswordForm(prev => ({ ...prev, confirm_password: e.target.value })),
@@ -1638,11 +1578,13 @@ window.Views.SettingsView = ({
                        ]),
                        React.createElement('div', { key: 'footer', className: 'flex gap-3 justify-end pt-4' }, [
                            React.createElement('button', {
+                               key: 'cancel-btn',
                                type: 'button',
                                onClick: () => setShowPasswordModal(false),
                                className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
                            }, 'Cancel'),
                            React.createElement('button', {
+                               key: 'change-btn',
                                type: 'submit',
                                className: 'px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2'
                            }, [
@@ -1681,7 +1623,7 @@ window.Views.SettingsView = ({
                title: 'Create New Location'
            }),
 
-           React.createElement(SystemSettingModal, {
+           React.createElement(window.Modals.SystemSettingModal, {
                key: 'setting-modal',
                show: showSettingModal,
                onClose: () => {
@@ -1694,7 +1636,13 @@ window.Views.SettingsView = ({
                        category: 'general',
                        setting_type: 'text'
                    });
-               }
+               },
+               editingSetting: editingSetting,
+               X: X,
+               settingForm: settingForm,
+               setSettingForm: setSettingForm,
+               handleSaveSetting: handleSaveSetting,
+               Save: Save
            })
        ]);
     };

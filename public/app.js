@@ -7,6 +7,14 @@ const POSApp = () => {
     // Authentication state
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    
+    // Debug: Make currentUser available in console
+    React.useEffect(() => {
+        if (currentUser) {
+            window.currentUser = currentUser;
+            console.log('Current user updated:', currentUser);
+        }
+    }, [currentUser]);
     const [authLoading, setAuthLoading] = useState(true);
 
     // Enhanced state management

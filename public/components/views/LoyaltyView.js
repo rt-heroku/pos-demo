@@ -417,6 +417,7 @@ window.Views.LoyaltyView= ({
                     // Sort controls
                     React.createElement('div', { key: 'sort', className: 'flex items-center gap-2' }, [
                         React.createElement('select', {
+                            key: 'sort-select',
                             value: sortBy,
                             onChange: (e) => setSortBy(e.target.value),
                             className: 'px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
