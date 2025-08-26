@@ -116,7 +116,7 @@ const ProductCard = ({ product }) => {
 
     const productImage = getProductImage();
     
-    return React.createElement('div', { 
+    return React.createElement('div', { key: 'product-card', 
         className: `bg-white rounded-lg border hover:shadow-lg transition-all duration-200 overflow-hidden ${
             selectedProducts.includes(product.id) ? 'ring-2 ring-blue-500' : ''
         }` 
@@ -160,6 +160,7 @@ const ProductCard = ({ product }) => {
             // Selection checkbox
             React.createElement('div', { key: 'checkbox', className: 'absolute bottom-2 left-2' }, [
                 React.createElement('input', {
+                    key: 'checkbox-input',
                     type: 'checkbox',
                     checked: selectedProducts.includes(product.id),
                     onChange: (e) => onProductSelect(product.id, e.target.checked),
@@ -173,6 +174,7 @@ const ProductCard = ({ product }) => {
                 className: 'absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center' 
             }, [
                 React.createElement('span', { 
+                    key: 'inactive-span',
                     className: 'text-white font-medium px-3 py-1 bg-gray-800 rounded' 
                 }, 'Inactive')
             ])
@@ -182,24 +184,27 @@ const ProductCard = ({ product }) => {
         React.createElement('div', { key: 'info', className: 'p-4' }, [
             React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-2' }, [
                 React.createElement('div', { key: 'title-section', className: 'flex-1 pr-2' }, [
-                    React.createElement('h3', { className: 'font-semibold text-lg line-clamp-2 mb-1' }, product.name),
-                    React.createElement('p', { className: 'text-sm text-gray-600 font-mono' }, product.sku),
-                    product.brand && React.createElement('p', { className: 'text-sm text-blue-600 font-medium' }, 
+                    React.createElement('h3', { key: 'title-h3', className: 'font-semibold text-lg line-clamp-2 mb-1' }, product.name),
+                    React.createElement('p', { key: 'sku-p', className: 'text-sm text-gray-600 font-mono' }, product.sku),
+                    product.brand && React.createElement('p', { key: 'brand-p', className: 'text-sm text-blue-600 font-medium' }, 
                         `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
                     )
                 ]),
                 React.createElement('div', { key: 'quick-actions', className: 'flex flex-col gap-1' }, [
                     React.createElement('button', {
+                        key: 'edit-btn',
                         onClick: () => onEditProduct(product),
                         className: 'p-1 text-gray-400 hover:text-blue-600 transition-colors rounded',
                         title: 'Edit Product'
                     }, React.createElement(Edit, { size: 16 })),
                     React.createElement('button', {
+                        key: 'duplicate-btn',
                         onClick: () => onDuplicateProduct(product.id),
                         className: 'p-1 text-gray-400 hover:text-green-600 transition-colors rounded',
                         title: 'Duplicate Product'
                     }, React.createElement(Copy, { size: 16 })),
                     React.createElement('button', {
+                        key: 'delete-btn',
                         onClick: () => onDeleteProduct(product.id),
                         className: 'p-1 text-gray-400 hover:text-red-600 transition-colors rounded',
                         title: 'Delete Product'
@@ -208,26 +213,27 @@ const ProductCard = ({ product }) => {
             ]),
             
             React.createElement('div', { key: 'details', className: 'space-y-3' }, [
-                React.createElement('div', { className: 'flex justify-between items-center' }, [
-                    React.createElement('span', { className: 'text-2xl font-bold text-green-600' }, 
+                React.createElement('div', { key: 'price-section', className: 'flex justify-between items-center' }, [
+                    React.createElement('span', { key: 'price-span', className: 'text-2xl font-bold text-green-600' }, 
                         `$${parseFloat(product.price).toFixed(2)}`
                     ),
-                    React.createElement('div', { className: 'text-right' }, [
-                        React.createElement('div', { className: 'text-sm font-medium' }, 
+                    React.createElement('div', { key: 'stock-section', className: 'text-right' }, [
+                        React.createElement('div', { key: 'stock-div', className: 'text-sm font-medium' }, 
                             `Stock: ${product.stock}`
                         ),
-                        React.createElement('div', { className: 'text-xs text-gray-500' }, 
+                        React.createElement('div', { key: 'category-div', className: 'text-xs text-gray-500' }, 
                             product.category
                         )
                     ])
                 ]),
                 
                 product.description && React.createElement('p', { 
+                    key: 'description-p',
                     className: 'text-sm text-gray-600 line-clamp-2' 
                 }, product.description),
                 
                 // Product attributes
-                React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
+                React.createElement('div', { key: 'attributes-div', className: 'flex flex-wrap gap-1' }, [
                     product.material && React.createElement('span', { 
                         key: 'material',
                         className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
@@ -248,6 +254,7 @@ const ProductCard = ({ product }) => {
                 
                 // Features preview
                 product.features && product.features.length > 0 && React.createElement('div', { 
+                    key: 'features-div',
                     className: 'text-xs text-gray-500 flex items-center gap-1' 
                 }, [
                     React.createElement('span', { key: 'features-icon' }, '✨'),
@@ -274,13 +281,14 @@ const ProductRow = ({ product }) => {
 
     const productImage = getProductImage();
     
-    return React.createElement('tr', { 
+    return React.createElement('tr', { key: 'product-row', 
         className: `hover:bg-gray-50 border-b transition-colors ${
             selectedProducts.includes(product.id) ? 'bg-blue-50' : ''
         } ${!product.is_active ? 'opacity-60' : ''}` 
     }, [
         React.createElement('td', { key: 'select', className: 'p-4' }, [
             React.createElement('input', {
+                key: 'checkbox-input',
                 type: 'checkbox',
                 checked: selectedProducts.includes(product.id),
                 onChange: (e) => onProductSelect(product.id, e.target.checked),
@@ -288,8 +296,8 @@ const ProductRow = ({ product }) => {
             })
         ]),
         React.createElement('td', { key: 'product', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex items-center gap-3' }, [
-                React.createElement('div', { className: 'w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0' }, [
+            React.createElement('div', { key: 'product-div', className: 'flex items-center gap-3' }, [
+                React.createElement('div', { key: 'image-div', className: 'w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0' }, [
                     // Show actual image if available
                     productImage.type === 'url' ? (
                         React.createElement('img', {
@@ -312,24 +320,24 @@ const ProductRow = ({ product }) => {
                         style: { display: productImage.type === 'url' ? 'none' : 'block' }
                     }, productImage.src)
                 ]),
-                React.createElement('div', { className: 'min-w-0 flex-1' }, [
-                    React.createElement('div', { className: 'font-medium truncate' }, product.name),
-                    React.createElement('div', { className: 'text-sm text-gray-600 font-mono' }, product.sku),
-                    product.brand && React.createElement('div', { className: 'text-sm text-blue-600' }, 
+                React.createElement('div', { key: 'name-div', className: 'min-w-0 flex-1' }, [
+                    React.createElement('div', { key: 'name-div', className: 'font-medium truncate' }, product.name),
+                    React.createElement('div', { key: 'sku-div', className: 'text-sm text-gray-600 font-mono' }, product.sku),
+                    product.brand && React.createElement('div', { key: 'brand-div', className: 'text-sm text-blue-600' }, 
                         `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
                     )
                 ])
             ])
         ]),
         React.createElement('td', { key: 'category', className: 'p-4' }, [
-            React.createElement('div', { className: 'text-sm' }, product.category),
-            product.product_type && React.createElement('div', { className: 'text-xs text-gray-500' }, product.product_type)
+            React.createElement('div', { key: 'category-div', className: 'text-sm' }, product.category),
+            product.product_type && React.createElement('div', { key: 'product-type-div', className: 'text-xs text-gray-500' }, product.product_type)
         ]),
         React.createElement('td', { key: 'price', className: 'p-4 font-medium text-green-600' }, 
             `$${parseFloat(product.price).toFixed(2)}`
         ),
         React.createElement('td', { key: 'attributes', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
+            React.createElement('div', { key: 'attributes-div', className: 'flex flex-wrap gap-1' }, [
                 product.material && React.createElement('span', { 
                     key: 'material',
                     className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded' 
@@ -342,17 +350,18 @@ const ProductRow = ({ product }) => {
         ]),
 
         React.createElement('td', { key: 'stock', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex items-center gap-2' }, [
-                React.createElement('span', { className: `px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` }, 
+            React.createElement('div', { key: 'stock-div', className: 'flex items-center gap-2' }, [
+                React.createElement('span', { key: 'stock-span', className: `px-2 py-1 rounded-full text-xs font-medium ${stockInfo.color}` }, 
                     product.stock
                 ),
-                React.createElement('span', { className: 'text-xs text-gray-500' }, stockInfo.text)
+                React.createElement('span', { key: 'stock-text-span', className: 'text-xs text-gray-500' }, stockInfo.text)
             ])
         ]),
 
         React.createElement('td', { key: 'status', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex flex-wrap gap-1' }, [
+            React.createElement('div', { key: 'status-div', className: 'flex flex-wrap gap-1' }, [
                 React.createElement('span', { 
+                    key: 'status-span',
                     className: `px-2 py-1 rounded-full text-xs font-medium ${
                         product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                     }` 
@@ -364,18 +373,21 @@ const ProductRow = ({ product }) => {
             ])
         ]),
         React.createElement('td', { key: 'actions', className: 'p-4' }, [
-            React.createElement('div', { className: 'flex gap-1' }, [
+            React.createElement('div', { key: 'actions-div', className: 'flex gap-1' }, [
                 React.createElement('button', {
+                    key: 'edit-btn',
                     onClick: () => onEditProduct(product),
                     className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
                     title: 'Edit'
                 }, React.createElement(Edit, { size: 16 })),
                 React.createElement('button', {
+                    key: 'duplicate-btn',
                     onClick: () => onDuplicateProduct(product.id),
                     className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
                     title: 'Duplicate'
                 }, React.createElement(Copy, { size: 16 })),
                 React.createElement('button', {
+                    key: 'delete-btn',
                     onClick: () => onDeleteProduct(product.id),
                     className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
                     title: 'Delete'
@@ -385,6 +397,7 @@ const ProductRow = ({ product }) => {
     ]);
 };
     const EmptyState = () => React.createElement('div', { 
+        key: 'empty-state',
         className: 'bg-white rounded-xl shadow-sm border p-12 text-center' 
     }, [
         React.createElement(Package, { 
@@ -413,16 +426,16 @@ const ProductRow = ({ product }) => {
         ])
     ]);
 
-    return React.createElement('div', { className: 'space-y-6' }, [
+    return React.createElement('div', { key: 'inventory-view', className: 'space-y-6' }, [
         // Header with controls
         React.createElement('div', { key: 'header', className: 'bg-white rounded-xl shadow-sm border p-6' }, [
-            React.createElement('div', { className: 'flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6' }, [
+            React.createElement('div', { key: 'header-content', className: 'flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6' }, [
                 React.createElement('div', { key: 'title-section' }, [
-                    React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-3' }, [
+                    React.createElement('h2', { key: 'title-h2', className: 'text-2xl font-bold flex items-center gap-3' }, [
                         React.createElement(Package, { key: 'icon', size: 28 }),
                         'Product Inventory'
                     ]),
-                    React.createElement('p', { className: 'text-gray-600 mt-1' }, [
+                    React.createElement('p', { key: 'subtitle-p', className: 'text-gray-600 mt-1' }, [
                         `${products.length} products`,
                         products.filter(p => p.stock <= 5).length > 0 && 
                             ` • ${products.filter(p => p.stock <= 5).length} low stock`,
@@ -433,6 +446,7 @@ const ProductRow = ({ product }) => {
                 
                 React.createElement('div', { key: 'actions', className: 'flex flex-wrap gap-3' }, [
                     React.createElement('button', {
+                        key: 'add-product-btn',
                         onClick: onShowProductModal,
                         className: 'flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
                     }, [
@@ -441,6 +455,7 @@ const ProductRow = ({ product }) => {
                     ]),
                     
                     React.createElement('button', {
+                        key: 'filters-btn',
                         onClick: () => setShowFilters(!showFilters),
                         className: `flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
                             showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'hover:bg-gray-50'
@@ -449,11 +464,13 @@ const ProductRow = ({ product }) => {
                         React.createElement(Filter, { key: 'icon', size: 20 }),
                         'Filters',
                         Object.keys(searchFilters).length > 0 && React.createElement('span', {
+                            key: 'filter-count-span',
                             className: 'bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center'
                         }, Object.keys(searchFilters).length)
                     ]),
                     
                     selectedProducts.length > 0 && React.createElement('button', {
+                        key: 'bulk-actions-btn',
                         onClick: () => setShowBulkActions(!showBulkActions),
                         className: 'flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
                     }, [
@@ -464,13 +481,14 @@ const ProductRow = ({ product }) => {
             ]),
 
             // Quick search and view controls
-            React.createElement('div', { className: 'flex flex-col sm:flex-row gap-4 items-center' }, [
+            React.createElement('div', { key: 'search-controls', className: 'flex flex-col sm:flex-row gap-4 items-center' }, [
                 React.createElement('div', { key: 'search', className: 'relative flex-1' }, [
-                    React.createElement(Search, { 
+                    React.createElement(Search, { key: 'search-icon',
                         className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
                         size: 20 
                     }),
                     React.createElement('input', {
+                        key: 'search-input',
                         type: 'text',
                         value: localSearchTerm,
                         onChange: (e) => setLocalSearchTerm(e.target.value),
@@ -481,6 +499,7 @@ const ProductRow = ({ product }) => {
                 
                 React.createElement('div', { key: 'sort', className: 'flex items-center gap-2' }, [
                     React.createElement('select', {
+                        key: 'sort-select',
                         value: sortBy,
                         onChange: (e) => setSortBy(e.target.value),
                         className: 'px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -491,6 +510,7 @@ const ProductRow = ({ product }) => {
                         React.createElement('option', { key: 'created', value: 'created_at' }, 'Date Added')
                     ]),
                     React.createElement('button', {
+                        key: 'sort-order-btn',
                         onClick: () => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'),
                         className: 'p-2 border rounded-lg hover:bg-gray-50 transition-colors',
                         title: `Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`
@@ -500,6 +520,7 @@ const ProductRow = ({ product }) => {
                 // View mode toggle
                 React.createElement('div', { key: 'view-toggle', className: 'flex border rounded-lg overflow-hidden' }, [
                     React.createElement('button', {
+                        key: 'grid-view-btn',
                         onClick: () => onViewModeChange('grid'),
                         className: `p-2 transition-colors ${
                             viewMode === 'grid' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'
@@ -507,7 +528,8 @@ const ProductRow = ({ product }) => {
                         title: 'Grid View'
                     }, React.createElement(Grid3X3, { size: 20 })),
                     React.createElement('button', {
-                        onClick: () => onViewModeChange('list'),
+                        key: 'list-view-btn',
+                            onClick: () => onViewModeChange('list'),
                         className: `p-2 transition-colors ${
                             viewMode === 'list' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'
                         }`,
@@ -519,10 +541,10 @@ const ProductRow = ({ product }) => {
 
         // Filters panel
         showFilters && React.createElement('div', { key: 'filters', className: 'bg-white rounded-xl shadow-sm border p-6' }, [
-            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4' }, [
+            React.createElement('div', { key: 'filters-content', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4' }, [
                 // Brand filter
                 React.createElement('div', { key: 'brand' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Brand'),
+                    React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium mb-2' }, 'Brand'),
                     React.createElement('select', {
                         value: searchFilters.brand || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, brand: e.target.value || undefined }),
@@ -537,7 +559,7 @@ const ProductRow = ({ product }) => {
                 
                 // Collection filter
                 React.createElement('div', { key: 'collection' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Collection'),
+                    React.createElement('label', { key: 'collection-label', className: 'block text-sm font-medium mb-2' }, 'Collection'),
                     React.createElement('select', {
                         value: searchFilters.collection || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, collection: e.target.value || undefined }),
@@ -552,7 +574,7 @@ const ProductRow = ({ product }) => {
                 
                 // Product Type filter
                 React.createElement('div', { key: 'type' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Type'),
+                    React.createElement('label', { key: 'type-label', className: 'block text-sm font-medium mb-2' }, 'Type'),
                     React.createElement('select', {
                         value: searchFilters.productType || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, productType: e.target.value || undefined }),
@@ -567,7 +589,7 @@ const ProductRow = ({ product }) => {
                 
                 // Material filter
                 React.createElement('div', { key: 'material' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Material'),
+                    React.createElement('label', { key: 'material-label', className: 'block text-sm font-medium mb-2' }, 'Material'),
                     React.createElement('select', {
                         value: searchFilters.material || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, material: e.target.value || undefined }),
@@ -582,7 +604,7 @@ const ProductRow = ({ product }) => {
                 
                 // Status filter
                 React.createElement('div', { key: 'status' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Status'),
+                    React.createElement('label', { key: 'status-label', className: 'block text-sm font-medium mb-2' }, 'Status'),
                     React.createElement('select', {
                         value: (() => {
                             if (searchFilters.inStock === 'true') return 'in-stock';
@@ -610,9 +632,9 @@ const ProductRow = ({ product }) => {
             ]),
             
             // Price range filters
-            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 mt-4' }, [
+            React.createElement('div', { key: 'price-filters', className: 'grid grid-cols-1 md:grid-cols-2 gap-4 mt-4' }, [
                 React.createElement('div', { key: 'min-price' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Min Price ($)'),
+                    React.createElement('label', { key: 'min-price-label', className: 'block text-sm font-medium mb-2' }, 'Min Price ($)'),
                     React.createElement('input', {
                         type: 'number',
                         step: '0.01',
@@ -624,7 +646,7 @@ const ProductRow = ({ product }) => {
                     })
                 ]),
                 React.createElement('div', { key: 'max-price' }, [
-                    React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Max Price ($)'),
+                    React.createElement('label', { key: 'max-price-label', className: 'block text-sm font-medium mb-2' }, 'Max Price ($)'),
                     React.createElement('input', {
                         type: 'number',
                         step: '0.01',
@@ -639,6 +661,7 @@ const ProductRow = ({ product }) => {
 
             // Clear filters button
             Object.keys(searchFilters).length > 0 && React.createElement('div', { 
+                key: 'clear-filters-btn',
                 className: 'mt-4 pt-4 border-t flex justify-end' 
             }, [
                 React.createElement('button', {
@@ -653,31 +676,36 @@ const ProductRow = ({ product }) => {
             key: 'bulk-actions', 
             className: 'bg-white rounded-xl shadow-sm border p-6' 
         }, [
-            React.createElement('div', { className: 'flex items-center justify-between mb-4' }, [
-                React.createElement('h3', { className: 'font-medium' }, `Bulk Actions (${selectedProducts.length} selected)`),
+            React.createElement('div', { key: 'bulk-actions-header', className: 'flex items-center justify-between mb-4' }, [
+                React.createElement('h3', { key: 'bulk-actions-title', className: 'font-medium' }, `Bulk Actions (${selectedProducts.length} selected)`),
                 React.createElement('button', {
                     onClick: () => onSelectAll(false),
                     className: 'text-sm text-gray-500 hover:text-gray-700'
                 }, 'Clear Selection')
             ]),
-            React.createElement('div', { className: 'flex flex-wrap gap-3' }, [
+            React.createElement('div', { key: 'bulk-actions-buttons', className: 'flex flex-wrap gap-3' }, [
                 React.createElement('button', {
+                    key: 'activate-btn',
                     onClick: () => handleBulkAction('activate'),
                     className: 'px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors'
                 }, '✅ Activate'),
                 React.createElement('button', {
+                    key: 'deactivate-btn',
                     onClick: () => handleBulkAction('deactivate'),
                     className: 'px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors'
                 }, '⏸️ Deactivate'),
                 React.createElement('button', {
-                    onClick: () => handleBulkAction('feature'),
+                    key: 'feature-btn',
+                        onClick: () => handleBulkAction('feature'),
                     className: 'px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors'
                 }, '⭐ Mark Featured'),
                 React.createElement('button', {
+                    key: 'unfeature-btn',
                     onClick: () => handleBulkAction('unfeature'),
                     className: 'px-4 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors'
                 }, '⭐ Remove Featured'),
                 React.createElement('button', {
+                    key: 'delete-btn',
                     onClick: () => handleBulkAction('delete'),
                     className: 'px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors'
                 }, '🗑️ Delete Selected')
@@ -687,36 +715,38 @@ const ProductRow = ({ product }) => {
         // Products display
         React.createElement('div', { key: 'products' }, [
             loading ? (
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-sm border p-12 text-center' }, [
-                    React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4' }),
-                    React.createElement('p', { className: 'text-gray-600 text-lg' }, 'Loading products...'),
-                    React.createElement('p', { className: 'text-gray-500 text-sm mt-2' }, 'Please wait while we fetch your inventory')
+                React.createElement('div', { key: 'loading-div', className: 'bg-white rounded-xl shadow-sm border p-12 text-center' }, [
+                    React.createElement('div', { key: 'loading-spinner', className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4' }),
+                    React.createElement('p', { key: 'loading-text', className: 'text-gray-600 text-lg' }, 'Loading products...'),
+                    React.createElement('p', { key: 'loading-subtext', className: 'text-gray-500 text-sm mt-2' }, 'Please wait while we fetch your inventory')
                 ])
             ) : sortedProducts.length === 0 ? (
                 React.createElement(EmptyState, { key: 'empty-state' })
             ) : viewMode === 'grid' ? (
                 // Grid view
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-sm border' }, [
-                    React.createElement('div', { className: 'p-6 border-b' }, [
-                        React.createElement('div', { className: 'flex items-center justify-between mb-4' }, [
-                            React.createElement('div', { className: 'flex items-center gap-4' }, [
-                                React.createElement('label', { className: 'flex items-center gap-2 cursor-pointer' }, [
+                React.createElement('div', { key: 'grid-view', className: 'bg-white rounded-xl shadow-sm border' }, [
+                    React.createElement('div', { key: 'grid-header', className: 'p-6 border-b' }, [
+                        React.createElement('div', { key: 'grid-header-content', className: 'flex items-center justify-between mb-4' }, [
+                            React.createElement('div', { key: 'grid-header-select', className: 'flex items-center gap-4' }, [
+                                React.createElement('label', { key: 'grid-header-select-label', className: 'flex items-center gap-2 cursor-pointer' }, [
                                     React.createElement('input', {
+                                        key: 'grid-header-select-input',
                                         type: 'checkbox',
                                         checked: selectedProducts.length === sortedProducts.length && sortedProducts.length > 0,
                                         onChange: (e) => onSelectAll(e.target.checked),
                                         className: 'w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500'
                                     }),
-                                    React.createElement('span', { className: 'text-sm font-medium' }, 'Select All')
+                                    React.createElement('span', { key: 'grid-header-select-span', className: 'text-sm font-medium' }, 'Select All')
                                 ])
                             ]),
-                            React.createElement('div', { className: 'text-sm text-gray-600' }, 
+                            React.createElement('div', { key: 'grid-header-count', className: 'text-sm text-gray-600' }, 
                                 `Showing ${sortedProducts.length} products`
                             )
                         ])
                     ]),
-                    React.createElement('div', { className: 'p-6' }, [
+                    React.createElement('div', { key: 'grid-body', className: 'p-6' }, [
                         React.createElement('div', { 
+                            key: 'grid-body-content',
                             className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6' 
                         }, sortedProducts.map(product => 
                             React.createElement(ProductCard, { key: product.id, product })
@@ -725,13 +755,14 @@ const ProductRow = ({ product }) => {
                 ])
             ) : (
                 // List view
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-sm border overflow-hidden' }, [
-                    React.createElement('div', { className: 'overflow-x-auto' }, [
-                        React.createElement('table', { className: 'w-full min-w-[800px]' }, [
+                React.createElement('div', { key: 'list-view', className: 'bg-white rounded-xl shadow-sm border overflow-hidden' }, [
+                    React.createElement('div', { key: 'list-view-content', className: 'overflow-x-auto' }, [
+                        React.createElement('table', { key: 'list-view-table', className: 'w-full min-w-[800px]' }, [
                             React.createElement('thead', { key: 'thead', className: 'bg-gray-50 border-b' }, [
                                 React.createElement('tr', { key: 'header-row' }, [
                                     React.createElement('th', { key: 'select', className: 'p-4 text-left w-16' }, [
                                         React.createElement('input', {
+                                            key: 'list-view-select-input',
                                             type: 'checkbox',
                                             checked: selectedProducts.length === sortedProducts.length && sortedProducts.length > 0,
                                             onChange: (e) => onSelectAll(e.target.checked),
@@ -752,7 +783,7 @@ const ProductRow = ({ product }) => {
                             )
                         ])
                     ]),
-                    React.createElement('div', { className: 'p-4 border-t bg-gray-50 text-center text-sm text-gray-600' }, 
+                    React.createElement('div', { key: 'list-view-footer', className: 'p-4 border-t bg-gray-50 text-center text-sm text-gray-600' }, 
                         `Showing ${sortedProducts.length} of ${products.length} products`
                     )
                 ])
