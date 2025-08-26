@@ -37,6 +37,9 @@ A complete full-stack Point of Sale system with customer loyalty features, built
 - Heroku CLI (for deployment)
 - Git
 
+## Default admin user
+username: admin
+password: P@$$word1
 
 ## Deploy to Heroku
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy?template=https://github.com/rt-heroku/pos-demo)

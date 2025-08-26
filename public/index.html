@@ -67,10 +67,30 @@
     <!-- Load the application files in order -->
     <script src="/icons.js"></script>
     <script src="/api.js"></script>
+    
+    <!-- Load common components first -->
+    <script type="text/babel" src="/components/common/TabButton.js"></script>
+    <script type="text/babel" src="/components/common/CategoryBadge.js"></script>
+    
+    
+    <!-- Load existing files -->
     <script type="text/babel" src="/auth.js"></script>
-    <script type="text/babel" src="/modals.js"></script>
-    <script type="text/babel" src="/views.js"></script>
+    <script type="text/babel" src="/components/modals/CustomerFormModal.js"></script>
+    <script type="text/babel" src="/components/modals/ProductModal.js"></script>
+    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js"></script>
+    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js"></script>
+    <script type="text/babel" src="/components/modals/ReceiptModal.js"></script>
+    
+    <!-- Load view components -->
+    <script type="text/babel" src="/components/views/POSView.js"></script>
+    <script type="text/babel" src="/components/views/LoyaltyView.js"></script>
+    <script type="text/babel" src="/components/views/SalesView.js"></script>
+    <script type="text/babel" src="/components/views/SettingsView.js"></script>
+    <script type="text/babel" src="/components/views/InventoryView.js"></script>
+
     <script type="text/babel" src="/enhanced-pos.js"></script> 
+
+    <!-- Load the main application -->
     <script type="text/babel" src="/app.js"></script>
 </body>
 </html>

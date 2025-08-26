@@ -918,11 +918,13 @@ const POSApp = () => {
     };
 
     const handleAddNewCustomer = () => {
+        console.log('handleAddNewCustomer -> New Customer Pushed');
         setCurrentCustomer(null);
         setShowCustomerFormModal(true);
     };
 
     const handleEditCustomer = (customer) => {
+        console.log('handleAddNewCustomer -> Edit Customer Pushed');
         setCurrentCustomer(customer);
         setShowCustomerFormModal(true);
     };
@@ -1245,25 +1247,7 @@ const POSApp = () => {
 
                     ])
                 ])
-            ]),
-            React.createElement(window.Modals.CustomerFormModal, {
-    key: 'customer-form-modal',
-    show: showCustomerFormModal,
-    onClose: handleCloseCustomerModal,
-    customer: currentCustomer,
-    onSave: handleSaveCustomer,
-    loading
-}),
-
-React.createElement(window.Modals.CustomerDeleteModal, {
-    key: 'customer-delete-modal',
-    show: showCustomerDeleteModal,
-    onClose: handleCloseDeleteModal,
-    customer: customerToDelete,
-    onConfirm: handleConfirmDeleteCustomer,
-    loading
-})
-
+            ])
         ]),
 
         // Main Content
@@ -1383,6 +1367,24 @@ React.createElement(window.Modals.CustomerDeleteModal, {
         ]),
 
         // Modals
+        React.createElement(window.Modals.CustomerFormModal, {
+            key: 'customer-form-modal',
+            show: showCustomerFormModal,
+            onClose: handleCloseCustomerModal,
+            customer: currentCustomer,
+            onSave: handleSaveCustomer,
+            loading
+        }),
+
+        React.createElement(window.Modals.CustomerDeleteModal, {
+            key: 'customer-delete-modal',
+            show: showCustomerDeleteModal,
+            onClose: handleCloseDeleteModal,
+            customer: customerToDelete,
+            onConfirm: handleConfirmDeleteCustomer,
+            loading
+        }),
+
         React.createElement(window.Modals.LoyaltyModal, { 
             key: 'loyalty-modal',
             show: showLoyaltyModal, onClose: () => setShowLoyaltyModal(false),
@@ -1390,14 +1392,7 @@ React.createElement(window.Modals.CustomerDeleteModal, {
             loyaltySearchTerm, setLoyaltySearchTerm, onSearchCustomers: searchCustomers,
             customerSearchResults, onSelectCustomer: handleSelectCustomer, loading
         }),
-        
-        React.createElement(window.Modals.NewCustomerModal, { 
-            key: 'new-customer-modal',
-            show: showNewCustomerForm, onClose: () => setShowNewCustomerForm(false),
-            newCustomerForm, setNewCustomerForm, onCreateCustomer: createNewCustomer,
-            loyaltyNumber, loading
-        }),
-        
+                
         React.createElement(window.Modals.CustomerHistoryModal, { 
             key: 'history-modal',
             show: showCustomerHistory, onClose: () => setShowCustomerHistory(false),
@@ -1430,12 +1425,15 @@ React.createElement(window.Modals.CustomerDeleteModal, {
             className: 'fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50'
         }, [
             React.createElement('div', { 
+                key: 'loading-content',
                 className: 'bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center gap-3' 
             }, [
                 React.createElement('div', { 
+                    key: 'loading-spinner',
                     className: 'animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' 
                 }),
                 React.createElement('span', { 
+                    key: 'loading-text',
                     className: 'text-gray-700 dark:text-gray-300' 
                 }, 'Loading...')
             ])
