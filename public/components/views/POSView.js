@@ -227,14 +227,14 @@ window.Views.POSView = ({
         return React.createElement('button', {
             onClick: () => onAddToCart(product),
             disabled: isOutOfStock,
-            className: `p-4 rounded-lg border-2 transition-all duration-200 ${
+            className: `p-2 lg:p-2 rounded-lg border transition-all duration-200 touch-button ${
                 isOutOfStock
                     ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
                     : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:shadow-md active:scale-95 hover:bg-blue-50 dark:hover:bg-blue-900/20'
             }`
         }, [
             React.createElement('div', { key: 'image-container', className: 'relative mb-3' }, [
-                React.createElement('div', { key: 'image-wrapper', className: 'w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
+                React.createElement('div', { key: 'image-wrapper', className: 'w-full h-32 lg:h-40 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
                     productImage.type === 'url' ? (
                         React.createElement('img', {
                             key: 'product-img',
@@ -250,7 +250,7 @@ window.Views.POSView = ({
                     
                     React.createElement('div', { 
                         key: 'fallback',
-                        className: 'w-full h-full flex items-center justify-center text-4xl',
+                        className: 'w-full h-full flex items-center justify-center text-4xl lg:text-6xl',
                         style: { display: productImage.type === 'url' ? 'none' : 'flex' }
                     }, productImage.src)
                 ]),
@@ -273,8 +273,8 @@ window.Views.POSView = ({
             ]),
             
             React.createElement('div', { key: 'info', className: 'text-center' }, [
-                React.createElement('div', { key: 'name', className: 'font-medium text-sm mb-1 line-clamp-2 dark:text-white' }, product.name),
-                React.createElement('div', { key: 'price', className: 'text-blue-600 dark:text-blue-400 font-bold text-lg' }, `$${parseFloat(product.price).toFixed(2)}`),
+                React.createElement('div', { key: 'name', className: 'font-medium text-xs lg:text-sm mb-1 line-clamp-2 dark:text-white' }, product.name),
+                React.createElement('div', { key: 'price', className: 'text-blue-600 dark:text-blue-400 font-bold text-base lg:text-lg' }, `$${parseFloat(product.price).toFixed(2)}`),
                 React.createElement('div', { key: 'stock', className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, `Stock: ${product.stock}`),
                 
                 React.createElement('div', { key: 'details', className: 'flex flex-wrap gap-1 justify-center mt-2' }, [
@@ -291,7 +291,7 @@ window.Views.POSView = ({
         ]);
     };
 
-    return React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-6 h-full' }, [
+    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6 h-full' }, [
         // Products Section
         React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700' }, [
             React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
@@ -327,21 +327,21 @@ window.Views.POSView = ({
             ]),
             React.createElement('div', { 
                 key: 'products-grid',
-                className: 'p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto' 
+                className: 'p-4 lg:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto custom-scrollbar' 
             }, products.map(product =>
                 React.createElement(ProductCard, { key: product.id, product })
             ))
         ]),
 
         // Enhanced Cart Section with Discount System
-        React.createElement('div', { key: 'cart', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
-            React.createElement('div', { key: 'cart-header', className: 'p-6 border-b dark:border-gray-700' }, [
-                React.createElement('h2', { key: 'cart-title', className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
-                    React.createElement(ShoppingCart, { key: 'cart-icon', size: 24 }),
+        React.createElement('div', { key: 'cart', className: 'cart-panel bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col lg:relative' }, [
+            React.createElement('div', { key: 'cart-header', className: 'p-4 lg:p-6 border-b dark:border-gray-700' }, [
+                React.createElement('h2', { key: 'cart-title', className: 'text-lg lg:text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                    React.createElement(ShoppingCart, { key: 'cart-icon', size: 20 }),
                     `Cart (${cart.length})`
                 ])
             ]),
-            React.createElement('div', { key: 'cart-content', className: 'flex-1 p-6' }, [
+            React.createElement('div', { key: 'cart-content', className: 'flex-1 p-4 lg:p-6 custom-scrollbar' }, [
                 // Enhanced customer info section
                 React.createElement(React.Fragment, { key: 'customer-section' }, [
                     selectedCustomer ? (

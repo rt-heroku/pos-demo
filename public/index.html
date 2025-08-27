@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="POS System">
     <title>POS System with Loyalty</title>
 <!--     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -24,6 +28,312 @@
             width: 20px;
             height: 20px;
             animation: spin 2s linear infinite;
+        }
+
+        /* Mobile-first responsive design */
+        .pos-container {
+            max-width: 80rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+        }
+        
+        @media (min-width: 640px) {
+            .pos-container {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Adjust bottom padding for mobile nav */
+        @media (max-width: 1023px) {
+            .pos-container {
+                padding-bottom: 5rem; /* 80px for mobile nav */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .pos-container {
+                padding-bottom: 1.5rem; /* Normal padding on desktop */
+            }
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        
+        @media (min-width: 640px) {
+            .product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .product-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+        }
+
+        .cart-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+            transform: translateZ(0);
+            transition: transform 0.3s;
+            z-index: 50;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        @media (min-width: 1024px) {
+            .cart-panel {
+                position: relative;
+                border-top: none;
+            }
+        }
+
+        .cart-panel.hidden {
+            transform: translateY(100%);
+        }
+        
+        @media (min-width: 1024px) {
+            .cart-panel.hidden {
+                transform: translateY(0);
+                display: block;
+            }
+        }
+
+        /* Mobile navigation */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+            z-index: 40;
+            display: block;
+        }
+        
+        /* Hide mobile nav on desktop */
+        @media (min-width: 1024px) {
+            .mobile-nav {
+                display: none !important;
+                position: absolute !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                transform: translateY(100%) !important;
+            }
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .mobile-nav-item.active {
+            color: #2563eb;
+        }
+
+        /* Touch-friendly buttons */
+        .touch-button {
+            min-height: 44px;
+            min-width: 44px;
+/*            display: flex;
+*/            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobile-optimized forms */
+        .mobile-input {
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+        }
+
+        /* Responsive tables */
+        .responsive-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .responsive-table table {
+            min-width: 100%;
+        }
+
+        /* Mobile drawer */
+        .mobile-drawer {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+        
+        @media (min-width: 1024px) {
+            .mobile-drawer {
+                display: none;
+            }
+        }
+
+        .mobile-drawer-content {
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 20rem;
+            background-color: white;
+            transform: translateZ(0);
+            transition: transform 0.3s;
+        }
+
+        .mobile-drawer.hidden .mobile-drawer-content {
+            transform: translateX(100%);
+        }
+
+        /* Landscape mobile optimizations */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .cart-panel {
+                max-height: 40vh;
+            }
+        }
+
+        /* Tablet optimizations */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        /* Prevent zoom on input focus (iOS) */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+            select,
+            textarea,
+            input {
+                font-size: 16px;
+            }
+        }
+
+        /* Custom scrollbar for mobile */
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f7fafc;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        /* Safe area for notched devices */
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Dark theme styles */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-tertiary: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-color: #e5e7eb;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+
+        .dark {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border-color: #374151;
+            --accent-color: #60a5fa;
+            --accent-hover: #3b82f6;
+        }
+
+        /* Apply theme variables */
+        body {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .bg-white {
+            background-color: var(--bg-primary);
+        }
+
+        .dark .bg-white {
+            background-color: var(--bg-primary);
+        }
+
+        .text-gray-900 {
+            color: var(--text-primary);
+        }
+
+        .dark .text-gray-900 {
+            color: var(--text-primary);
+        }
+
+        .text-gray-600 {
+            color: var(--text-secondary);
+        }
+
+        .dark .text-gray-600 {
+            color: var(--text-secondary);
+        }
+
+        .text-gray-500 {
+            color: var(--text-tertiary);
+        }
+
+        .dark .text-gray-500 {
+            color: var(--text-tertiary);
+        }
+
+        .border-gray-200 {
+            border-color: var(--border-color);
+        }
+
+        .dark .border-gray-200 {
+            border-color: var(--border-color);
+        }
+
+        .border-gray-700 {
+            border-color: var(--border-color);
+        }
+
+        .dark .border-gray-700 {
+            border-color: var(--border-color);
         }
     </style>
 </head>
@@ -62,11 +372,32 @@
         console.log('React loaded:', typeof React !== 'undefined');
         console.log('ReactDOM loaded:', typeof ReactDOM !== 'undefined');
         console.log('Babel loaded:', typeof Babel !== 'undefined');
+        
+        // Initialize theme on page load
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+        }
+        
+        // Register Service Worker for offline support (only in production)
+        if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
     </script>
     
     <!-- Load the application files in order -->
     <script src="/icons.js"></script>
     <script src="/api.js"></script>
+    <script src="/mobile-utils.js"></script>
     
     <!-- Load common components first -->
     <script type="text/babel" src="/components/common/TabButton.js"></script>

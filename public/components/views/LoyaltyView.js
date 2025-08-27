@@ -222,7 +222,7 @@ window.Views.LoyaltyView= ({
         ]);
     };
 
-    return React.createElement('div', { className: 'space-y-6' }, [
+            return React.createElement('div', { className: 'space-y-4 lg:space-y-6' }, [
         // Header with tabs
         React.createElement('div', { key: 'header', className: 'bg-white rounded-xl shadow-sm border p-6' }, [
             React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between mb-6' }, [

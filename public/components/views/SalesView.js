@@ -6,14 +6,14 @@
     window.Views.SalesView = ({ analytics, transactions }) => {
         const { DollarSign, BarChart3, Receipt, Users } = window.Icons;
 
-        return React.createElement('div', {key: 'sales-view', className: 'space-y-6' }, [
+        return React.createElement('div', {key: 'sales-view', className: 'space-y-4 lg:space-y-6' }, [
             // Stats Cards
-            React.createElement('div', { key: 'stats', className: 'grid grid-cols-1 md:grid-cols-4 gap-6' }, [
-                React.createElement('div', { key: 'today-sales', className: 'bg-white p-6 rounded-xl shadow-sm border' }, [
+            React.createElement('div', { key: 'stats', className: 'grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6' }, [
+                React.createElement('div', { key: 'today-sales', className: 'bg-white p-4 lg:p-6 rounded-xl shadow-sm border' }, [
                     React.createElement('div', { key: 'today-sales-content', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'content' }, [
                             React.createElement('p', { key: 'today-sales-label', className: 'text-gray-600 text-sm' }, "Today's Sales"),
-                            React.createElement('p', { key: 'today-sales-value', className: 'text-2xl font-bold text-green-600' }, `${analytics.todaySales.toFixed(2)}`)
+                            React.createElement('p', { key: 'today-sales-value', className: 'text-xl lg:text-2xl font-bold text-green-600' }, `${analytics.todaySales.toFixed(2)}`)
                         ]),
                         React.createElement(DollarSign, { key: 'icon', className: 'text-green-600', size: 32 })
                     ])

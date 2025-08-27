@@ -13,6 +13,8 @@ const POSApp = () => {
         if (currentUser) {
             window.currentUser = currentUser;
             console.log('Current user updated:', currentUser);
+            console.log('Stored user ps_user_id =',localStorage.getItem('pos_user_id'));
+
         }
     }, [currentUser]);
     const [authLoading, setAuthLoading] = useState(true);
@@ -88,7 +90,8 @@ const POSApp = () => {
     const getUserId = () => {
         let userId = localStorage.getItem('pos_user_id');
         if (!userId) {
-            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            //userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            throw new Error('User ID not found');
             localStorage.setItem('pos_user_id', userId);
         }
         return userId;
@@ -125,6 +128,7 @@ const POSApp = () => {
     const handleLoginSuccess = (authData) => {
         setCurrentUser(authData.user);
         setIsAuthenticated(true);
+        localStorage.setItem('pos_user_id', authData.user.username);
         // Don't call initializeApp here, let the useEffect handle it
     };
 
@@ -135,6 +139,10 @@ const POSApp = () => {
         setCart([]);
         setSelectedLocation(null);
         setCurrentView('pos');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        localStorage.removeItem('token_expires');
+        localStorage.removeItem('pos_user_id');
     };
 
     // Initial app setup
@@ -146,17 +154,35 @@ const POSApp = () => {
 
     // Apply theme when settings change
     useEffect(() => {
+        console.log('userSettings.theme_mode =',userSettings.theme_mode);
         if (userSettings.theme_mode === 'dark') {
             document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark');
         }
     }, [userSettings.theme_mode]);
+
+    // Initialize theme from localStorage
+    const initializeTheme = () => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark');
+        }
+    };
 
     // Initialize the application
     const initializeApp = async () => {
         try {
             setAppLoading(true);
+            
+            // Initialize theme
+            initializeTheme();
             
             // Check if setup is required (this endpoint doesn't require auth)
             const setupStatus = await fetch('/api/setup/status').then(r => r.json());
@@ -331,9 +357,10 @@ const POSApp = () => {
             
             // Save to user settings
             const userId = getUserId();
+            const token = localStorage.getItem('auth_token');
             await fetch(`/api/settings/${userId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ selected_location_id: location.id })
             });
             
@@ -360,9 +387,10 @@ const POSApp = () => {
     const handleCreateLocation = async (locationData) => {
         setLoading(true);
         try {
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/locations', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(locationData)
             });
             
@@ -391,9 +419,10 @@ const POSApp = () => {
     const handleUpdateLocation = async (locationId, locationData) => {
         setLoading(true);
         try {
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`/api/locations/${locationId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(locationData)
             });
             
@@ -424,9 +453,10 @@ const POSApp = () => {
     const handleLogoUpload = async (locationId, logoBase64) => {
         setLoading(true);
         try {
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`/api/locations/${locationId}/logo`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ logo_base64: logoBase64 })
             });
             
@@ -453,10 +483,24 @@ const POSApp = () => {
 
     const handleThemeToggle = async (theme) => {
         try {
+            // Apply theme immediately
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('theme', theme);
+            
+            // Update server settings
+            const token = localStorage.getItem('auth_token');
             const userId = getUserId();
             const response = await fetch(`/api/settings/${userId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ theme_mode: theme })
             });
             
@@ -888,13 +932,23 @@ const POSApp = () => {
     };
 
     // Navigation Component
-    const NavButton = ({ view, icon: Icon, label, active, requiredPermission }) => {
+    const NavButton = ({ view, icon: Icon, label, active, requiredPermission, isMobile = false }) => {
         // Check if user has permission for this view
         if (requiredPermission && currentUser) {
             const [module, action] = requiredPermission.split(':');
             if (!currentUser.permissions[module] || !currentUser.permissions[module][action]) {
                 return null; // Don't render button if no permission
             }
+        }
+
+        if (isMobile) {
+            return React.createElement('button', {
+                onClick: () => setCurrentView(view),
+                className: `mobile-nav-item touch-button ${active ? 'active' : 'text-gray-600'}`
+            }, [
+                React.createElement(Icon, { key: 'icon', size: 24 }),
+                React.createElement('span', { key: 'label', className: 'mt-1' }, label)
+            ]);
         }
 
         return React.createElement('button', {
@@ -1181,10 +1235,10 @@ const POSApp = () => {
 
     // Main render
     return React.createElement('div', { className: 'min-h-screen bg-gray-100 dark:bg-gray-900' }, [
-        // Header
+        // Header (hidden on mobile)
         React.createElement('header', { 
             key: 'header', 
-            className: 'bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700' 
+            className: 'bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 hidden lg:block' 
         }, [
             React.createElement('div', { key: 'header-container', className: 'max-w-7xl mx-auto px-6 py-4' }, [
                 React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between' }, [
@@ -1252,14 +1306,73 @@ const POSApp = () => {
                             active: currentView === 'settings',
                             requiredPermission: 'settings:read'
                         }),
+                        // Theme toggle button
+                        React.createElement('button', {
+                            key: 'desktop-theme-toggle',
+                            onClick: () => handleThemeToggle(userSettings?.theme_mode === 'dark' ? 'light' : 'dark'),
+                            className: `p-2 rounded-lg transition-colors ${
+                                userSettings?.theme_mode === 'dark' 
+                                    ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`,
+                            title: userSettings?.theme_mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+                        }, userSettings?.theme_mode === 'dark' ? '☀️' : '🌙'),
 
                     ])
                 ])
             ])
         ]),
 
+        // Mobile Header
+        React.createElement('header', { 
+            key: 'mobile-header', 
+            className: 'bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 lg:hidden safe-area-top' 
+        }, [
+            React.createElement('div', { key: 'mobile-header-container', className: 'px-4 py-3' }, [
+                React.createElement('div', { key: 'mobile-header-content', className: 'flex items-center justify-between' }, [
+                    React.createElement('div', { key: 'mobile-logo-section', className: 'flex items-center gap-2' }, [
+                        selectedLocation?.logo_base64 && React.createElement('img', {
+                            key: 'mobile-location-logo',
+                            src: selectedLocation.logo_base64,
+                            alt: 'Store logo',
+                            className: 'w-8 h-8 object-contain'
+                        }),
+                        React.createElement('div', { key: 'mobile-titles' }, [
+                            React.createElement('h1', { 
+                                key: 'mobile-main-title',
+                                className: 'text-lg font-bold text-gray-900 dark:text-white' 
+                            }, 'POS System'),
+                            selectedLocation && React.createElement('p', { 
+                                key: 'mobile-location-info',
+                                className: 'text-xs text-gray-600 dark:text-gray-300' 
+                            }, selectedLocation.store_name)
+                        ])
+                    ]),
+                    React.createElement('div', { key: 'mobile-user-info', className: 'text-right flex items-center gap-2' }, [
+                        // Theme toggle button
+                        React.createElement('button', {
+                            key: 'mobile-theme-toggle',
+                            onClick: () => handleThemeToggle(userSettings?.theme_mode === 'dark' ? 'light' : 'dark'),
+                            className: 'p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors',
+                            title: userSettings?.theme_mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+                        }, userSettings?.theme_mode === 'dark' ? '☀️' : '🌙'),
+                        React.createElement('div', { key: 'mobile-user-details' }, [
+                            currentUser && React.createElement('p', { 
+                                key: 'mobile-user-name',
+                                className: 'text-sm font-medium text-gray-900 dark:text-white' 
+                            }, `${currentUser.first_name} ${currentUser.last_name}`),
+                            React.createElement('p', { 
+                                key: 'mobile-current-view',
+                                className: 'text-xs text-gray-500 dark:text-gray-400 capitalize' 
+                            }, currentView)
+                        ])
+                    ])
+                ])
+            ])
+        ]),
+
         // Main Content
-        React.createElement('main', { key: 'main', className: 'max-w-7xl mx-auto p-6' }, [
+        React.createElement('main', { key: 'main', className: 'pos-container pb-20 lg:pb-6' }, [
             currentView === 'pos' && selectedLocation && React.createElement(window.Views.POSView, { 
                 key: 'pos-view',
                 products: filteredProducts,
@@ -1372,6 +1485,60 @@ const POSApp = () => {
                         className: 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
                     }, 'Go to Settings')
                 ])
+        ]),
+
+        // Mobile Navigation (hidden on desktop)
+        React.createElement('nav', { 
+            key: 'mobile-nav', 
+            className: 'mobile-nav safe-area-bottom' 
+        }, [
+            React.createElement('div', { key: 'mobile-nav-container', className: 'flex justify-around' }, [
+                React.createElement(NavButton, { 
+                    key: 'mobile-pos-nav',
+                    view: 'pos', 
+                    icon: ShoppingCart, 
+                    label: 'POS', 
+                    active: currentView === 'pos',
+                    requiredPermission: 'pos:read',
+                    isMobile: true
+                }),
+                React.createElement(NavButton, { 
+                    key: 'mobile-loyalty-nav',
+                    view: 'loyalty', 
+                    icon: Award, 
+                    label: 'Loyalty', 
+                    active: currentView === 'loyalty',
+                    requiredPermission: 'customers:read',
+                    isMobile: true
+                }),
+                React.createElement(NavButton, { 
+                    key: 'mobile-inventory-nav',
+                    view: 'inventory', 
+                    icon: Package, 
+                    label: 'Inventory', 
+                    active: currentView === 'inventory',
+                    requiredPermission: 'inventory:read',
+                    isMobile: true
+                }),
+                React.createElement(NavButton, { 
+                    key: 'mobile-sales-nav',
+                    view: 'sales', 
+                    icon: BarChart3, 
+                    label: 'Sales', 
+                    active: currentView === 'sales',
+                    requiredPermission: 'reports:read',
+                    isMobile: true
+                }),
+                React.createElement(NavButton, { 
+                    key: 'mobile-settings-nav',
+                    view: 'settings', 
+                    icon: Settings, 
+                    label: 'Settings', 
+                    active: currentView === 'settings',
+                    requiredPermission: 'settings:read',
+                    isMobile: true
+                })
+            ])
         ]),
 
         // Modals

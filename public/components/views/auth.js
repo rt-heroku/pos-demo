@@ -31,7 +31,10 @@ window.Auth = {
                 localStorage.setItem('auth_token', data.token);
                 localStorage.setItem('user_data', JSON.stringify(data.user));
                 localStorage.setItem('token_expires', data.expires_at);
-
+                localStorage.setItem('pos_user_id', data.user.username);
+                console.log('Before ps_user_id =', data.user.username);
+                console.log('After ps_user_id =',localStorage.getItem('pos_user_id'));
+                
                 onLoginSuccess(data);
             } catch (err) {
                 setError(err.message);
