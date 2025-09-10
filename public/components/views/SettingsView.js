@@ -33,6 +33,18 @@ window.Views.SettingsView = ({
         const [databaseInfo, setDatabaseInfo] = React.useState(null);
         const [copiedToClipboard, setCopiedToClipboard] = React.useState('');
         
+        // MuleSoft Loyalty Sync State
+        const [mulesoftConfig, setMulesoftConfig] = React.useState({
+            endpoint: '',
+            loyaltyProgramId: '',
+            journalTypeId: '',
+            journalSubtypeId: ''
+        });
+        const [loyaltyPrograms, setLoyaltyPrograms] = React.useState([]);
+        const [journalTypes, setJournalTypes] = React.useState([]);
+        const [loadingPrograms, setLoadingPrograms] = React.useState(false);
+        const [loadingJournalTypes, setLoadingJournalTypes] = React.useState(false);
+        
         // FIX: Use a ref to track the form data to prevent re-renders from losing focus
         const formDataRef = React.useRef({
             store_code: '',
@@ -66,6 +78,7 @@ window.Views.SettingsView = ({
             if (activeTab === 'system') {
                 loadSystemSettings();
                 loadDatabaseInfo();
+                loadMulesoftConfig();
             }
         }, [activeTab]);
 
@@ -335,6 +348,137 @@ window.Views.SettingsView = ({
                 setCopiedToClipboard(type);
                 setTimeout(() => setCopiedToClipboard(''), 2000);
             });
+        };
+
+        // MuleSoft Loyalty Sync Functions
+        const loadMulesoftConfig = async () => {
+            try {
+                const settings = await window.API.call('/system-settings');
+                const config = {
+                    endpoint: settings.find(s => s.setting_key === 'mulesoft_loyalty_sync_endpoint')?.setting_value || '',
+                    loyaltyProgramId: settings.find(s => s.setting_key === 'loyalty_program_id')?.setting_value || '',
+                    journalTypeId: settings.find(s => s.setting_key === 'journal_type_id')?.setting_value || '',
+                    journalSubtypeId: settings.find(s => s.setting_key === 'journal_subtype_id')?.setting_value || ''
+                };
+                setMulesoftConfig(config);
+                
+                // Load programs and journal types if endpoint is configured
+                if (config.endpoint) {
+                    await loadLoyaltyPrograms(config.endpoint);
+                    await loadJournalTypes(config.endpoint);
+                }
+            } catch (error) {
+                console.error('Failed to load MuleSoft config:', error);
+            }
+        };
+
+        const loadLoyaltyPrograms = async (endpoint) => {
+            if (!endpoint) return;
+            
+            setLoadingPrograms(true);
+            try {
+                const response = await fetch(`${endpoint}/programs`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const programs = await response.json();
+                setLoyaltyPrograms(programs);
+            } catch (error) {
+                console.error('Failed to load loyalty programs:', error);
+                setLoyaltyPrograms([]);
+            } finally {
+                setLoadingPrograms(false);
+            }
+        };
+
+        const loadJournalTypes = async (endpoint) => {
+            if (!endpoint) return;
+            
+            setLoadingJournalTypes(true);
+            try {
+                const response = await fetch(`${endpoint}/journaltypes`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const types = await response.json();
+                setJournalTypes(types);
+            } catch (error) {
+                console.error('Failed to load journal types:', error);
+                setJournalTypes([]);
+            } finally {
+                setLoadingJournalTypes(false);
+            }
+        };
+
+        const saveMulesoftSetting = async (key, value) => {
+            try {
+                const existingSetting = systemSettings.find(s => s.setting_key === key);
+                const method = existingSetting ? 'PUT' : 'POST';
+                const url = existingSetting ? `/system-settings/${key}` : '/system-settings';
+                
+                const settingData = {
+                    setting_key: key,
+                    setting_value: value,
+                    description: getSettingDescription(key),
+                    category: 'integration',
+                    setting_type: 'text'
+                };
+                
+                await window.API.call(url, {
+                    method,
+                    body: JSON.stringify(settingData)
+                });
+                
+                await loadSystemSettings();
+                return true;
+            } catch (error) {
+                console.error(`Failed to save ${key}:`, error);
+                alert(`Failed to save ${key}: ${error.message}`);
+                return false;
+            }
+        };
+
+        const getSettingDescription = (key) => {
+            const descriptions = {
+                'mulesoft_loyalty_sync_endpoint': 'MuleSoft Loyalty Sync API endpoint URL',
+                'loyalty_program_id': 'Selected loyalty program ID for MuleSoft integration',
+                'journal_type_id': 'Selected journal type ID for MuleSoft integration',
+                'journal_subtype_id': 'Selected journal subtype ID for MuleSoft integration'
+            };
+            return descriptions[key] || '';
+        };
+
+        const handleEndpointChange = async (value) => {
+            setMulesoftConfig(prev => ({ ...prev, endpoint: value }));
+            await saveMulesoftSetting('mulesoft_loyalty_sync_endpoint', value);
+            
+            if (value) {
+                await loadLoyaltyPrograms(value);
+                await loadJournalTypes(value);
+            } else {
+                setLoyaltyPrograms([]);
+                setJournalTypes([]);
+            }
+        };
+
+        const handleLoyaltyProgramChange = async (value) => {
+            setMulesoftConfig(prev => ({ ...prev, loyaltyProgramId: value }));
+            await saveMulesoftSetting('loyalty_program_id', value);
+        };
+
+        const handleJournalTypeChange = async (value) => {
+            setMulesoftConfig(prev => ({ 
+                ...prev, 
+                journalTypeId: value,
+                journalSubtypeId: '' // Reset subtype when type changes
+            }));
+            await saveMulesoftSetting('journal_type_id', value);
+            await saveMulesoftSetting('journal_subtype_id', '');
+        };
+
+        const handleJournalSubtypeChange = async (value) => {
+            setMulesoftConfig(prev => ({ ...prev, journalSubtypeId: value }));
+            await saveMulesoftSetting('journal_subtype_id', value);
         };
 
         // Handle dark mode toggle
@@ -1087,6 +1231,185 @@ window.Views.SettingsView = ({
                                    ])
                                )
                            )
+                       ])
+                   ])
+               ]),
+
+               // MuleSoft Loyalty Sync Configuration
+               React.createElement('div', { key: 'mulesoft-config', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
+                   React.createElement('div', { key: 'section-header', className: 'flex items-center gap-2 mb-6' }, [
+                       React.createElement('div', { key: 'icon', className: 'w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center' }, [
+                           React.createElement('svg', { key: 'svg', className: 'w-5 h-5 text-blue-600 dark:text-blue-400', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+                               React.createElement('path', { key: 'path', strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' })
+                           ])
+                       ]),
+                       React.createElement('div', { key: 'title-section' }, [
+                           React.createElement('h3', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 'MuleSoft Loyalty Sync'),
+                           React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                               'Configure MuleSoft loyalty program integration settings'
+                           )
+                       ])
+                   ]),
+
+                   React.createElement('div', { key: 'config-form', className: 'space-y-6' }, [
+                       // Endpoint URL
+                       React.createElement('div', { key: 'endpoint-section' }, [
+                           React.createElement('label', { key: 'endpoint-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 
+                               'MuleSoft Loyalty Sync Endpoint URL'
+                           ),
+                           React.createElement('input', {
+                               key: 'endpoint-input',
+                               type: 'url',
+                               value: mulesoftConfig.endpoint,
+                               onChange: (e) => handleEndpointChange(e.target.value),
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                               placeholder: 'https://your-mulesoft-instance.cloudhub.io/api/loyalty'
+                           }),
+                           React.createElement('p', { key: 'endpoint-help', className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
+                               'Enter the base URL for your MuleSoft loyalty sync API'
+                           )
+                       ]),
+
+                       // Loyalty Programs Dropdown
+                       React.createElement('div', { key: 'programs-section' }, [
+                           React.createElement('label', { key: 'programs-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 
+                               'Loyalty Program'
+                           ),
+                           React.createElement('div', { key: 'programs-container', className: 'relative' }, [
+                               React.createElement('select', {
+                                   key: 'programs-select',
+                                   value: mulesoftConfig.loyaltyProgramId,
+                                   onChange: (e) => handleLoyaltyProgramChange(e.target.value),
+                                   disabled: !mulesoftConfig.endpoint || loadingPrograms,
+                                   className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                               }, [
+                                   React.createElement('option', { key: 'empty-program', value: '' }, 
+                                       loadingPrograms ? 'Loading programs...' : 'Select a loyalty program...'
+                                   ),
+                                   ...loyaltyPrograms.map(program => 
+                                       React.createElement('option', { key: program.Id, value: program.Id }, program.Name)
+                                   )
+                               ]),
+                               loadingPrograms && React.createElement('div', { 
+                                   key: 'programs-spinner',
+                                   className: 'absolute right-3 top-1/2 transform -translate-y-1/2'
+                               }, [
+                                   React.createElement('div', { 
+                                       key: 'spinner',
+                                       className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600' 
+                                   })
+                               ])
+                           ]),
+                           !mulesoftConfig.endpoint && React.createElement('p', { key: 'programs-help', className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
+                               'Configure the endpoint URL first to load available programs'
+                           )
+                       ]),
+
+                       // Journal Types and Subtypes
+                       React.createElement('div', { key: 'journal-section' }, [
+                           React.createElement('label', { key: 'journal-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 
+                               'Journal Type & Subtype'
+                           ),
+                           React.createElement('div', { key: 'journal-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                               // Journal Type
+                               React.createElement('div', { key: 'journal-type' }, [
+                                   React.createElement('label', { key: 'journal-type-label', className: 'block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400' }, 
+                                       'Journal Type'
+                                   ),
+                                   React.createElement('div', { key: 'journal-type-container', className: 'relative' }, [
+                                       React.createElement('select', {
+                                           key: 'journal-type-select',
+                                           value: mulesoftConfig.journalTypeId,
+                                           onChange: (e) => handleJournalTypeChange(e.target.value),
+                                           disabled: !mulesoftConfig.endpoint || loadingJournalTypes,
+                                           className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                                       }, [
+                                           React.createElement('option', { key: 'empty-type', value: '' }, 
+                                               loadingJournalTypes ? 'Loading types...' : 'Select journal type...'
+                                           ),
+                                           ...journalTypes.map(journalType => 
+                                               React.createElement('option', { key: journalType.JournalType.Id, value: journalType.JournalType.Id }, 
+                                                   journalType.JournalType.Name
+                                               )
+                                           )
+                                       ]),
+                                       loadingJournalTypes && React.createElement('div', { 
+                                           key: 'journal-type-spinner',
+                                           className: 'absolute right-3 top-1/2 transform -translate-y-1/2'
+                                       }, [
+                                           React.createElement('div', { 
+                                               key: 'spinner',
+                                               className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600' 
+                                           })
+                                       ])
+                                   ])
+                               ]),
+
+                               // Journal Subtype
+                               React.createElement('div', { key: 'journal-subtype' }, [
+                                   React.createElement('label', { key: 'journal-subtype-label', className: 'block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400' }, 
+                                       'Journal Subtype'
+                                   ),
+                                   React.createElement('select', {
+                                       key: 'journal-subtype-select',
+                                       value: mulesoftConfig.journalSubtypeId,
+                                       onChange: (e) => handleJournalSubtypeChange(e.target.value),
+                                       disabled: !mulesoftConfig.journalTypeId,
+                                       className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                                   }, [
+                                       React.createElement('option', { key: 'empty-subtype', value: '' }, 
+                                           !mulesoftConfig.journalTypeId ? 'Select journal type first...' : 'Select journal subtype...'
+                                       ),
+                                       ...(mulesoftConfig.journalTypeId ? 
+                                           journalTypes
+                                               .find(jt => jt.JournalType.Id === mulesoftConfig.journalTypeId)
+                                               ?.JournalSubTypes?.map(subtype => 
+                                                   React.createElement('option', { key: subtype.Id, value: subtype.Id }, subtype.Name)
+                                               ) || []
+                                           : []
+                                       )
+                                   ])
+                               ])
+                           ]),
+                           !mulesoftConfig.endpoint && React.createElement('p', { key: 'journal-help', className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, 
+                               'Configure the endpoint URL first to load available journal types'
+                           )
+                       ]),
+
+                       // Configuration Status
+                       React.createElement('div', { key: 'status-section', className: 'mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg' }, [
+                           React.createElement('h4', { key: 'status-title', className: 'text-sm font-medium mb-2 dark:text-white' }, 
+                               'Configuration Status'
+                           ),
+                           React.createElement('div', { key: 'status-items', className: 'space-y-2 text-sm' }, [
+                               React.createElement('div', { key: 'endpoint-status', className: 'flex items-center gap-2' }, [
+                                   React.createElement('div', { 
+                                       key: 'endpoint-indicator',
+                                       className: `w-2 h-2 rounded-full ${mulesoftConfig.endpoint ? 'bg-green-500' : 'bg-gray-400'}` 
+                                   }),
+                                   React.createElement('span', { key: 'endpoint-text', className: 'dark:text-gray-300' }, 
+                                       `Endpoint: ${mulesoftConfig.endpoint ? 'Configured' : 'Not configured'}`
+                                   )
+                               ]),
+                               React.createElement('div', { key: 'program-status', className: 'flex items-center gap-2' }, [
+                                   React.createElement('div', { 
+                                       key: 'program-indicator',
+                                       className: `w-2 h-2 rounded-full ${mulesoftConfig.loyaltyProgramId ? 'bg-green-500' : 'bg-gray-400'}` 
+                                   }),
+                                   React.createElement('span', { key: 'program-text', className: 'dark:text-gray-300' }, 
+                                       `Loyalty Program: ${mulesoftConfig.loyaltyProgramId ? 'Selected' : 'Not selected'}`
+                                   )
+                               ]),
+                               React.createElement('div', { key: 'journal-status', className: 'flex items-center gap-2' }, [
+                                   React.createElement('div', { 
+                                       key: 'journal-indicator',
+                                       className: `w-2 h-2 rounded-full ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId ? 'bg-green-500' : 'bg-gray-400'}` 
+                                   }),
+                                   React.createElement('span', { key: 'journal-text', className: 'dark:text-gray-300' }, 
+                                       `Journal Type/Subtype: ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId ? 'Selected' : 'Not selected'}`
+                                   )
+                               ])
+                           ])
                        ])
                    ])
                ]),

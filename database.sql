@@ -1331,7 +1331,7 @@ CREATE TABLE IF NOT EXISTS roles (
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    username VARCHAR(50),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
@@ -1385,7 +1385,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+-- CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
@@ -1509,7 +1509,7 @@ UPDATE locations SET created_by_user = (SELECT id FROM users WHERE username = 'a
 CREATE OR REPLACE VIEW user_permissions AS
 SELECT 
     u.id as user_id,
-    u.username,
+    u.email as username,
     u.email,
     u.first_name,
     u.last_name,
