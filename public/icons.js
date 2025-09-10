@@ -279,5 +279,12 @@ window.Icons = {
         React.createElement('path', { key: 'path1', d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }),
         React.createElement('polyline', { key: 'polyline', points: "16,17 21,12 16,7" }),
         React.createElement('line', { key: 'line', x1: "21", x2: "9", y1: "12", y2: "12" })
+    ]),
+
+    RefreshCw: (props) => React.createElement('svg', { ...iconProps, ...props }, [
+        React.createElement('path', { key: 'path1', d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }),
+        React.createElement('path', { key: 'path2', d: "M21 3v5h-5" }),
+        React.createElement('path', { key: 'path3', d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }),
+        React.createElement('path', { key: 'path4', d: "M3 21v-5h5" })
     ])
 };
