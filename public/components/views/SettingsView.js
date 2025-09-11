@@ -38,12 +38,21 @@ window.Views.SettingsView = ({
             endpoint: '',
             loyaltyProgramId: '',
             journalTypeId: '',
-            journalSubtypeId: ''
+            journalSubtypeId: '',
+            enrollmentJournalSubtypeId: ''
         });
         const [loyaltyPrograms, setLoyaltyPrograms] = React.useState([]);
         const [journalTypes, setJournalTypes] = React.useState([]);
         const [loadingPrograms, setLoadingPrograms] = React.useState(false);
         const [loadingJournalTypes, setLoadingJournalTypes] = React.useState(false);
+        
+        // Members sync state
+        const [showMembersModal, setShowMembersModal] = React.useState(false);
+        const [members, setMembers] = React.useState([]);
+        const [loadingMembers, setLoadingMembers] = React.useState(false);
+        const [syncingMembers, setSyncingMembers] = React.useState(false);
+        const [syncResults, setSyncResults] = React.useState(null);
+        const [showSyncResults, setShowSyncResults] = React.useState(false);
         
         // FIX: Use a ref to track the form data to prevent re-renders from losing focus
         const formDataRef = React.useRef({
@@ -358,7 +367,8 @@ window.Views.SettingsView = ({
                     endpoint: settings.find(s => s.setting_key === 'mulesoft_loyalty_sync_endpoint')?.setting_value || '',
                     loyaltyProgramId: settings.find(s => s.setting_key === 'loyalty_program_id')?.setting_value || '',
                     journalTypeId: settings.find(s => s.setting_key === 'journal_type_id')?.setting_value || '',
-                    journalSubtypeId: settings.find(s => s.setting_key === 'journal_subtype_id')?.setting_value || ''
+                    journalSubtypeId: settings.find(s => s.setting_key === 'journal_subtype_id')?.setting_value || '',
+                    enrollmentJournalSubtypeId: settings.find(s => s.setting_key === 'enrollment_journal_subtype_id')?.setting_value || ''
                 };
                 setMulesoftConfig(config);
                 
@@ -481,6 +491,11 @@ window.Views.SettingsView = ({
             await saveMulesoftSetting('journal_subtype_id', value);
         };
 
+        const handleEnrollmentJournalSubtypeChange = async (value) => {
+            setMulesoftConfig(prev => ({ ...prev, enrollmentJournalSubtypeId: value }));
+            await saveMulesoftSetting('enrollment_journal_subtype_id', value);
+        };
+
         const refreshLoyaltyPrograms = async () => {
             if (mulesoftConfig.endpoint) {
                 await loadLoyaltyPrograms(mulesoftConfig.endpoint);
@@ -491,6 +506,68 @@ window.Views.SettingsView = ({
             if (mulesoftConfig.endpoint) {
                 await loadJournalTypes(mulesoftConfig.endpoint);
             }
+        };
+
+        // Members sync functions
+        const loadMembers = async () => {
+            if (!mulesoftConfig.endpoint) {
+                alert('Please configure the MuleSoft endpoint first');
+                return;
+            }
+
+            setLoadingMembers(true);
+            try {
+                const response = await fetch(`${mulesoftConfig.endpoint}/members`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const membersData = await response.json();
+                setMembers(membersData);
+                setShowMembersModal(true);
+            } catch (error) {
+                console.error('Failed to load members:', error);
+                alert(`Failed to load members: ${error.message}`);
+            } finally {
+                setLoadingMembers(false);
+            }
+        };
+
+        const syncMembers = async () => {
+            if (!mulesoftConfig.loyaltyProgramId) {
+                alert('Please select a loyalty program first');
+                return;
+            }
+
+            if (!confirm('This will replace current customer data. Are you sure you want to continue?')) {
+                return;
+            }
+
+            setSyncingMembers(true);
+            try {
+                const response = await fetch(`${mulesoftConfig.endpoint}/bulk/sync/members?member=${mulesoftConfig.loyaltyProgramId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const results = await response.json();
+                setSyncResults(results);
+                setShowSyncResults(true);
+                setShowMembersModal(false);
+            } catch (error) {
+                console.error('Failed to sync members:', error);
+                alert(`Failed to sync members: ${error.message}`);
+            } finally {
+                setSyncingMembers(false);
+            }
+        };
+
+        const closeMembersModal = () => {
+            setShowMembersModal(false);
+            setMembers([]);
+        };
+
+        const closeSyncResults = () => {
+            setShowSyncResults(false);
+            setSyncResults(null);
         };
 
         const parseDatabaseCredentialsYAML = (databaseUrl) => {
@@ -1285,7 +1362,7 @@ sfdc.account=`;
                         React.createElement('div', { key: 'journal-section' }, [
                             React.createElement('div', { key: 'journal-header', className: 'flex items-center justify-between mb-2' }, [
                                 React.createElement('label', { key: 'journal-label', className: 'block text-sm font-medium dark:text-white' }, 
-                                    'Journal Type & Subtype'
+                                    'Journal Type & Subtypes'
                                 ),
                                 React.createElement('button', {
                                     key: 'journal-refresh-btn',
@@ -1299,7 +1376,7 @@ sfdc.account=`;
                                     className: loadingJournalTypes ? 'animate-spin' : ''
                                 }))
                             ]),
-                            React.createElement('div', { key: 'journal-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                            React.createElement('div', { key: 'journal-container', className: 'grid grid-cols-1 md:grid-cols-3 gap-4' }, [
                                 // Journal Type
                                 React.createElement('div', { key: 'journal-type' }, [
                                     React.createElement('label', { key: 'journal-type-label', className: 'block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400' }, 
@@ -1328,7 +1405,7 @@ sfdc.account=`;
                                 // Journal Subtype
                                 React.createElement('div', { key: 'journal-subtype' }, [
                                     React.createElement('label', { key: 'journal-subtype-label', className: 'block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400' }, 
-                                        'Journal Subtype'
+                                        'Transaction Journal Subtype'
                                     ),
                                     React.createElement('select', {
                                         key: 'journal-subtype-select',
@@ -1339,6 +1416,32 @@ sfdc.account=`;
                                     }, [
                                         React.createElement('option', { key: 'empty-subtype', value: '' }, 
                                             !mulesoftConfig.journalTypeId ? 'Select journal type first...' : 'Select journal subtype...'
+                                        ),
+                                        ...(mulesoftConfig.journalTypeId ? 
+                                            journalTypes
+                                                .find(jt => jt.JournalType.Id === mulesoftConfig.journalTypeId)
+                                                ?.JournalSubTypes?.map(subtype => 
+                                                    React.createElement('option', { key: subtype.Id, value: subtype.Id }, subtype.Name)
+                                                ) || []
+                                            : []
+                                        )
+                                    ])
+                                ]),
+
+                                // Enrollment TJ Subtype
+                                React.createElement('div', { key: 'enrollment-journal-subtype' }, [
+                                    React.createElement('label', { key: 'enrollment-journal-subtype-label', className: 'block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400' }, 
+                                        'Enrollment TJ Subtype'
+                                    ),
+                                    React.createElement('select', {
+                                        key: 'enrollment-journal-subtype-select',
+                                        value: mulesoftConfig.enrollmentJournalSubtypeId,
+                                        onChange: (e) => handleEnrollmentJournalSubtypeChange(e.target.value),
+                                        disabled: !mulesoftConfig.journalTypeId,
+                                        className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                                    }, [
+                                        React.createElement('option', { key: 'empty-enrollment-subtype', value: '' }, 
+                                            !mulesoftConfig.journalTypeId ? 'Select journal type first...' : 'Select enrollment subtype...'
                                         ),
                                         ...(mulesoftConfig.journalTypeId ? 
                                             journalTypes
@@ -1383,13 +1486,37 @@ sfdc.account=`;
                                 React.createElement('div', { key: 'journal-status', className: 'flex items-center gap-2' }, [
                                     React.createElement('div', { 
                                         key: 'journal-indicator',
-                                        className: `w-2 h-2 rounded-full ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId ? 'bg-green-500' : 'bg-gray-400'}` 
+                                        className: `w-2 h-2 rounded-full ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId && mulesoftConfig.enrollmentJournalSubtypeId ? 'bg-green-500' : 'bg-gray-400'}` 
                                     }),
                                     React.createElement('span', { key: 'journal-text', className: 'dark:text-gray-300' }, 
-                                        `Journal Type/Subtype: ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId ? 'Selected' : 'Not selected'}`
+                                        `Journal Types & Subtypes: ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId && mulesoftConfig.enrollmentJournalSubtypeId ? 'Selected' : 'Not selected'}`
                                     )
                                 ])
                             ])
+                        ])
+                    ]),
+
+                    // Load Members from Loyalty Cloud
+                    React.createElement('div', { key: 'load-members-section', className: 'mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg' }, [
+                        React.createElement('h4', { key: 'load-members-title', className: 'text-sm font-medium mb-3 dark:text-white' }, 
+                            'Load Members from Loyalty Cloud'
+                        ),
+                        React.createElement('p', { key: 'load-members-description', className: 'text-xs text-gray-600 dark:text-gray-400 mb-4' }, 
+                            'Load and sync loyalty program members from the MuleSoft loyalty cloud system'
+                        ),
+                        React.createElement('button', {
+                            key: 'load-members-btn',
+                            onClick: loadMembers,
+                            disabled: !mulesoftConfig.endpoint || loadingMembers,
+                            className: 'flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                        }, [
+                            loadingMembers && React.createElement('div', { 
+                                key: 'loading-spinner',
+                                className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                            }),
+                            React.createElement('span', { key: 'btn-text' }, 
+                                loadingMembers ? 'Loading Members...' : 'Load Members from Cloud'
+                            )
                         ])
                     ])
                 ]),
@@ -2116,6 +2243,204 @@ sfdc.account=`;
                setSettingForm: setSettingForm,
                handleSaveSetting: handleSaveSetting,
                Save: Save
-           })
+           }),
+
+           // Members Modal
+           showMembersModal && React.createElement('div', {
+               key: 'members-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
+                           `Loyalty Members (${members.length} found)`
+                       ),
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: closeMembersModal,
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, React.createElement(X, { size: 24 }))
+                   ]),
+                   
+                   React.createElement('div', { key: 'content', className: 'p-6' }, [
+                       React.createElement('div', { key: 'warning', className: 'mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg' }, [
+                           React.createElement('p', { key: 'warning-text', className: 'text-sm text-yellow-800 dark:text-yellow-200' }, 
+                               '⚠️ This action will replace current customer data. Please review the members below before proceeding.'
+                           )
+                       ]),
+                       
+                       React.createElement('div', { key: 'members-list', className: 'max-h-96 overflow-y-auto border dark:border-gray-700 rounded-lg' }, [
+                           React.createElement('table', { key: 'members-table', className: 'w-full' }, [
+                               React.createElement('thead', { key: 'thead', className: 'bg-gray-50 dark:bg-gray-700 sticky top-0' }, [
+                                   React.createElement('tr', { key: 'header-row' }, [
+                                       React.createElement('th', { key: 'membership-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Membership #'),
+                                       React.createElement('th', { key: 'name-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Name'),
+                                       React.createElement('th', { key: 'email-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Email'),
+                                       React.createElement('th', { key: 'tier-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Tier'),
+                                       React.createElement('th', { key: 'points-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Points')
+                                   ])
+                               ]),
+                               React.createElement('tbody', { key: 'tbody', className: 'bg-white dark:bg-gray-800 divide-y dark:divide-gray-700' }, 
+                                   members.map((member, index) => 
+                                       React.createElement('tr', { key: `member-${index}`, className: 'hover:bg-gray-50 dark:hover:bg-gray-700' }, [
+                                           React.createElement('td', { key: 'membership', className: 'px-4 py-3 text-sm font-medium text-gray-900 dark:text-white' }, 
+                                               member.MembershipNumber
+                                           ),
+                                           React.createElement('td', { key: 'name', className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, 
+                                               member.Contact?.Name || 'N/A'
+                                           ),
+                                           React.createElement('td', { key: 'email', className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, 
+                                               member.Contact?.Email || 'N/A'
+                                           ),
+                                           React.createElement('td', { key: 'tier', className: 'px-4 py-3 text-sm' }, [
+                                               React.createElement('span', { 
+                                                   key: 'tier-badge',
+                                                   className: `px-2 py-1 text-xs font-medium rounded-full ${
+                                                       member.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                                       member.tier === 'Silver' ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' :
+                                                       'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                                   }`
+                                               }, member.tier || 'N/A')
+                                           ]),
+                                           React.createElement('td', { key: 'points', className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, 
+                                               member.points?.[0]?.PointsBalance || 0
+                                           )
+                                       ])
+                                   )
+                               )
+                           ])
+                       ])
+                   ]),
+
+                   React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                       React.createElement('button', {
+                           key: 'cancel-btn',
+                           onClick: closeMembersModal,
+                           className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+                       }, 'Cancel'),
+                       React.createElement('button', {
+                           key: 'sync-btn',
+                           onClick: syncMembers,
+                           disabled: syncingMembers,
+                           className: 'px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2'
+                       }, [
+                           syncingMembers && React.createElement('div', { 
+                               key: 'sync-spinner',
+                               className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                           }),
+                           syncingMembers ? 'Syncing...' : 'Sync Members'
+                       ])
+                   ])
+               ])
+           ]),
+
+           // Sync Results Modal
+           showSyncResults && React.createElement('div', {
+               key: 'sync-results-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
+                           'Members Sync Results'
+                       ),
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: closeSyncResults,
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, React.createElement(X, { size: 24 }))
+                   ]),
+                   
+                   React.createElement('div', { key: 'content', className: 'p-6' }, [
+                       React.createElement('div', { key: 'summary', className: 'mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg' }, [
+                           React.createElement('h3', { key: 'summary-title', className: 'text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2' }, 
+                               'Sync Summary'
+                           ),
+                           React.createElement('div', { key: 'summary-stats', className: 'grid grid-cols-2 md:grid-cols-4 gap-4' }, [
+                               React.createElement('div', { key: 'total', className: 'text-center' }, [
+                                   React.createElement('div', { key: 'total-number', className: 'text-2xl font-bold text-blue-900 dark:text-blue-100' }, 
+                                       syncResults?.length || 0
+                                   ),
+                                   React.createElement('div', { key: 'total-label', className: 'text-sm text-blue-700 dark:text-blue-200' }, 'Total Processed')
+                               ]),
+                               React.createElement('div', { key: 'success', className: 'text-center' }, [
+                                   React.createElement('div', { key: 'success-number', className: 'text-2xl font-bold text-green-600' }, 
+                                       syncResults?.filter(r => r.success === 'true').length || 0
+                                   ),
+                                   React.createElement('div', { key: 'success-label', className: 'text-sm text-green-700 dark:text-green-200' }, 'Successful')
+                               ]),
+                               React.createElement('div', { key: 'failed', className: 'text-center' }, [
+                                   React.createElement('div', { key: 'failed-number', className: 'text-2xl font-bold text-red-600' }, 
+                                       syncResults?.filter(r => r.success === 'false').length || 0
+                                   ),
+                                   React.createElement('div', { key: 'failed-label', className: 'text-sm text-red-700 dark:text-red-200' }, 'Failed')
+                               ]),
+                               React.createElement('div', { key: 'synced', className: 'text-center' }, [
+                                   React.createElement('div', { key: 'synced-number', className: 'text-2xl font-bold text-blue-600' }, 
+                                       syncResults?.filter(r => r.success === 'true' && r.affectedRows > 0).length || 0
+                                   ),
+                                   React.createElement('div', { key: 'synced-label', className: 'text-sm text-blue-700 dark:text-blue-200' }, 'New Members')
+                               ])
+                           ])
+                       ]),
+                       
+                       React.createElement('div', { key: 'results-list', className: 'max-h-96 overflow-y-auto border dark:border-gray-700 rounded-lg' }, [
+                           React.createElement('table', { key: 'results-table', className: 'w-full' }, [
+                               React.createElement('thead', { key: 'thead', className: 'bg-gray-50 dark:bg-gray-700 sticky top-0' }, [
+                                   React.createElement('tr', { key: 'header-row' }, [
+                                       React.createElement('th', { key: 'status-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Status'),
+                                       React.createElement('th', { key: 'loyalty-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Loyalty #'),
+                                       React.createElement('th', { key: 'name-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Name'),
+                                       React.createElement('th', { key: 'email-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Email'),
+                                       React.createElement('th', { key: 'error-header', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider' }, 'Error')
+                                   ])
+                               ]),
+                               React.createElement('tbody', { key: 'tbody', className: 'bg-white dark:bg-gray-800 divide-y dark:divide-gray-700' }, 
+                                   syncResults?.map((result, index) => 
+                                       React.createElement('tr', { key: `result-${index}`, className: 'hover:bg-gray-50 dark:hover:bg-gray-700' }, [
+                                           React.createElement('td', { key: 'status', className: 'px-4 py-3 text-sm' }, [
+                                               React.createElement('span', { 
+                                                   key: 'status-badge',
+                                                   className: `px-2 py-1 text-xs font-medium rounded-full ${
+                                                       result.success === 'true' 
+                                                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                           : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                   }`
+                                               }, result.success === 'true' ? 'Success' : 'Failed')
+                                           ]),
+                                           React.createElement('td', { key: 'loyalty', className: 'px-4 py-3 text-sm font-medium text-gray-900 dark:text-white' }, 
+                                               result.loyalty_number
+                                           ),
+                                           React.createElement('td', { key: 'name', className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, 
+                                               result.name || 'N/A'
+                                           ),
+                                           React.createElement('td', { key: 'email', className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, 
+                                               result.email || 'N/A'
+                                           ),
+                                           React.createElement('td', { key: 'error', className: 'px-4 py-3 text-sm text-red-600 dark:text-red-400 max-w-xs truncate' }, 
+                                               result.error || ''
+                                           )
+                                       ])
+                                   ) || []
+                               )
+                           ])
+                       ])
+                   ]),
+
+                   React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: closeSyncResults,
+                           className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                       }, 'Close')
+                   ])
+               ])
+           ])
        ]);
     };
