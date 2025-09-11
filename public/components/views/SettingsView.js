@@ -544,7 +544,7 @@ window.Views.SettingsView = ({
 
             setSyncingMembers(true);
             try {
-                const response = await fetch(`${mulesoftConfig.endpoint}/bulk/sync/members?member=${mulesoftConfig.loyaltyProgramId}`);
+                const response = await fetch(`${mulesoftConfig.endpoint}/bulk/sync/members?program=${mulesoftConfig.loyaltyProgramId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
