@@ -1658,7 +1658,7 @@ sfdc.account=`;
                    ])
                ])
            ]), 
-
+ 
            // Users Tab Content
            activeTab === 'users' && currentUser?.permissions?.users?.read && React.createElement('div', { key: 'users-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [
