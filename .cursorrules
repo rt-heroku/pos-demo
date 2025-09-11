@@ -1,0 +1,338 @@
+# POS System with Loyalty Program - Cursor Rules
+
+## Project Overview
+This is a full-stack Point of Sale (POS) system with customer loyalty features, built with:
+- **Frontend**: React 18 with vanilla JavaScript (no build process)
+- **Backend**: Express.js with Node.js
+- **Database**: PostgreSQL
+- **Deployment**: Heroku-ready
+- **Architecture**: Server-side rendered with client-side React components
+
+## Technology Stack
+- **Runtime**: Node.js 18.x
+- **Framework**: Express.js 4.18+
+- **Database**: PostgreSQL with pg driver
+- **Frontend**: React 18 (development mode), Babel standalone
+- **Styling**: Tailwind CSS via CDN
+- **Icons**: Custom SVG icon components
+- **Authentication**: JWT-based with role-based access control
+
+## Code Style & Conventions
+
+### JavaScript/React
+- Use **React.createElement** syntax (no JSX)
+- Prefer functional components with React hooks
+- Use **const** for variable declarations
+- Use **async/await** for asynchronous operations
+- Use **template literals** for string interpolation
+- Use **destructuring** for object/array assignments
+- Use **arrow functions** for callbacks and event handlers
+
+### File Organization
+- **Components**: `/public/components/` with subdirectories:
+  - `views/` - Main application views
+  - `modals/` - Modal dialogs
+  - `common/` - Reusable components
+- **Utilities**: `/public/` root level for core utilities
+- **Server**: `server.js` - Express server and API routes
+- **Database**: `database.sql` - Schema and initial data
+
+### Naming Conventions
+- **Files**: PascalCase for components (`SettingsView.js`)
+- **Variables**: camelCase (`userSettings`, `isDarkMode`)
+- **Constants**: UPPER_SNAKE_CASE (`BASE_URL`)
+- **Functions**: camelCase (`loadSystemSettings`)
+- **Database**: snake_case (`user_sessions`, `loyalty_points`)
+
+## Architecture Patterns
+
+### Component Structure
+```javascript
+// Standard component pattern
+window.Views.ComponentName = ({ props }) => {
+    // State declarations
+    const [state, setState] = React.useState(initialValue);
+    
+    // Effects
+    React.useEffect(() => {
+        // Side effects
+    }, [dependencies]);
+    
+    // Event handlers
+    const handleEvent = async (params) => {
+        // Implementation
+    };
+    
+    // Render
+    return React.createElement('div', { className: '...' }, [
+        // Child elements
+    ]);
+};
+```
+
+### API Integration
+- Use `window.API.call()` for all API requests
+- Handle errors with try/catch blocks
+- Show loading states during API calls
+- Use proper HTTP methods (GET, POST, PUT, DELETE)
+
+### State Management
+- Use React hooks for local component state
+- Pass data down via props
+- Use context for global state when needed
+- Store user preferences in localStorage
+
+## Database Schema
+
+### Key Tables
+- **users**: User accounts with roles
+- **user_sessions**: JWT session management
+- **roles**: Role-based permissions
+- **locations**: Store locations
+- **products**: Product catalog
+- **customers**: Customer information
+- **transactions**: Sales transactions
+- **loyalty_points**: Points tracking
+- **system_settings**: Configuration settings
+
+### Database Functions
+- Use `get_system_setting(key)` for configuration values
+- Use `get_system_setting_or_default(key, default)` for fallbacks
+- All timestamps use PostgreSQL `TIMESTAMP WITH TIME ZONE`
+
+## Security Guidelines
+
+### Authentication
+- Use JWT tokens for session management
+- Implement role-based access control
+- Validate all user inputs
+- Use parameterized queries to prevent SQL injection
+- Hash passwords with bcrypt (if implemented)
+
+### Data Validation
+- Validate all API inputs
+- Sanitize user inputs
+- Use proper error handling
+- Implement rate limiting for API endpoints
+
+## UI/UX Guidelines
+
+### Design System
+- Use Tailwind CSS classes for styling
+- Support both light and dark themes
+- Use consistent spacing (4, 8, 12, 16, 24px)
+- Use semantic color classes (`text-blue-600`, `bg-red-100`)
+- Implement responsive design (mobile-first)
+
+### Component Patterns
+- Use consistent button styles and sizes
+- Implement loading states for all async operations
+- Show error messages with proper styling
+- Use modal dialogs for forms and confirmations
+- Implement proper form validation
+
+### Accessibility
+- Use semantic HTML elements
+- Provide proper ARIA labels
+- Ensure keyboard navigation works
+- Use sufficient color contrast
+- Provide alt text for images
+
+## Performance Guidelines
+
+### Frontend
+- Use React.memo for expensive components
+- Implement proper loading states
+- Use lazy loading for large datasets
+- Optimize re-renders with proper dependencies
+- Use efficient data structures
+
+### Backend
+- Use database indexes for frequently queried columns
+- Implement proper pagination for large datasets
+- Use connection pooling for database connections
+- Cache frequently accessed data
+- Optimize SQL queries
+
+## Error Handling
+
+### Frontend
+```javascript
+try {
+    const data = await window.API.call('/endpoint');
+    // Handle success
+} catch (error) {
+    console.error('Operation failed:', error);
+    alert(error.message || 'An error occurred');
+}
+```
+
+### Backend
+```javascript
+try {
+    const result = await pool.query('SELECT * FROM table');
+    res.json(result.rows);
+} catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+```
+
+## Testing Guidelines
+
+### Component Testing
+- Test user interactions and state changes
+- Test error handling scenarios
+- Test loading states
+- Test form validation
+
+### API Testing
+- Test all CRUD operations
+- Test authentication and authorization
+- Test error responses
+- Test edge cases and validation
+
+## Deployment Guidelines
+
+### Heroku Configuration
+- Use `Procfile` for process definition
+- Set environment variables in Heroku dashboard
+- Use `heroku-postbuild` script for dependencies
+- Configure database connection string
+
+### Environment Variables
+- `DATABASE_URL`: PostgreSQL connection string
+- `NODE_ENV`: Environment (development/production)
+- `PORT`: Server port (Heroku sets this automatically)
+
+## Code Quality
+
+### Best Practices
+- Write self-documenting code with clear variable names
+- Use consistent indentation (2 spaces)
+- Add comments for complex business logic
+- Keep functions small and focused
+- Use early returns to reduce nesting
+
+### Code Review Checklist
+- [ ] Proper error handling
+- [ ] Input validation
+- [ ] Security considerations
+- [ ] Performance implications
+- [ ] Accessibility compliance
+- [ ] Mobile responsiveness
+- [ ] Dark mode support
+
+## Common Patterns
+
+### Modal Components
+```javascript
+const Modal = ({ show, onClose, title, children }) => {
+    if (!show) return null;
+    
+    return React.createElement('div', {
+        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+    }, [
+        React.createElement('div', {
+            className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
+        }, [
+            // Modal content
+        ])
+    ]);
+};
+```
+
+### Form Handling
+```javascript
+const [formData, setFormData] = React.useState({
+    field1: '',
+    field2: ''
+});
+
+const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+};
+
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+        await window.API.call('/endpoint', {
+            method: 'POST',
+            body: JSON.stringify(formData)
+        });
+        // Handle success
+    } catch (error) {
+        // Handle error
+    }
+};
+```
+
+### Loading States
+```javascript
+const [loading, setLoading] = React.useState(false);
+
+const handleAsyncOperation = async () => {
+    setLoading(true);
+    try {
+        await someAsyncOperation();
+    } finally {
+        setLoading(false);
+    }
+};
+```
+
+## Integration Guidelines
+
+### MuleSoft Integration
+- Use system settings for configuration
+- Implement proper error handling for external API calls
+- Cache external data when appropriate
+- Provide user feedback for integration status
+
+### Salesforce Integration
+- Use MuleSoft for all Salesforce integration
+- Handle rate limiting and retries
+
+## Documentation
+
+### Code Comments
+- Document complex business logic
+- Explain non-obvious implementation details
+- Document API endpoints and their parameters
+- Include examples for reusable functions
+
+### README Updates
+- Keep installation instructions current
+- Document new features and changes
+- Include troubleshooting guides
+- Provide API documentation
+
+## Git Workflow
+
+### Commit Messages
+- Use conventional commit format
+- Be descriptive and concise
+- Reference issues when applicable
+- Use present tense ("Add feature" not "Added feature")
+
+### Branch Naming
+- `feature/description` for new features
+- `bugfix/description` for bug fixes
+- `hotfix/description` for urgent fixes
+- `refactor/description` for code improvements
+
+## Monitoring & Logging
+
+### Error Tracking
+- Log all errors with context
+- Use structured logging format
+- Include user information when available
+- Monitor API response times
+
+### Performance Monitoring
+- Track database query performance
+- Monitor API endpoint response times
+- Track user interaction patterns
+- Monitor memory usage
+
+Remember: This is a production-ready POS system. Always consider security, performance, and user experience in your implementations.
