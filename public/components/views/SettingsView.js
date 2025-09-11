@@ -1657,7 +1657,7 @@ sfdc.account=`;
                        'Loading database information...'
                    ])
                ])
-           ]),
+           ]), 
 
            // Users Tab Content
            activeTab === 'users' && currentUser?.permissions?.users?.read && React.createElement('div', { key: 'users-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
