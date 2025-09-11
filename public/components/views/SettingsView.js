@@ -502,7 +502,10 @@ window.Views.SettingsView = ({
                 const password = url.password;
                 const database = url.pathname.substring(1); // Remove leading slash
                 
-                return `postgresql:
+                return `#Environment
+env: "prod"
+#DB Configuration
+db:
   host: "${host}"
   port: "${port}"
   user: "${user}"
@@ -511,12 +514,15 @@ window.Views.SettingsView = ({
 
 #Salesforce configurations
 sfdc:
-  url: 'http://login.salesforce.com/'
+  url: "http://login.salesforce.com/services/Soap/u/64.0"
   token: 
   password: 
   account: `;
             } catch (error) {
-                return `postgresql:
+                return `#Environment
+env: "prod"
+#DB Configuration
+db:
   host: ""
   port: ""
   user: ""
@@ -525,7 +531,7 @@ sfdc:
 
 #Salesforce configurations
 sfdc:
-  url: 'http://login.salesforce.com/'
+  url: "http://login.salesforce.com/services/Soap/u/64.0"
   token: 
   password: 
   account: `;
@@ -541,11 +547,14 @@ sfdc:
                 const password = url.password;
                 const database = url.pathname.substring(1); // Remove leading slash
                 
-                return `postgresql.host=${host}
-postgresql.port=${port}
-postgresql.user=${user}
-postgresql.password=${password}
-postgresql.database=${database}
+                return `#Environment
+env=prod
+#DB Configuration
+db.host=${host}
+db.port=${port}
+db.user=${user}
+db.password=${password}
+db.database=${database}
 
 #Salesforce configurations
 sfdc.url=http://login.salesforce.com/
@@ -553,11 +562,14 @@ sfdc.token=
 sfdc.password=
 sfdc.account=`;
             } catch (error) {
-                return `postgresql.host=
-postgresql.port=
-postgresql.user=
-postgresql.password=
-postgresql.database=
+                return `#Environment
+env=prod
+#DB Configuration
+db.host=
+db.port=
+db.user=
+db.password=
+db.database=
 
 #Salesforce configurations
 sfdc.url=http://login.salesforce.com/
