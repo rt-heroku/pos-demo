@@ -1,3 +1,27 @@
+/**
+ * SettingsView Component
+ * 
+ * A comprehensive settings management component for the POS system that handles:
+ * - System settings configuration and management
+ * - MuleSoft Loyalty Sync integration
+ * - Database connection management
+ * - Location management
+ * - User preferences
+ * - Members sync from loyalty cloud
+ * 
+ * Features:
+ * - Real-time configuration status indicators
+ * - MuleSoft API integration for loyalty programs and journal types
+ * - Database credentials parsing and formatting (YAML/Java properties)
+ * - Salesforce configuration templates
+ * - Members loading and syncing with detailed results
+ * - Responsive design with dark mode support
+ * 
+ * @author Rodrigo Torres
+ * @version 1.0.0
+ * @since 2025-01-11
+ */
+
 if (!window.Views) {
     window.Views = {};
 }

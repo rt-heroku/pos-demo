@@ -1,3 +1,32 @@
+/**
+ * POS System Server
+ * 
+ * Express.js backend server for the Point of Sale (POS) system with the following features:
+ * - RESTful API endpoints for all POS operations
+ * - PostgreSQL database integration
+ * - User authentication and authorization
+ * - System settings management
+ * - Customer, product, and sales management
+ * - Inventory tracking and management
+ * - Location-based operations
+ * - MuleSoft integration support
+ * - Static file serving for the frontend
+ * 
+ * API Endpoints:
+ * - Authentication: /api/auth/login, /api/auth/register
+ * - Customers: /api/customers (CRUD operations)
+ * - Products: /api/products (CRUD operations)
+ * - Sales: /api/sales (CRUD operations)
+ * - Inventory: /api/inventory (CRUD operations)
+ * - System Settings: /api/system-settings (CRUD operations)
+ * - Locations: /api/locations (CRUD operations)
+ * - Users: /api/users (CRUD operations)
+ * 
+ * @author Rodrigo Torres
+ * @version 1.0.0
+ * @since 2025-01-11
+ */
+
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');

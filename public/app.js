@@ -1,3 +1,35 @@
+/**
+ * POS Application - Main Application Component
+ * 
+ * The main application component that orchestrates the entire POS system:
+ * - User authentication and session management
+ * - Multi-location support with location switching
+ * - Navigation between different views (POS, Sales, Inventory, etc.)
+ * - Global state management for the application
+ * - User settings and preferences
+ * - Dark mode theme management
+ * 
+ * Features:
+ * - JWT-based authentication
+ * - Location-based data filtering
+ * - Responsive navigation
+ * - User profile management
+ * - Theme switching (light/dark mode)
+ * - Real-time data synchronization
+ * - Error handling and user feedback
+ * 
+ * Views:
+ * - POSView: Main point of sale interface
+ * - SalesView: Sales history and analytics
+ * - InventoryView: Product and inventory management
+ * - LoyaltyView: Customer loyalty program management
+ * - SettingsView: System configuration and settings
+ * 
+ * @author Rodrigo Torres
+ * @version 1.0.0
+ * @since 2025-01-11
+ */
+
 // Updated main POS Application with Settings and Multi-Location Support
 // This replaces the existing app.js
 

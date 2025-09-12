@@ -1,3 +1,28 @@
+/**
+ * POSView Component
+ * 
+ * The main Point of Sale interface component that provides the core POS functionality:
+ * - Product catalog display with search and filtering
+ * - Shopping cart management with quantity controls
+ * - Customer selection and loyalty integration
+ * - Payment processing with multiple payment methods
+ * - Receipt generation and printing
+ * - Real-time inventory updates
+ * 
+ * Features:
+ * - Responsive grid layout for products
+ * - Real-time cart calculations
+ * - Customer loyalty point display
+ * - Payment method selection (Cash, Card, Mobile)
+ * - Receipt preview and printing
+ * - Dark mode support
+ * - Mobile-optimized interface
+ * 
+ * @author Rodrigo Torres
+ * @version 1.0.0
+ * @since 2025-01-11
+ */
+
 // POSView.js - Point of Sale View Component
 if (!window.Views) {
     window.Views = {};

@@ -2,6 +2,10 @@
 
 A complete full-stack Point of Sale system with customer loyalty features, built with React, Express.js, and PostgreSQL.
 
+**Author:** Rodrigo Torres  
+**Version:** 1.0.0  
+**Created:** January 11, 2025
+
 ## 🚀 Features
 
 ### 🛒 Point of Sale

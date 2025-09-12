@@ -1,3 +1,26 @@
+/**
+ * API Client Module
+ * 
+ * Provides a centralized API client for the POS system with the following capabilities:
+ * - Generic API call function with authentication
+ * - CRUD operations for customers, products, sales, and inventory
+ * - System settings management
+ * - Location management
+ * - User authentication and management
+ * - Error handling and response processing
+ * 
+ * Features:
+ * - Automatic token-based authentication
+ * - Request/response interceptors
+ * - Error handling with user-friendly messages
+ * - Support for GET, POST, PUT, DELETE operations
+ * - JSON request/response handling
+ * 
+ * @author Rodrigo Torres
+ * @version 1.0.0
+ * @since 2025-01-11
+ */
+
 // public/api.js - API functions
 window.API = {
     BASE_URL: '/api',

@@ -1,3 +1,32 @@
+/**
+ * Icons Library
+ * 
+ * A comprehensive collection of SVG icon components for the POS system.
+ * All icons are built using React.createElement for compatibility with the vanilla React setup.
+ * 
+ * Features:
+ * - Consistent styling with shared iconProps
+ * - Scalable SVG icons with proper viewBox
+ * - Stroke-based design for clean appearance
+ * - Dark mode compatible
+ * - Responsive sizing
+ * 
+ * Icon Categories:
+ * - Navigation: Home, Settings, Users, etc.
+ * - Actions: Add, Edit, Delete, Save, etc.
+ * - Commerce: ShoppingCart, CreditCard, etc.
+ * - Status: Check, X, Alert, etc.
+ * - Media: Play, Pause, Volume, etc.
+ * - System: Refresh, Download, Upload, etc.
+ * 
+ * Usage:
+ * React.createElement(Icons.IconName, { size: 24, className: "custom-class" })
+ * 
+ * @author Rodrigo Torres
+ * @version 1.0.0
+ * @since 2025-01-11
+ */
+
 // public/icons.js - All icon components
 const iconProps = { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
 
