@@ -2845,7 +2845,7 @@ sfdc.account=`;
                                        ])
                                    ]),
                                    React.createElement('div', { key: 'batch-products', className: 'p-6' }, [
-                                       React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, 
+                                       React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, [
                                            (() => {
                                                // Process products the same way as in View Products button
                                                const processedProducts = batch.products
