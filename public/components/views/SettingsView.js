@@ -90,6 +90,7 @@ window.Views.SettingsView = ({
         const [loadingProducts, setLoadingProducts] = React.useState(false);
         const [creatingProducts, setCreatingProducts] = React.useState(false);
         const [expandedProducts, setExpandedProducts] = React.useState(new Set());
+        const [existingProducts, setExistingProducts] = React.useState([]);
         const [generatedHistory, setGeneratedHistory] = React.useState([]);
         const [loadingHistory, setLoadingHistory] = React.useState(false);
         const [historySearchTerm, setHistorySearchTerm] = React.useState('');
@@ -140,6 +141,7 @@ window.Views.SettingsView = ({
             } else if (activeTab === 'products') {
                 loadMulesoftConfig();
                 loadGeneratedHistory();
+                loadExistingProducts();
             }
         }, [activeTab]);
 
@@ -828,6 +830,19 @@ window.Views.SettingsView = ({
             } catch (error) {
                 console.error('Failed to check existing products:', error);
                 return [];
+            }
+        };
+
+        const loadExistingProducts = async () => {
+            try {
+                const response = await window.API.call('/products');
+                if (response && response.products) {
+                    const productNames = response.products.map(p => p.name);
+                    setExistingProducts(productNames);
+                }
+            } catch (error) {
+                console.error('Failed to load existing products:', error);
+                setExistingProducts([]);
             }
         };
 
