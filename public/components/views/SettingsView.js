@@ -2896,7 +2896,7 @@ sfdc.account=`;
                                                        ])
                                                    ])
                                                );
-                                               })()()
+                                               })()
                                            ),
                                            (() => {
                                                const processedProducts = batch.products
