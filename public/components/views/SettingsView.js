@@ -772,10 +772,22 @@ window.Views.SettingsView = ({
         const loadGeneratedHistory = async () => {
             setLoadingHistory(true);
             try {
+                console.log('🔍 [DEBUG] Loading generated history...');
                 const response = await window.API.call('/generated-products/history');
+                console.log('🔍 [DEBUG] Generated history API response:', response);
+                console.log('🔍 [DEBUG] Response type:', typeof response);
+                console.log('🔍 [DEBUG] Response length:', response?.length);
+                if (response && response.length > 0) {
+                    console.log('🔍 [DEBUG] First batch:', response[0]);
+                    if (response[0].products && response[0].products.length > 0) {
+                        console.log('🔍 [DEBUG] First product in first batch:', response[0].products[0]);
+                        console.log('🔍 [DEBUG] First product type:', typeof response[0].products[0]);
+                        console.log('🔍 [DEBUG] First product keys:', Object.keys(response[0].products[0] || {}));
+                    }
+                }
                 setGeneratedHistory(response);
             } catch (error) {
-                console.error('Failed to load generated history:', error);
+                console.error('❌ [ERROR] Failed to load generated history:', error);
                 alert(`Failed to load generated history: ${error.message}`);
             } finally {
                 setLoadingHistory(false);
@@ -2818,7 +2830,19 @@ sfdc.account=`;
                                    ])
                                ]),
                                React.createElement('tbody', { key: 'table-body' }, 
-                                   productsFromCloud.map((product, index) => [
+                                   (() => {
+                                       console.log('🔍 [DEBUG] Rendering products table with productsFromCloud:', productsFromCloud);
+                                       console.log('🔍 [DEBUG] productsFromCloud length:', productsFromCloud?.length);
+                                       if (productsFromCloud && productsFromCloud.length > 0) {
+                                           console.log('🔍 [DEBUG] First product in table:', productsFromCloud[0]);
+                                           console.log('🔍 [DEBUG] First product type:', typeof productsFromCloud[0]);
+                                           console.log('🔍 [DEBUG] First product keys:', Object.keys(productsFromCloud[0] || {}));
+                                           console.log('🔍 [DEBUG] First product.product_name:', productsFromCloud[0]?.product_name);
+                                           console.log('🔍 [DEBUG] First product.collection:', productsFromCloud[0]?.collection);
+                                           console.log('🔍 [DEBUG] First product.pricing:', productsFromCloud[0]?.pricing);
+                                           console.log('🔍 [DEBUG] First product.sku:', productsFromCloud[0]?.sku);
+                                       }
+                                       return productsFromCloud.map((product, index) => [
                                        React.createElement('tr', { 
                                            key: `product-row-${index}`,
                                            className: `border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedProducts.some(p => p.sku === product.sku) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`
@@ -2883,7 +2907,8 @@ sfdc.account=`;
                                                ])
                                            ])
                                        ])
-                                   ]).flat()
+                                   ]).flat();
+                                   })()
                                )
                            ])
                        ])
@@ -2988,19 +3013,44 @@ sfdc.account=`;
                                                    React.createElement('button', {
                                                        key: 'view-batch-btn',
                                                        onClick: () => {
+                                                           console.log('🔍 [DEBUG] View Products button clicked for batch:', batch.batchId);
+                                                           console.log('🔍 [DEBUG] Batch data:', batch);
+                                                           console.log('🔍 [DEBUG] Raw batch.products:', batch.products);
+                                                           console.log('🔍 [DEBUG] Products type:', typeof batch.products);
+                                                           console.log('🔍 [DEBUG] Products length:', batch.products?.length);
+                                                           
+                                                           if (batch.products && batch.products.length > 0) {
+                                                               console.log('🔍 [DEBUG] First product before processing:', batch.products[0]);
+                                                               console.log('🔍 [DEBUG] First product type:', typeof batch.products[0]);
+                                                               console.log('🔍 [DEBUG] First product keys:', Object.keys(batch.products[0] || {}));
+                                                           }
+                                                           
                                                            // Ensure products are properly formatted
-                                                           const formattedProducts = batch.products.map(product => {
+                                                           const formattedProducts = batch.products.map((product, index) => {
+                                                               console.log(`🔍 [DEBUG] Processing product ${index}:`, product);
+                                                               console.log(`🔍 [DEBUG] Product ${index} type:`, typeof product);
+                                                               
                                                                // If product is a string, try to parse it
                                                                if (typeof product === 'string') {
                                                                    try {
-                                                                       return JSON.parse(product);
+                                                                       const parsed = JSON.parse(product);
+                                                                       console.log(`🔍 [DEBUG] Parsed product ${index}:`, parsed);
+                                                                       return parsed;
                                                                    } catch (e) {
-                                                                       console.error('Error parsing product:', e);
+                                                                       console.error('❌ [ERROR] Error parsing product:', e, 'Product:', product);
                                                                        return product;
                                                                    }
                                                                }
+                                                               console.log(`🔍 [DEBUG] Product ${index} is already an object:`, product);
                                                                return product;
                                                            });
+                                                           
+                                                           console.log('🔍 [DEBUG] Final formatted products:', formattedProducts);
+                                                           if (formattedProducts.length > 0) {
+                                                               console.log('🔍 [DEBUG] First formatted product:', formattedProducts[0]);
+                                                               console.log('🔍 [DEBUG] First formatted product keys:', Object.keys(formattedProducts[0] || {}));
+                                                           }
+                                                           
                                                            setProductsFromCloud(formattedProducts);
                                                            setSelectedProducts([]);
                                                            setExpandedProducts(new Set());
