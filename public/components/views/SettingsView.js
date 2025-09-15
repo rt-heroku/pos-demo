@@ -3066,7 +3066,27 @@ sfdc.account=`;
                                        ]),
                                        React.createElement('div', { key: 'batch-products', className: 'p-4' }, [
                                            React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3' }, 
-                                               batch.products.slice(0, 6).map((product, index) => [
+                                               (() => {
+                                                   // Process products the same way as in View Products button
+                                                   const processedProducts = batch.products
+                                                       .flat() // Flatten any nested arrays
+                                                       .filter(product => product !== null && product !== undefined) // Remove null/undefined products
+                                                       .map(product => {
+                                                           // If product is a string, try to parse it
+                                                           if (typeof product === 'string') {
+                                                               try {
+                                                                   return JSON.parse(product);
+                                                               } catch (e) {
+                                                                   console.error('Error parsing product in preview:', e);
+                                                                   return product;
+                                                               }
+                                                           }
+                                                           return product;
+                                                       });
+                                                   
+                                                   console.log('🔍 [DEBUG] Preview products processed:', processedProducts);
+                                                   
+                                                   return processedProducts.slice(0, 6).map((product, index) => [
                                                    React.createElement('div', { 
                                                        key: `product-${index}`,
                                                        className: 'p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800'
@@ -3093,13 +3113,19 @@ sfdc.account=`;
                                                            }, 'Generated')
                                                        ])
                                                    ])
-                                               ])
+                                               ]);
+                                               })()
                                            ),
-                                           batch.products.length > 6 && React.createElement('div', { key: 'more-products', className: 'mt-3 text-center' }, [
-                                               React.createElement('p', { key: 'more-text', className: 'text-sm text-gray-500 dark:text-gray-400' }, 
-                                                   `+${batch.products.length - 6} more products`
-                                               )
-                                           ])
+                                           (() => {
+                                               const processedProducts = batch.products
+                                                   .flat()
+                                                   .filter(product => product !== null && product !== undefined);
+                                               return processedProducts.length > 6 && React.createElement('div', { key: 'more-products', className: 'mt-3 text-center' }, [
+                                                   React.createElement('p', { key: 'more-text', className: 'text-sm text-gray-500 dark:text-gray-400' }, 
+                                                       `+${processedProducts.length - 6} more products`
+                                                   )
+                                               ]);
+                                           })()
                                        ])
                                    ])
                                ]).flat()
