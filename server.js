@@ -689,41 +689,34 @@ app.post('/api/generated-products/save', async (req, res) => {
       return res.status(400).json({ error: 'Batch ID and products array are required' });
     }
 
-    // First, ensure the table exists
+    // Get the next batch number using the existing function
+    let batchNumber;
     try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS generated_products (
-          id SERIAL PRIMARY KEY,
-          batch_id VARCHAR(100) NOT NULL,
-          product_data JSONB NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          created_by VARCHAR(100) DEFAULT 'system'
-        )
-      `);
-      
-      // Create indexes if they don't exist
-      await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch_id)
-      `);
-      await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_generated_products_created_at ON generated_products(created_at)
-      `);
-    } catch (createErr) {
-      console.error('Error creating generated_products table:', createErr);
-      // Continue anyway, table might already exist
+      const batchResult = await pool.query('SELECT get_next_batch_number() as next_batch');
+      batchNumber = batchResult.rows[0].next_batch;
+    } catch (batchErr) {
+      // If the function doesn't exist, use a simple increment
+      const maxBatchResult = await pool.query('SELECT COALESCE(MAX(batch), 0) + 1 as next_batch FROM generated_products');
+      batchNumber = maxBatchResult.rows[0].next_batch;
     }
 
-    // Save each product as a separate record with the same batch_id
+    // Save each product as a separate record with the same batch number
     for (const product of products) {
       await pool.query(
-        'INSERT INTO generated_products (batch_id, product_data, created_by) VALUES ($1, $2, $3)',
-        [batchId, JSON.stringify(product), 'system']
+        'INSERT INTO generated_products (batch, brand, segment, num_of_products, generated_product) VALUES ($1, $2, $3, $4, $5)',
+        [
+          batchNumber,
+          metadata?.brand || null,
+          metadata?.segment || null,
+          metadata?.numberOfProducts || products.length,
+          JSON.stringify(product)
+        ]
       );
     }
 
     res.json({ 
-      message: `Saved ${products.length} products to batch ${batchId}`,
-      batchId: batchId,
+      message: `Saved ${products.length} products to batch ${batchNumber}`,
+      batchId: batchNumber,
       productCount: products.length
     });
   } catch (err) {
@@ -734,47 +727,30 @@ app.post('/api/generated-products/save', async (req, res) => {
 
 app.get('/api/generated-products/history', async (req, res) => {
   try {
-    // First, check if the table exists and create it if it doesn't
-    try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS generated_products (
-          id SERIAL PRIMARY KEY,
-          batch_id VARCHAR(100) NOT NULL,
-          product_data JSONB NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          created_by VARCHAR(100) DEFAULT 'system'
-        )
-      `);
-      
-      // Create indexes if they don't exist
-      await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch_id)
-      `);
-      await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_generated_products_created_at ON generated_products(created_at)
-      `);
-    } catch (createErr) {
-      console.error('Error creating generated_products table:', createErr);
-      // Continue anyway, table might already exist
-    }
-
-    // Get all generated products grouped by batch_id
+    // Get all generated products grouped by batch
     const result = await pool.query(`
       SELECT 
-        batch_id,
+        batch,
+        brand,
+        segment,
+        num_of_products,
         COUNT(*) as total_products,
         MIN(created_at) as created_at,
-        array_agg(product_data ORDER BY id) as products
+        array_agg(generated_product ORDER BY id) as products
       FROM generated_products 
-      GROUP BY batch_id 
+      WHERE batch IS NOT NULL
+      GROUP BY batch, brand, segment, num_of_products
       ORDER BY created_at DESC
     `);
 
     const batches = result.rows.map(row => ({
-      batchId: row.batch_id,
+      batchId: row.batch,
+      brand: row.brand,
+      segment: row.segment,
+      numOfProducts: row.num_of_products,
       totalProducts: parseInt(row.total_products),
       createdAt: row.created_at,
-      products: row.products
+      products: row.products.filter(p => p !== null) // Filter out null products
     }));
 
     res.json(batches);
