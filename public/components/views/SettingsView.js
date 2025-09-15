@@ -2845,7 +2845,7 @@ sfdc.account=`;
                                        ])
                                    ]),
                                    React.createElement('div', { key: 'batch-products', className: 'p-6' }, [
-                                       React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, [
+                                       React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, 
                                            (() => {
                                                // Process products the same way as in View Products button
                                                const processedProducts = batch.products
@@ -2864,7 +2864,7 @@ sfdc.account=`;
                                                        return product;
                                                    });
                                                
-                                               return processedProducts.slice(0, 6).map((product, index) => 
+                                               const productElements = processedProducts.slice(0, 6).map((product, index) => 
                                                    React.createElement('div', { 
                                                        key: `product-${index}`,
                                                        className: 'p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:shadow-md transition-shadow duration-200'
@@ -2896,19 +2896,21 @@ sfdc.account=`;
                                                        ])
                                                    ])
                                                );
-                                               })()
-                                           ),
-                                           (() => {
-                                               const processedProducts = batch.products
-                                                   .flat()
-                                                   .filter(product => product !== null && product !== undefined);
-                                               return processedProducts.length > 6 && React.createElement('div', { key: 'more-products', className: 'col-span-full text-center py-4' }, [
-                                                   React.createElement('p', { key: 'more-text', className: 'text-sm text-gray-500 dark:text-gray-400' }, 
-                                                       `+${processedProducts.length - 6} more products`
-                                                   )
-                                               ]);
+                                               
+                                               // Add "more products" element if needed
+                                               if (processedProducts.length > 6) {
+                                                   productElements.push(
+                                                       React.createElement('div', { key: 'more-products', className: 'col-span-full text-center py-4' }, [
+                                                           React.createElement('p', { key: 'more-text', className: 'text-sm text-gray-500 dark:text-gray-400' }, 
+                                                               `+${processedProducts.length - 6} more products`
+                                                           )
+                                                       ])
+                                                   );
+                                               }
+                                               
+                                               return productElements;
                                            })()
-                                       ])
+                                       )
                                    ])
                                ])
                            ])
