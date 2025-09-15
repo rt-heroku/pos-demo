@@ -749,7 +749,18 @@ app.get('/api/generated-products/history', async (req, res) => {
       numOfProducts: row.num_of_products,
       totalProducts: parseInt(row.total_products),
       createdAt: row.created_at,
-      products: row.products.filter(p => p !== null) // Filter out null products
+      products: row.products.filter(p => p !== null).map(product => {
+        // Ensure the product data is properly parsed if it's a string
+        if (typeof product === 'string') {
+          try {
+            return JSON.parse(product);
+          } catch (e) {
+            console.error('Error parsing product JSON:', e);
+            return product;
+          }
+        }
+        return product;
+      })
     }));
 
     res.json(batches);

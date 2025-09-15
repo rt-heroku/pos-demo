@@ -2988,7 +2988,20 @@ sfdc.account=`;
                                                    React.createElement('button', {
                                                        key: 'view-batch-btn',
                                                        onClick: () => {
-                                                           setProductsFromCloud(batch.products);
+                                                           // Ensure products are properly formatted
+                                                           const formattedProducts = batch.products.map(product => {
+                                                               // If product is a string, try to parse it
+                                                               if (typeof product === 'string') {
+                                                                   try {
+                                                                       return JSON.parse(product);
+                                                                   } catch (e) {
+                                                                       console.error('Error parsing product:', e);
+                                                                       return product;
+                                                                   }
+                                                               }
+                                                               return product;
+                                                           });
+                                                           setProductsFromCloud(formattedProducts);
                                                            setSelectedProducts([]);
                                                            setExpandedProducts(new Set());
                                                            setShowGeneratedHistoryModal(false);
