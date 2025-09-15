@@ -307,6 +307,48 @@ const handleAsyncOperation = async () => {
 - Include troubleshooting guides
 - Provide API documentation
 
+## Development Workflow
+
+### Pre-Deployment Checklist
+**ALWAYS run syntax checking before pushing to Heroku:**
+
+```bash
+# 1. Check syntax for all JavaScript files
+npm run check-syntax
+
+# 2. If syntax is OK, proceed with deployment
+git add . && git commit -m "your changes" && git push heroku main
+
+# 3. Or use the precommit hook (automatically runs syntax check)
+npm run precommit
+```
+
+### Syntax Checking
+- **MANDATORY**: Run `npm run check-syntax` before every deployment
+- **Purpose**: Catch JavaScript syntax errors before they reach production
+- **Coverage**: Checks all 22 JavaScript files in the project
+- **Failure**: If syntax check fails, fix errors before deploying
+
+### Cache Management
+- Update cache version in `index.html` when making changes
+- Use `npm run update-cache` to automatically increment version
+- This ensures browsers load the latest version of your changes
+
+### Local Development
+```bash
+# Start local server
+npm start
+
+# Check syntax
+npm run check-syntax
+
+# Update cache version
+npm run update-cache
+
+# Run linting (if needed)
+npm run lint
+```
+
 ## Git Workflow
 
 ### Commit Messages
@@ -320,6 +362,13 @@ const handleAsyncOperation = async () => {
 - `bugfix/description` for bug fixes
 - `hotfix/description` for urgent fixes
 - `refactor/description` for code improvements
+
+### Deployment Process
+1. **Syntax Check**: `npm run check-syntax` (MANDATORY)
+2. **Cache Update**: Update version in `index.html` if needed
+3. **Commit**: `git add . && git commit -m "descriptive message"`
+4. **Deploy**: `git push heroku main`
+5. **Verify**: Check Heroku logs and test the deployed app
 
 ## Monitoring & Logging
 
