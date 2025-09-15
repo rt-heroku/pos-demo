@@ -2864,38 +2864,38 @@ sfdc.account=`;
                                                        return product;
                                                    });
                                                
-                                               return processedProducts.slice(0, 6).map((product, index) => [
-                                               React.createElement('div', { 
-                                                   key: `product-${index}`,
-                                                   className: 'p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:shadow-md transition-shadow duration-200'
-                                               }, [
-                                                   React.createElement('div', { key: 'product-header', className: 'flex justify-between items-start mb-3' }, [
-                                                       React.createElement('h5', { key: 'product-name', className: 'font-medium text-sm dark:text-white truncate flex-1 mr-2' }, 
-                                                           product.product_name
+                                               return processedProducts.slice(0, 6).map((product, index) => 
+                                                   React.createElement('div', { 
+                                                       key: `product-${index}`,
+                                                       className: 'p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:shadow-md transition-shadow duration-200'
+                                                   }, [
+                                                       React.createElement('div', { key: 'product-header', className: 'flex justify-between items-start mb-3' }, [
+                                                           React.createElement('h5', { key: 'product-name', className: 'font-medium text-sm dark:text-white truncate flex-1 mr-2' }, 
+                                                               product.product_name
+                                                           ),
+                                                           React.createElement('span', { key: 'product-sku', className: 'text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded' }, 
+                                                               product.sku
+                                                           )
+                                                       ]),
+                                                       React.createElement('p', { key: 'product-price', className: 'text-sm font-semibold text-green-600 dark:text-green-400 mb-2' }, 
+                                                           product.pricing?.price || 'N/A'
                                                        ),
-                                                       React.createElement('span', { key: 'product-sku', className: 'text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded' }, 
-                                                           product.sku
-                                                       )
-                                                   ]),
-                                                   React.createElement('p', { key: 'product-price', className: 'text-sm font-semibold text-green-600 dark:text-green-400 mb-2' }, 
-                                                       product.pricing?.price || 'N/A'
-                                                   ),
-                                                   React.createElement('p', { key: 'product-description', className: 'text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-3' }, 
-                                                       product.short_description || 'No description'
-                                                   ),
-                                                   React.createElement('div', { key: 'product-status', className: 'flex justify-between items-center' }, [
-                                                       React.createElement('span', { 
-                                                           key: 'status-badge',
-                                                           className: 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                                                       }, 'Generated'),
-                                                       // Check if product already exists
-                                                       existingProducts.includes(product.product_name) && React.createElement('span', { 
-                                                           key: 'exists-badge',
-                                                           className: 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                                                       }, 'Exists')
+                                                       React.createElement('p', { key: 'product-description', className: 'text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-3' }, 
+                                                           product.short_description || 'No description'
+                                                       ),
+                                                       React.createElement('div', { key: 'product-status', className: 'flex justify-between items-center' }, [
+                                                           React.createElement('span', { 
+                                                               key: 'status-badge',
+                                                               className: 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                                           }, 'Generated'),
+                                                           // Check if product already exists
+                                                           existingProducts.includes(product.product_name) && React.createElement('span', { 
+                                                               key: 'exists-badge',
+                                                               className: 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                                           }, 'Exists')
+                                                       ])
                                                    ])
-                                               ])
-                                               ]);
+                                               );
                                                })()
                                            ),
                                            (() => {
