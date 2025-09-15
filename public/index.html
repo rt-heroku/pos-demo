@@ -23,6 +23,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <meta name="theme-color" content="#3b82f6">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -415,35 +421,36 @@
     </script>
     
     <!-- Load the application files in order -->
-    <script src="/icons.js"></script>
-    <script src="/api.js"></script>
-    <script src="/mobile-utils.js"></script>
+    <script src="/icons.js?v=20250111-001"></script>
+    <script src="/api.js?v=20250111-001"></script>
+    <script src="/crypto-utils.js?v=20250111-001"></script>
+    <script src="/mobile-utils.js?v=20250111-001"></script>
     
     <!-- Load common components first -->
-    <script type="text/babel" src="/components/common/TabButton.js"></script>
-    <script type="text/babel" src="/components/common/CategoryBadge.js"></script>
+    <script type="text/babel" src="/components/common/TabButton.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/common/CategoryBadge.js?v=20250111-001"></script>
     
     
     <!-- Load modals -->
-    <script type="text/babel" src="/components/views/auth.js"></script>
-    <script type="text/babel" src="/components/modals/CustomerFormModal.js"></script>
-    <script type="text/babel" src="/components/modals/ProductModal.js"></script>
-    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js"></script>
-    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js"></script>
-    <script type="text/babel" src="/components/modals/ReceiptModal.js"></script>
-    <script type="text/babel" src="/components/modals/LoyaltyModal.js"></script>
-    <script type="text/babel" src="/components/modals/SystemSettingModal.js"></script>
+    <script type="text/babel" src="/components/views/auth.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/ProductModal.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=20250111-001"></script>
     
     <!-- Load view components -->
-    <script type="text/babel" src="/components/views/POSView.js"></script>
-    <script type="text/babel" src="/components/views/LoyaltyView.js"></script>
-    <script type="text/babel" src="/components/views/SalesView.js"></script>
-    <script type="text/babel" src="/components/views/SettingsView.js"></script>
-    <script type="text/babel" src="/components/views/InventoryView.js"></script>
+    <script type="text/babel" src="/components/views/POSView.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/views/LoyaltyView.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/views/SalesView.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/views/SettingsView.js?v=20250111-001"></script>
+    <script type="text/babel" src="/components/views/InventoryView.js?v=20250111-001"></script>
 
-    <script type="text/babel" src="/enhanced-pos.js"></script> 
+    <script type="text/babel" src="/enhanced-pos.js?v=20250111-001"></script> 
 
     <!-- Load the main application -->
-    <script type="text/babel" src="/app.js"></script>
+    <script type="text/babel" src="/app.js?v=20250111-001"></script>
 </body>
 </html>

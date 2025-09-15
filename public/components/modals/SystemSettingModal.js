@@ -93,6 +93,23 @@
                             ])
                         ]),
                         
+                        React.createElement('div', { key: 'encryption' }, [
+                            React.createElement('label', { key: 'encryption-label', className: 'flex items-center gap-2 mb-2' }, [
+                                React.createElement('input', {
+                                    key: 'encryption-checkbox',
+                                    type: 'checkbox',
+                                    checked: settingForm.is_encrypted || false,
+                                    onChange: (e) => setSettingForm(prev => ({ ...prev, is_encrypted: e.target.checked })),
+                                    className: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                }),
+                                React.createElement('span', { key: 'encryption-text', className: 'text-sm font-medium dark:text-white' }, 'Encrypt this setting'),
+                                React.createElement('span', { key: 'encryption-icon', className: 'text-xs' }, '🔒')
+                            ]),
+                            React.createElement('p', { key: 'encryption-help', className: 'text-xs text-gray-500 dark:text-gray-400' }, 
+                                'Encrypt sensitive data like passwords and API keys'
+                            )
+                        ]),
+                        
                         React.createElement('div', { key: 'description' }, [
                             React.createElement('label', { key: 'description-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Description'),
                             React.createElement('textarea', {

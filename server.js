@@ -47,7 +47,22 @@ const pool = new Pool({
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Static file serving with cache control
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+        // Disable caching for JavaScript files to prevent cache issues during development
+        if (path.endsWith('.js') || path.endsWith('.jsx') || path.endsWith('.ts') || path.endsWith('.tsx')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+        // Allow caching for other static assets (images, CSS, etc.)
+        else if (path.endsWith('.css') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.gif') || path.endsWith('.svg') || path.endsWith('.ico')) {
+            res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour cache
+        }
+    }
+}));
 
 // Test database connection
 pool.connect((err, client, release) => {
@@ -2609,7 +2624,7 @@ app.get('/api/system-settings/:key', async (req, res) => {
 
 app.post('/api/system-settings', async (req, res) => {
     try {
-        const { setting_key, setting_value, description, category, setting_type } = req.body;
+        const { setting_key, setting_value, description, category, setting_type, is_encrypted } = req.body;
         
         if (!setting_key || !setting_value) {
             return res.status(400).json({ error: 'Setting key and value are required' });
@@ -2617,8 +2632,8 @@ app.post('/api/system-settings', async (req, res) => {
         
         const result = await pool.query(
             `INSERT INTO system_settings 
-            (setting_key, setting_value, description, category, setting_type, created_by, updated_by) 
-            VALUES ($1, $2, $3, $4, $5, $6, $6) 
+            (setting_key, setting_value, description, category, setting_type, is_encrypted, created_by, updated_by) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $7) 
             RETURNING *`,
             [
                 setting_key,
@@ -2626,6 +2641,7 @@ app.post('/api/system-settings', async (req, res) => {
                 description || null,
                 category || 'general',
                 setting_type || 'text',
+                is_encrypted || false,
                 'admin' // You can replace this with actual user when you have auth
             ]
         );
@@ -2644,7 +2660,7 @@ app.post('/api/system-settings', async (req, res) => {
 app.put('/api/system-settings/:key', async (req, res) => {
     try {
         const { key } = req.params;
-        const { setting_value, description, category, setting_type, is_active } = req.body;
+        const { setting_value, description, category, setting_type, is_active, is_encrypted } = req.body;
         
         const result = await pool.query(
             `UPDATE system_settings 
@@ -2653,9 +2669,10 @@ app.put('/api/system-settings/:key', async (req, res) => {
                 category = COALESCE($3, category),
                 setting_type = COALESCE($4, setting_type),
                 is_active = COALESCE($5, is_active),
+                is_encrypted = COALESCE($6, is_encrypted),
                 updated_at = CURRENT_TIMESTAMP,
-                updated_by = $6
-            WHERE setting_key = $7
+                updated_by = $7
+            WHERE setting_key = $8
             RETURNING *`,
             [
                 setting_value,
@@ -2663,6 +2680,7 @@ app.put('/api/system-settings/:key', async (req, res) => {
                 category,
                 setting_type,
                 is_active,
+                is_encrypted,
                 'admin', // Replace with actual user
                 key
             ]

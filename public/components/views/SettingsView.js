@@ -322,15 +322,20 @@ window.Views.SettingsView = ({
 
         const handleSaveSetting = async () => {
             try {
-                const method = editingSetting ? 'PUT' : 'POST';
-                const url = editingSetting 
-                    ? `/system-settings/${editingSetting.setting_key}`
-                    : '/system-settings';
+                const { setting_key, setting_value, description, category, setting_type, is_encrypted } = settingForm;
                 
-                const data = await window.API.call(url, {
-                    method,
-                    body: JSON.stringify(settingForm)
-                });
+                const settingOptions = {
+                    description: description,
+                    category: category,
+                    setting_type: setting_type,
+                    encrypt: is_encrypted || false
+                };
+                
+                if (editingSetting) {
+                    await window.API.systemSettings.update(setting_key, setting_value, settingOptions);
+                } else {
+                    await window.API.systemSettings.set(setting_key, setting_value, settingOptions);
+                }
                 
                 await loadSystemSettings();
                 setShowSettingModal(false);
@@ -340,7 +345,8 @@ window.Views.SettingsView = ({
                     setting_value: '',
                     description: '',
                     category: 'general',
-                    setting_type: 'text'
+                    setting_type: 'text',
+                    is_encrypted: false
                 });
                 
                 alert('Setting saved successfully!');
@@ -386,7 +392,7 @@ window.Views.SettingsView = ({
         // MuleSoft Loyalty Sync Functions
         const loadMulesoftConfig = async () => {
             try {
-                const settings = await window.API.call('/system-settings');
+                const settings = await window.API.systemSettings.getAll();
                 const config = {
                     endpoint: settings.find(s => s.setting_key === 'mulesoft_loyalty_sync_endpoint')?.setting_value || '',
                     loyaltyProgramId: settings.find(s => s.setting_key === 'loyalty_program_id')?.setting_value || '',
@@ -444,24 +450,22 @@ window.Views.SettingsView = ({
             }
         };
 
-        const saveMulesoftSetting = async (key, value) => {
+        const saveMulesoftSetting = async (key, value, encrypt = false) => {
             try {
                 const existingSetting = systemSettings.find(s => s.setting_key === key);
-                const method = existingSetting ? 'PUT' : 'POST';
-                const url = existingSetting ? `/system-settings/${key}` : '/system-settings';
                 
-                const settingData = {
-                    setting_key: key,
-                    setting_value: value,
+                const settingOptions = {
                     description: getSettingDescription(key),
                     category: 'integration',
-                    setting_type: 'text'
+                    setting_type: 'text',
+                    encrypt: encrypt
                 };
                 
-                await window.API.call(url, {
-                    method,
-                    body: JSON.stringify(settingData)
-                });
+                if (existingSetting) {
+                    await window.API.systemSettings.update(key, value, settingOptions);
+                } else {
+                    await window.API.systemSettings.set(key, value, settingOptions);
+                }
                 
                 await loadSystemSettings();
                 return true;
@@ -1542,6 +1546,66 @@ sfdc.account=`;
                                 loadingMembers ? 'Loading Members...' : 'Load Members from Cloud'
                             )
                         ])
+                    ]),
+
+                    // Encrypted Settings Section
+                    React.createElement('div', { key: 'encrypted-settings-section', className: 'mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800' }, [
+                        React.createElement('h4', { key: 'encrypted-title', className: 'text-sm font-medium mb-3 dark:text-white flex items-center gap-2' }, [
+                            React.createElement('div', { key: 'lock-icon', className: 'w-4 h-4' }, '🔒'),
+                            'Encrypted Settings'
+                        ]),
+                        React.createElement('p', { key: 'encrypted-description', className: 'text-xs text-gray-600 dark:text-gray-400 mb-4' }, 
+                            'Store sensitive data like API keys and passwords securely with encryption'
+                        ),
+                        React.createElement('div', { key: 'encrypted-examples', className: 'space-y-3' }, [
+                            React.createElement('div', { key: 'api-key-example', className: 'flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700' }, [
+                                React.createElement('div', { key: 'api-key-info' }, [
+                                    React.createElement('h5', { key: 'api-key-title', className: 'text-sm font-medium dark:text-white' }, 'API Key Example'),
+                                    React.createElement('p', { key: 'api-key-desc', className: 'text-xs text-gray-500 dark:text-gray-400' }, 'Store external API keys securely')
+                                ]),
+                                React.createElement('button', {
+                                    key: 'api-key-btn',
+                                    onClick: () => {
+                                        setEditingSetting(null);
+                                        setSettingForm({
+                                            setting_key: 'external_api_key',
+                                            setting_value: '',
+                                            description: 'External API key for third-party integrations',
+                                            category: 'integration',
+                                            setting_type: 'password',
+                                            is_encrypted: true
+                                        });
+                                        setShowSettingModal(true);
+                                    },
+                                    className: 'px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'
+                                }, 'Add API Key')
+                            ]),
+                            React.createElement('div', { key: 'password-example', className: 'flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700' }, [
+                                React.createElement('div', { key: 'password-info' }, [
+                                    React.createElement('h5', { key: 'password-title', className: 'text-sm font-medium dark:text-white' }, 'Password Example'),
+                                    React.createElement('p', { key: 'password-desc', className: 'text-xs text-gray-500 dark:text-gray-400' }, 'Store database or service passwords securely')
+                                ]),
+                                React.createElement('button', {
+                                    key: 'password-btn',
+                                    onClick: () => {
+                                        setEditingSetting(null);
+                                        setSettingForm({
+                                            setting_key: 'external_service_password',
+                                            setting_value: '',
+                                            description: 'Password for external service authentication',
+                                            category: 'integration',
+                                            setting_type: 'password',
+                                            is_encrypted: true
+                                        });
+                                        setShowSettingModal(true);
+                                    },
+                                    className: 'px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'
+                                }, 'Add Password')
+                            ])
+                        ]),
+                        React.createElement('div', { key: 'encrypted-note', className: 'mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200' }, [
+                            '💡 Tip: Encrypted settings are automatically decrypted when retrieved for API calls'
+                        ])
                     ])
                 ]),
 
@@ -1820,8 +1884,8 @@ sfdc.account=`;
                        'Loading database information...'
                    ])
                ])
-           ]), 
- 
+           ]),
+
            // Users Tab Content
            activeTab === 'users' && currentUser?.permissions?.users?.read && React.createElement('div', { key: 'users-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                React.createElement('div', { key: 'section-header', className: 'flex items-center justify-between mb-6' }, [

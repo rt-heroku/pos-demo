@@ -165,3 +165,114 @@ window.API.customers.advancedSearch = (filters) => {
     ).toString();
     return window.API.call(`/customers/advanced-search?${queryString}`);
 };
+
+// System Settings API with encryption support
+window.API.systemSettings = {
+    // Get all system settings (with automatic decryption)
+    getAll: async function() {
+        const settings = await window.API.call('/system-settings');
+        // Decrypt encrypted settings
+        const decryptedSettings = await Promise.all(
+            settings.map(async (setting) => {
+                if (setting.is_encrypted && window.CryptoUtils) {
+                    try {
+                        const decryptedValue = await window.CryptoUtils.decryptIfNeeded(setting.setting_value);
+                        return { ...setting, setting_value: decryptedValue };
+                    } catch (error) {
+                        console.error(`Failed to decrypt setting ${setting.setting_key}:`, error);
+                        return setting; // Return original if decryption fails
+                    }
+                }
+                return setting;
+            })
+        );
+        return decryptedSettings;
+    },
+
+    // Get a specific system setting (with automatic decryption)
+    get: async function(key) {
+        const setting = await window.API.call(`/system-settings/${key}`);
+        if (setting && setting.is_encrypted && window.CryptoUtils) {
+            try {
+                const decryptedValue = await window.CryptoUtils.decryptIfNeeded(setting.setting_value);
+                return { ...setting, setting_value: decryptedValue };
+            } catch (error) {
+                console.error(`Failed to decrypt setting ${key}:`, error);
+                return setting; // Return original if decryption fails
+            }
+        }
+        return setting;
+    },
+
+    // Create or update a system setting (with optional encryption)
+    set: async function(key, value, options = {}) {
+        const { encrypt = false, description = '', category = 'general', setting_type = 'text' } = options;
+        
+        let finalValue = value;
+        let isEncrypted = false;
+        
+        // Encrypt the value if requested
+        if (encrypt && window.CryptoUtils && value) {
+            try {
+                finalValue = await window.CryptoUtils.encryptIfNeeded(value);
+                isEncrypted = true;
+            } catch (error) {
+                console.error(`Failed to encrypt setting ${key}:`, error);
+                throw new Error('Failed to encrypt setting value');
+            }
+        }
+        
+        const settingData = {
+            setting_key: key,
+            setting_value: finalValue,
+            description: description,
+            category: category,
+            setting_type: setting_type,
+            is_encrypted: isEncrypted
+        };
+        
+        return window.API.call('/system-settings', {
+            method: 'POST',
+            body: JSON.stringify(settingData)
+        });
+    },
+
+    // Update an existing system setting (with optional encryption)
+    update: async function(key, value, options = {}) {
+        const { encrypt = false, description = '', category = 'general', setting_type = 'text' } = options;
+        
+        let finalValue = value;
+        let isEncrypted = false;
+        
+        // Encrypt the value if requested
+        if (encrypt && window.CryptoUtils && value) {
+            try {
+                finalValue = await window.CryptoUtils.encryptIfNeeded(value);
+                isEncrypted = true;
+            } catch (error) {
+                console.error(`Failed to encrypt setting ${key}:`, error);
+                throw new Error('Failed to encrypt setting value');
+            }
+        }
+        
+        const settingData = {
+            setting_value: finalValue,
+            description: description,
+            category: category,
+            setting_type: setting_type,
+            is_encrypted: isEncrypted
+        };
+        
+        return window.API.call(`/system-settings/${key}`, {
+            method: 'PUT',
+            body: JSON.stringify(settingData)
+        });
+    },
+
+    // Delete a system setting
+    delete: function(key) {
+        return window.API.call(`/system-settings/${key}`, {
+            method: 'DELETE'
+        });
+    }
+};
