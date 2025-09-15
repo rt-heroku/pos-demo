@@ -134,6 +134,9 @@ window.Views.SettingsView = ({
                 loadSystemSettings();
                 loadDatabaseInfo();
                 loadMulesoftConfig();
+            } else if (activeTab === 'products') {
+                loadMulesoftConfig();
+                loadGeneratedHistory();
             }
         }, [activeTab]);
 
@@ -772,22 +775,10 @@ window.Views.SettingsView = ({
         const loadGeneratedHistory = async () => {
             setLoadingHistory(true);
             try {
-                console.log('🔍 [DEBUG] Loading generated history...');
                 const response = await window.API.call('/generated-products/history');
-                console.log('🔍 [DEBUG] Generated history API response:', response);
-                console.log('🔍 [DEBUG] Response type:', typeof response);
-                console.log('🔍 [DEBUG] Response length:', response?.length);
-                if (response && response.length > 0) {
-                    console.log('🔍 [DEBUG] First batch:', response[0]);
-                    if (response[0].products && response[0].products.length > 0) {
-                        console.log('🔍 [DEBUG] First product in first batch:', response[0].products[0]);
-                        console.log('🔍 [DEBUG] First product type:', typeof response[0].products[0]);
-                        console.log('🔍 [DEBUG] First product keys:', Object.keys(response[0].products[0] || {}));
-                    }
-                }
                 setGeneratedHistory(response);
             } catch (error) {
-                console.error('❌ [ERROR] Failed to load generated history:', error);
+                console.error('Failed to load generated history:', error);
                 alert(`Failed to load generated history: ${error.message}`);
             } finally {
                 setLoadingHistory(false);
@@ -1441,6 +1432,13 @@ sfdc.account=`;
                         label: 'Users', 
                         icon: Users,
                         active: activeTab === 'users' 
+                    }),
+                    currentUser?.role === 'admin' && React.createElement(TabButton, { 
+                        key: 'products-tab',
+                        tab: 'products', 
+                        label: 'Product Management', 
+                        icon: '📦',
+                        active: activeTab === 'products' 
                     })
                 ]),
                 
@@ -2650,6 +2648,271 @@ sfdc.account=`;
                title: 'Create New Location'
            }),
 
+           // Product Management Tab Content
+           activeTab === 'products' && currentUser?.role === 'admin' && React.createElement('div', { key: 'products-content', className: 'space-y-6' }, [
+               // Modern Product Management Section
+               React.createElement('div', { key: 'product-management-section', className: 'bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl shadow-lg border border-purple-200 dark:border-purple-800 p-8' }, [
+                   React.createElement('div', { key: 'section-header', className: 'flex items-center gap-3 mb-8' }, [
+                       React.createElement('div', { key: 'icon-container', className: 'w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg' }, [
+                           React.createElement('span', { key: 'icon', className: 'text-2xl' }, '📦')
+                       ]),
+                       React.createElement('div', { key: 'title-section' }, [
+                           React.createElement('h2', { key: 'title', className: 'text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent' }, 
+                               'Product Management'
+                           ),
+                           React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
+                               'Manage your product catalog with AI-powered generation and cloud sync'
+                           )
+                       ])
+                   ]),
+
+                   // Action Cards Grid
+                   React.createElement('div', { key: 'actions-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' }, [
+                       // Delete All Products Card
+                       React.createElement('div', { key: 'delete-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-red-600 dark:text-red-400 text-lg' }, '🗑️')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Delete All Products')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Permanently remove all product data from the system'
+                           ),
+                           React.createElement('button', {
+                               key: 'delete-btn',
+                               onClick: () => setShowDeleteProductsModal(true),
+                               className: 'w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
+                           }, 'Delete All Products')
+                       ]),
+
+                       // Load Products Card
+                       React.createElement('div', { key: 'load-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-blue-600 dark:text-blue-400 text-lg' }, '☁️')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Load from Cloud')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Import products from your MuleSoft loyalty cloud instance'
+                           ),
+                           React.createElement('button', {
+                               key: 'load-btn',
+                               onClick: loadProductsFromCloud,
+                               disabled: !mulesoftConfig.endpoint || loadingProducts,
+                               className: 'w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed'
+                           }, loadingProducts ? 'Loading...' : 'Load from Loyalty Cloud')
+                       ]),
+
+                       // Generate Products Card
+                       React.createElement('div', { key: 'generate-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-200 dark:border-green-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-green-600 dark:text-green-400 text-lg' }, '✨')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'AI Generation')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Generate new products using AI with custom parameters'
+                           ),
+                           React.createElement('button', {
+                               key: 'generate-btn',
+                               onClick: () => setShowGenerateProductsModal(true),
+                               disabled: !mulesoftConfig.endpoint,
+                               className: 'w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed'
+                           }, 'Generate Products')
+                       ])
+                   ]),
+
+                   // Create Products Button (when products are loaded)
+                   productsFromCloud.length > 0 && React.createElement('div', { key: 'create-section', className: 'mt-8 p-6 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl border border-purple-200 dark:border-purple-800' }, [
+                       React.createElement('div', { key: 'create-header', className: 'flex items-center justify-between mb-4' }, [
+                           React.createElement('div', { key: 'create-info' }, [
+                               React.createElement('h3', { key: 'create-title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Ready to Create Products'),
+                               React.createElement('p', { key: 'create-subtitle', className: 'text-sm text-gray-600 dark:text-gray-400' }, 
+                                   `${selectedProducts.length} of ${productsFromCloud.length} products selected`
+                               )
+                           ]),
+                           React.createElement('button', {
+                               key: 'create-btn',
+                               onClick: createSelectedProducts,
+                               disabled: selectedProducts.length === 0 || creatingProducts,
+                               className: 'px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed'
+                           }, creatingProducts ? 'Creating...' : `Create ${selectedProducts.length} Products`)
+                       ])
+                   ])
+               ]),
+
+               // Generated Products History Section
+               React.createElement('div', { key: 'history-section', className: 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg border dark:border-gray-700 p-8' }, [
+                   React.createElement('div', { key: 'history-header', className: 'flex items-center justify-between mb-6' }, [
+                       React.createElement('div', { key: 'history-title-section' }, [
+                           React.createElement('h3', { key: 'history-title', className: 'text-xl font-bold flex items-center gap-2 dark:text-white' }, [
+                               React.createElement('span', { key: 'history-icon', className: 'text-2xl' }, '📋'),
+                               'Generated Products History'
+                           ]),
+                           React.createElement('p', { key: 'history-subtitle', className: 'text-gray-600 dark:text-gray-300 text-sm mt-1' }, 
+                               'View and manage your AI-generated product batches'
+                           )
+                       ])
+                   ]),
+
+                   // Search and Filter Controls
+                   React.createElement('div', { key: 'search-controls', className: 'flex flex-col sm:flex-row gap-4 mb-6' }, [
+                       React.createElement('div', { key: 'search-input', className: 'flex-1' }, [
+                           React.createElement('input', {
+                               key: 'search-field',
+                               type: 'text',
+                               placeholder: 'Search by product name or SKU...',
+                               value: historySearchTerm,
+                               onChange: (e) => setHistorySearchTerm(e.target.value),
+                               className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'batch-filter', className: 'min-w-48' }, [
+                           React.createElement('select', {
+                               key: 'batch-select',
+                               value: selectedBatch || '',
+                               onChange: (e) => setSelectedBatch(e.target.value || null),
+                               className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                           }, [
+                               React.createElement('option', { key: 'all-batches', value: '' }, 'All Batches'),
+                               ...generatedHistory.map(batch => 
+                                   React.createElement('option', { 
+                                       key: `batch-${batch.batchId}`, 
+                                       value: batch.batchId 
+                                   }, `Batch ${batch.batchId} - ${batch.brand || 'Unknown Brand'} (${batch.totalProducts} products)`)
+                               )
+                           ])
+                       ])
+                   ]),
+
+                   // History Content
+                   loadingHistory ? React.createElement('div', { key: 'loading', className: 'flex justify-center py-12' }, [
+                       React.createElement('div', { key: 'spinner', className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600' })
+                   ]) : filteredHistory.length === 0 ? React.createElement('div', { key: 'empty', className: 'text-center py-12 text-gray-500 dark:text-gray-400' }, 
+                       'No generated products found'
+                   ) : React.createElement('div', { key: 'batches-list', className: 'space-y-6' }, 
+                       filteredHistory
+                           .filter(batch => !selectedBatch || batch.batchId === selectedBatch)
+                           .map(batch => [
+                               React.createElement('div', { 
+                                   key: `batch-${batch.batchId}`,
+                                   className: 'border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200'
+                               }, [
+                                   React.createElement('div', { key: 'batch-header', className: 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-600' }, [
+                                       React.createElement('div', { key: 'batch-info', className: 'flex justify-between items-center' }, [
+                                           React.createElement('div', { key: 'batch-details' }, [
+                                               React.createElement('h4', { key: 'batch-title', className: 'font-semibold text-lg dark:text-white' }, 
+                                                   `Batch ${batch.batchId}`
+                                               ),
+                                               React.createElement('p', { key: 'batch-meta', className: 'text-sm text-gray-600 dark:text-gray-400' }, 
+                                                   `${batch.totalProducts} products • ${batch.brand || 'Unknown Brand'} • ${batch.segment || 'No Segment'} • Generated ${new Date(batch.createdAt).toLocaleDateString()}`
+                                               )
+                                           ]),
+                                           React.createElement('div', { key: 'batch-actions' }, [
+                                               React.createElement('button', {
+                                                   key: 'view-batch-btn',
+                                                   onClick: () => {
+                                                       // Ensure products are properly formatted and flatten any nested arrays
+                                                       const formattedProducts = batch.products
+                                                           .flat() // Flatten any nested arrays
+                                                           .filter(product => product !== null && product !== undefined) // Remove null/undefined products
+                                                           .map(product => {
+                                                               // If product is a string, try to parse it
+                                                               if (typeof product === 'string') {
+                                                                   try {
+                                                                       return JSON.parse(product);
+                                                                   } catch (e) {
+                                                                       console.error('Error parsing product:', e);
+                                                                       return product;
+                                                                   }
+                                                               }
+                                                                   return product;
+                                                           });
+                                                       
+                                                       setProductsFromCloud(formattedProducts);
+                                                       setSelectedProducts([]);
+                                                       setExpandedProducts(new Set());
+                                                   },
+                                                   className: 'px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md'
+                                               }, 'View Products')
+                                           ])
+                                       ])
+                                   ]),
+                                   React.createElement('div', { key: 'batch-products', className: 'p-6' }, [
+                                       React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, 
+                                           (() => {
+                                               // Process products the same way as in View Products button
+                                               const processedProducts = batch.products
+                                                   .flat() // Flatten any nested arrays
+                                                   .filter(product => product !== null && product !== undefined) // Remove null/undefined products
+                                                   .map(product => {
+                                                       // If product is a string, try to parse it
+                                                       if (typeof product === 'string') {
+                                                           try {
+                                                               return JSON.parse(product);
+                                                           } catch (e) {
+                                                               console.error('Error parsing product in preview:', e);
+                                                               return product;
+                                                           }
+                                                       }
+                                                       return product;
+                                                   });
+                                               
+                                               return processedProducts.slice(0, 6).map((product, index) => [
+                                               React.createElement('div', { 
+                                                   key: `product-${index}`,
+                                                   className: 'p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:shadow-md transition-shadow duration-200'
+                                               }, [
+                                                   React.createElement('div', { key: 'product-header', className: 'flex justify-between items-start mb-3' }, [
+                                                       React.createElement('h5', { key: 'product-name', className: 'font-medium text-sm dark:text-white truncate flex-1 mr-2' }, 
+                                                           product.product_name
+                                                       ),
+                                                       React.createElement('span', { key: 'product-sku', className: 'text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded' }, 
+                                                           product.sku
+                                                       )
+                                                   ]),
+                                                   React.createElement('p', { key: 'product-price', className: 'text-sm font-semibold text-green-600 dark:text-green-400 mb-2' }, 
+                                                       product.pricing?.price || 'N/A'
+                                                   ),
+                                                   React.createElement('p', { key: 'product-description', className: 'text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-3' }, 
+                                                       product.short_description || 'No description'
+                                                   ),
+                                                   React.createElement('div', { key: 'product-status', className: 'flex justify-between items-center' }, [
+                                                       React.createElement('span', { 
+                                                           key: 'status-badge',
+                                                           className: 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                                       }, 'Generated'),
+                                                       // Check if product already exists
+                                                       existingProducts.includes(product.product_name) && React.createElement('span', { 
+                                                           key: 'exists-badge',
+                                                           className: 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                                       }, 'Exists')
+                                                   ])
+                                               ])
+                                               ]);
+                                               })()
+                                           ),
+                                           (() => {
+                                               const processedProducts = batch.products
+                                                   .flat()
+                                                   .filter(product => product !== null && product !== undefined);
+                                               return processedProducts.length > 6 && React.createElement('div', { key: 'more-products', className: 'col-span-full text-center py-4' }, [
+                                                   React.createElement('p', { key: 'more-text', className: 'text-sm text-gray-500 dark:text-gray-400' }, 
+                                                       `+${processedProducts.length - 6} more products`
+                                                   )
+                                               ]);
+                                           })()
+                                       ])
+                                   ])
+                               ])
+                           ]).flat()
+                   )
+               ])
+           ]),
+
            React.createElement(window.Modals.SystemSettingModal, {
                key: 'setting-modal',
                show: showSettingModal,
@@ -2830,19 +3093,7 @@ sfdc.account=`;
                                    ])
                                ]),
                                React.createElement('tbody', { key: 'table-body' }, 
-                                   (() => {
-                                       console.log('🔍 [DEBUG] Rendering products table with productsFromCloud:', productsFromCloud);
-                                       console.log('🔍 [DEBUG] productsFromCloud length:', productsFromCloud?.length);
-                                       if (productsFromCloud && productsFromCloud.length > 0) {
-                                           console.log('🔍 [DEBUG] First product in table:', productsFromCloud[0]);
-                                           console.log('🔍 [DEBUG] First product type:', typeof productsFromCloud[0]);
-                                           console.log('🔍 [DEBUG] First product keys:', Object.keys(productsFromCloud[0] || {}));
-                                           console.log('🔍 [DEBUG] First product.product_name:', productsFromCloud[0]?.product_name);
-                                           console.log('🔍 [DEBUG] First product.collection:', productsFromCloud[0]?.collection);
-                                           console.log('🔍 [DEBUG] First product.pricing:', productsFromCloud[0]?.pricing);
-                                           console.log('🔍 [DEBUG] First product.sku:', productsFromCloud[0]?.sku);
-                                       }
-                                       return productsFromCloud.map((product, index) => [
+                                   productsFromCloud.map((product, index) => [
                                        React.createElement('tr', { 
                                            key: `product-row-${index}`,
                                            className: `border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedProducts.some(p => p.sku === product.sku) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`
@@ -2907,8 +3158,7 @@ sfdc.account=`;
                                                ])
                                            ])
                                        ])
-                                   ]).flat();
-                                   })()
+                                   ]).flat()
                                )
                            ])
                        ])
@@ -3013,46 +3263,22 @@ sfdc.account=`;
                                                    React.createElement('button', {
                                                        key: 'view-batch-btn',
                                                        onClick: () => {
-                                                           console.log('🔍 [DEBUG] View Products button clicked for batch:', batch.batchId);
-                                                           console.log('🔍 [DEBUG] Batch data:', batch);
-                                                           console.log('🔍 [DEBUG] Raw batch.products:', batch.products);
-                                                           console.log('🔍 [DEBUG] Products type:', typeof batch.products);
-                                                           console.log('🔍 [DEBUG] Products length:', batch.products?.length);
-                                                           
-                                                           if (batch.products && batch.products.length > 0) {
-                                                               console.log('🔍 [DEBUG] First product before processing:', batch.products[0]);
-                                                               console.log('🔍 [DEBUG] First product type:', typeof batch.products[0]);
-                                                               console.log('🔍 [DEBUG] First product keys:', Object.keys(batch.products[0] || {}));
-                                                           }
-                                                           
                                                            // Ensure products are properly formatted and flatten any nested arrays
                                                            const formattedProducts = batch.products
                                                                .flat() // Flatten any nested arrays
                                                                .filter(product => product !== null && product !== undefined) // Remove null/undefined products
-                                                               .map((product, index) => {
-                                                                   console.log(`🔍 [DEBUG] Processing product ${index}:`, product);
-                                                                   console.log(`🔍 [DEBUG] Product ${index} type:`, typeof product);
-                                                                   
+                                                               .map(product => {
                                                                    // If product is a string, try to parse it
                                                                    if (typeof product === 'string') {
                                                                        try {
-                                                                           const parsed = JSON.parse(product);
-                                                                           console.log(`🔍 [DEBUG] Parsed product ${index}:`, parsed);
-                                                                           return parsed;
+                                                                           return JSON.parse(product);
                                                                        } catch (e) {
-                                                                           console.error('❌ [ERROR] Error parsing product:', e, 'Product:', product);
+                                                                           console.error('Error parsing product:', e);
                                                                            return product;
                                                                        }
                                                                    }
-                                                                   console.log(`🔍 [DEBUG] Product ${index} is already an object:`, product);
                                                                    return product;
                                                                });
-                                                           
-                                                           console.log('🔍 [DEBUG] Final formatted products:', formattedProducts);
-                                                           if (formattedProducts.length > 0) {
-                                                               console.log('🔍 [DEBUG] First formatted product:', formattedProducts[0]);
-                                                               console.log('🔍 [DEBUG] First formatted product keys:', Object.keys(formattedProducts[0] || {}));
-                                                           }
                                                            
                                                            setProductsFromCloud(formattedProducts);
                                                            setSelectedProducts([]);
@@ -3083,8 +3309,6 @@ sfdc.account=`;
                                                            }
                                                            return product;
                                                        });
-                                                   
-                                                   console.log('🔍 [DEBUG] Preview products processed:', processedProducts);
                                                    
                                                    return processedProducts.slice(0, 6).map((product, index) => [
                                                    React.createElement('div', { 

@@ -727,8 +727,6 @@ app.post('/api/generated-products/save', async (req, res) => {
 
 app.get('/api/generated-products/history', async (req, res) => {
   try {
-    console.log('🔍 [DEBUG] Fetching generated products history...');
-    
     // Get all generated products grouped by batch
     const result = await pool.query(`
       SELECT 
@@ -744,31 +742,19 @@ app.get('/api/generated-products/history', async (req, res) => {
       ORDER BY created_at DESC
     `);
 
-    console.log('🔍 [DEBUG] Raw database result:', JSON.stringify(result.rows, null, 2));
-
     const batches = result.rows.map(row => {
-      console.log('🔍 [DEBUG] Processing batch:', row.batch);
-      console.log('🔍 [DEBUG] Raw products array:', row.products);
-      
-      const processedProducts = row.products.filter(p => p !== null).map((product, index) => {
-        console.log(`🔍 [DEBUG] Processing product ${index}:`, typeof product, product);
-        
+      const processedProducts = row.products.filter(p => p !== null).map(product => {
         // Ensure the product data is properly parsed if it's a string
         if (typeof product === 'string') {
           try {
-            const parsed = JSON.parse(product);
-            console.log(`🔍 [DEBUG] Parsed product ${index}:`, parsed);
-            return parsed;
+            return JSON.parse(product);
           } catch (e) {
-            console.error('❌ [ERROR] Error parsing product JSON:', e, 'Product:', product);
+            console.error('Error parsing product JSON:', e);
             return product;
           }
         }
-        console.log(`🔍 [DEBUG] Product ${index} is already an object:`, product);
         return product;
       });
-      
-      console.log('🔍 [DEBUG] Final processed products for batch', row.batch, ':', processedProducts);
       
       return {
         batchId: row.batch,
@@ -781,10 +767,9 @@ app.get('/api/generated-products/history', async (req, res) => {
       };
     });
 
-    console.log('🔍 [DEBUG] Final batches response:', JSON.stringify(batches, null, 2));
     res.json(batches);
   } catch (err) {
-    console.error('❌ [ERROR] Error fetching generated products history:', err);
+    console.error('Error fetching generated products history:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
