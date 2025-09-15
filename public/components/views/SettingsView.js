@@ -2799,7 +2799,7 @@ sfdc.account=`;
                    ) : React.createElement('div', { key: 'batches-list', className: 'space-y-6' }, 
                        filteredHistory
                            .filter(batch => !selectedBatch || batch.batchId === selectedBatch)
-                           .map(batch => [
+                           .map(batch => 
                                React.createElement('div', { 
                                    key: `batch-${batch.batchId}`,
                                    className: 'border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200'
@@ -2911,7 +2911,7 @@ sfdc.account=`;
                                        ])
                                    ])
                                ])
-                           ]).flat()
+                           ])
                    )
                ])
            ]),
