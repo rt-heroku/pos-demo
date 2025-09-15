@@ -733,13 +733,12 @@ app.get('/api/generated-products/history', async (req, res) => {
         batch,
         brand,
         segment,
-        num_of_products,
-        COUNT(*) as total_products,
-        MIN(created_at) as created_at,
+        sum(num_of_products) as total_products,
+        MAX(created_at) as created_at,
         array_agg(generated_product ORDER BY id) as products
       FROM generated_products 
       WHERE batch IS NOT NULL
-      GROUP BY batch, brand, segment, num_of_products
+      GROUP BY batch, brand, segment
       ORDER BY created_at DESC
     `);
 
