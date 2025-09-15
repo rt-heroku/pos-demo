@@ -78,6 +78,24 @@ window.Views.SettingsView = ({
         const [syncResults, setSyncResults] = React.useState(null);
         const [showSyncResults, setShowSyncResults] = React.useState(false);
         
+        // Products management state
+        const [showDeleteProductsModal, setShowDeleteProductsModal] = React.useState(false);
+        const [showGenerateProductsModal, setShowGenerateProductsModal] = React.useState(false);
+        const [productsFromCloud, setProductsFromCloud] = React.useState([]);
+        const [selectedProducts, setSelectedProducts] = React.useState([]);
+        const [loadingProducts, setLoadingProducts] = React.useState(false);
+        const [creatingProducts, setCreatingProducts] = React.useState(false);
+        const [expandedProducts, setExpandedProducts] = React.useState(new Set());
+        
+        // Generate products form state
+        const [generateForm, setGenerateForm] = React.useState({
+            numberOfProducts: 5,
+            brand: '',
+            segment: '',
+            brandUrl: '',
+            message: ''
+        });
+        
         // FIX: Use a ref to track the form data to prevent re-renders from losing focus
         const formDataRef = React.useRef({
             store_code: '',
@@ -598,6 +616,136 @@ window.Views.SettingsView = ({
             setSyncResults(null);
         };
 
+        // Products Management Functions
+        const loadProductsFromCloud = async () => {
+            if (!mulesoftConfig.endpoint) {
+                alert('Please configure the MuleSoft endpoint first');
+                return;
+            }
+
+            setLoadingProducts(true);
+            try {
+                const response = await fetch(`${mulesoftConfig.endpoint}/products/loyalty`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const productsData = await response.json();
+                setProductsFromCloud(productsData);
+                setSelectedProducts([]);
+                setExpandedProducts(new Set());
+            } catch (error) {
+                console.error('Failed to load products:', error);
+                alert(`Failed to load products: ${error.message}`);
+            } finally {
+                setLoadingProducts(false);
+            }
+        };
+
+        const generateProducts = async () => {
+            if (!mulesoftConfig.endpoint) {
+                alert('Please configure the MuleSoft endpoint first');
+                return;
+            }
+
+            if (!generateForm.brand.trim()) {
+                alert('Please enter a brand name');
+                return;
+            }
+
+            if (generateForm.numberOfProducts < 1 || generateForm.numberOfProducts > 10) {
+                alert('Number of products must be between 1 and 10');
+                return;
+            }
+
+            setLoadingProducts(true);
+            try {
+                const params = new URLSearchParams({
+                    n: generateForm.numberOfProducts.toString(),
+                    segment: generateForm.segment,
+                    brand: generateForm.brand
+                });
+
+                if (generateForm.brandUrl.trim()) {
+                    params.append('brand_url', generateForm.brandUrl);
+                }
+
+                const response = await fetch(`${mulesoftConfig.endpoint}/products/generate?${params}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const productsData = await response.json();
+                setProductsFromCloud(productsData);
+                setSelectedProducts([]);
+                setExpandedProducts(new Set());
+                setShowGenerateProductsModal(false);
+            } catch (error) {
+                console.error('Failed to generate products:', error);
+                alert(`Failed to generate products: ${error.message}`);
+            } finally {
+                setLoadingProducts(false);
+            }
+        };
+
+        const createSelectedProducts = async () => {
+            if (selectedProducts.length === 0) {
+                alert('Please select at least one product to create');
+                return;
+            }
+
+            setCreatingProducts(true);
+            try {
+                const response = await window.API.call('/products/create', {
+                    method: 'POST',
+                    body: JSON.stringify(selectedProducts)
+                });
+
+                alert(`Successfully created ${selectedProducts.length} products!`);
+                setSelectedProducts([]);
+                setProductsFromCloud([]);
+            } catch (error) {
+                console.error('Failed to create products:', error);
+                alert(`Failed to create products: ${error.message}`);
+            } finally {
+                setCreatingProducts(false);
+            }
+        };
+
+        const deleteAllProducts = async () => {
+            try {
+                const response = await window.API.call('/products', {
+                    method: 'DELETE'
+                });
+                alert('All products have been deleted successfully!');
+                setShowDeleteProductsModal(false);
+            } catch (error) {
+                console.error('Failed to delete products:', error);
+                alert(`Failed to delete products: ${error.message}`);
+            }
+        };
+
+        const toggleProductSelection = (product) => {
+            setSelectedProducts(prev => {
+                const isSelected = prev.some(p => p.sku === product.sku);
+                if (isSelected) {
+                    return prev.filter(p => p.sku !== product.sku);
+                } else {
+                    return [...prev, product];
+                }
+            });
+        };
+
+        const toggleProductExpansion = (sku) => {
+            setExpandedProducts(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(sku)) {
+                    newSet.delete(sku);
+                } else {
+                    newSet.add(sku);
+                }
+                return newSet;
+            });
+        };
+
         const parseDatabaseCredentialsYAML = (databaseUrl) => {
             try {
                 const url = new URL(databaseUrl);
@@ -617,6 +765,10 @@ db:
   password: "${password}"
   database: "${database}"
 
+#Mule AI Chain Configuration
+mac:
+  inference_key: ""
+
 #Salesforce configurations
 sfdc:
   url: "http://login.salesforce.com/services/Soap/u/64.0"
@@ -633,6 +785,10 @@ db:
   user: ""
   password: ""
   database: ""
+
+#Mule AI Chain Configuration
+mac:
+  inference_key: ""
 
 #Salesforce configurations
 sfdc:
@@ -661,6 +817,9 @@ db.user=${user}
 db.password=${password}
 db.database=${database}
 
+#Mule AI Chain Configuration
+mac.inference_key=
+
 #Salesforce configurations
 sfdc.url=http://login.salesforce.com/
 sfdc.token=
@@ -675,6 +834,9 @@ db.port=
 db.user=
 db.password=
 db.database=
+
+#Mule AI Chain Configuration
+mac.inference_key=
 
 #Salesforce configurations
 sfdc.url=http://login.salesforce.com/
@@ -1548,6 +1710,73 @@ sfdc.account=`;
                         ])
                     ]),
 
+                    // Load Products Section
+                    React.createElement('div', { key: 'load-products-section', className: 'mt-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800' }, [
+                        React.createElement('h4', { key: 'load-products-title', className: 'text-sm font-medium mb-3 dark:text-white flex items-center gap-2' }, [
+                            React.createElement('div', { key: 'products-icon', className: 'w-4 h-4' }, '📦'),
+                            'Load Products'
+                        ]),
+                        React.createElement('p', { key: 'load-products-description', className: 'text-xs text-gray-600 dark:text-gray-400 mb-4' }, 
+                            'Manage product data from MuleSoft loyalty cloud system'
+                        ),
+                        React.createElement('div', { key: 'products-actions', className: 'grid grid-cols-1 md:grid-cols-2 gap-3' }, [
+                            // Delete All Products Button
+                            React.createElement('button', {
+                                key: 'delete-products-btn',
+                                onClick: () => setShowDeleteProductsModal(true),
+                                className: 'flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
+                            }, [
+                                React.createElement('div', { key: 'delete-icon', className: 'w-4 h-4' }, '🗑️'),
+                                React.createElement('span', { key: 'delete-text' }, 'Delete All Products')
+                            ]),
+                            
+                            // Load from Loyalty Cloud Button
+                            React.createElement('button', {
+                                key: 'load-products-cloud-btn',
+                                onClick: loadProductsFromCloud,
+                                disabled: !mulesoftConfig.endpoint || loadingProducts,
+                                className: 'flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            }, [
+                                loadingProducts && React.createElement('div', { 
+                                    key: 'loading-spinner',
+                                    className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                                }),
+                                React.createElement('div', { key: 'cloud-icon', className: 'w-4 h-4' }, '☁️'),
+                                React.createElement('span', { key: 'load-text' }, 
+                                    loadingProducts ? 'Loading Products...' : 'Load from Loyalty Cloud'
+                                )
+                            ]),
+                            
+                            // Generate Products Button
+                            React.createElement('button', {
+                                key: 'generate-products-btn',
+                                onClick: () => setShowGenerateProductsModal(true),
+                                disabled: !mulesoftConfig.endpoint,
+                                className: 'flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            }, [
+                                React.createElement('div', { key: 'generate-icon', className: 'w-4 h-4' }, '✨'),
+                                React.createElement('span', { key: 'generate-text' }, 'Ask Mule to Generate Products')
+                            ]),
+                            
+                            // Create Products Button (only show when products are loaded)
+                            productsFromCloud.length > 0 && React.createElement('button', {
+                                key: 'create-products-btn',
+                                onClick: createSelectedProducts,
+                                disabled: selectedProducts.length === 0 || creatingProducts,
+                                className: 'flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            }, [
+                                creatingProducts && React.createElement('div', { 
+                                    key: 'creating-spinner',
+                                    className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                                }),
+                                React.createElement('div', { key: 'create-icon', className: 'w-4 h-4' }, '➕'),
+                                React.createElement('span', { key: 'create-text' }, 
+                                    creatingProducts ? 'Creating Products...' : `Create Products (${selectedProducts.length})`
+                                )
+                            ])
+                        ])
+                    ]),
+
                     // Encrypted Settings Section
                     React.createElement('div', { key: 'encrypted-settings-section', className: 'mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800' }, [
                         React.createElement('h4', { key: 'encrypted-title', className: 'text-sm font-medium mb-3 dark:text-white flex items-center gap-2' }, [
@@ -2332,6 +2561,261 @@ sfdc.account=`;
                handleSaveSetting: handleSaveSetting,
                Save: Save
            }),
+
+           // Delete Products Confirmation Modal
+           showDeleteProductsModal && React.createElement('div', {
+               key: 'delete-products-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700' }, [
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold text-red-600 dark:text-red-400' }, 
+                           '⚠️ Delete All Products'
+                       )
+                   ]),
+                   React.createElement('div', { key: 'body', className: 'px-6 py-4' }, [
+                       React.createElement('p', { key: 'warning', className: 'text-gray-700 dark:text-gray-300 mb-4' }, 
+                           'This action will permanently delete ALL product data from the system. This cannot be undone.'
+                       ),
+                       React.createElement('p', { key: 'confirm', className: 'text-sm text-gray-600 dark:text-gray-400' }, 
+                           'Are you sure you want to continue?'
+                       )
+                   ]),
+                   React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                       React.createElement('button', {
+                           key: 'cancel-btn',
+                           onClick: () => setShowDeleteProductsModal(false),
+                           className: 'px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors'
+                       }, 'Cancel'),
+                       React.createElement('button', {
+                           key: 'delete-btn',
+                           onClick: deleteAllProducts,
+                           className: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
+                       }, 'Delete All Products')
+                   ])
+               ])
+           ]),
+
+           // Generate Products Modal
+           showGenerateProductsModal && React.createElement('div', {
+               key: 'generate-products-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-lg'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
+                           '✨ Generate Products with Mule'
+                       ),
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: () => setShowGenerateProductsModal(false),
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, '✕')
+                   ]),
+                   React.createElement('div', { key: 'body', className: 'px-6 py-4 space-y-4' }, [
+                       React.createElement('div', { key: 'number-field' }, [
+                           React.createElement('label', { key: 'number-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Number of products to generate (max 10)'),
+                           React.createElement('input', {
+                               key: 'number-input',
+                               type: 'number',
+                               min: 1,
+                               max: 10,
+                               value: generateForm.numberOfProducts,
+                               onChange: (e) => setGenerateForm(prev => ({ ...prev, numberOfProducts: parseInt(e.target.value) || 1 })),
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'brand-field' }, [
+                           React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Brand *'),
+                           React.createElement('input', {
+                               key: 'brand-input',
+                               type: 'text',
+                               value: generateForm.brand,
+                               onChange: (e) => setGenerateForm(prev => ({ ...prev, brand: e.target.value })),
+                               placeholder: 'Type your own brand or an existing one',
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'segment-field' }, [
+                           React.createElement('label', { key: 'segment-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Segment'),
+                           React.createElement('input', {
+                               key: 'segment-input',
+                               type: 'text',
+                               value: generateForm.segment,
+                               onChange: (e) => setGenerateForm(prev => ({ ...prev, segment: e.target.value })),
+                               placeholder: 'Segment the products',
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'url-field' }, [
+                           React.createElement('label', { key: 'url-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'URL of current Brand'),
+                           React.createElement('input', {
+                               key: 'url-input',
+                               type: 'url',
+                               value: generateForm.brandUrl,
+                               onChange: (e) => setGenerateForm(prev => ({ ...prev, brandUrl: e.target.value })),
+                               placeholder: 'https://example.com (optional)',
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ]),
+                       React.createElement('div', { key: 'message-field' }, [
+                           React.createElement('label', { key: 'message-label', className: 'block text-sm font-medium mb-2 dark:text-white' }, 'Message'),
+                           React.createElement('textarea', {
+                               key: 'message-textarea',
+                               value: generateForm.message,
+                               onChange: (e) => setGenerateForm(prev => ({ ...prev, message: e.target.value })),
+                               placeholder: 'Enter the URL of the brand of the customer you want to generate products, it will be used as an example.',
+                               rows: 3,
+                               className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                           })
+                       ])
+                   ]),
+                   React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                       React.createElement('button', {
+                           key: 'cancel-btn',
+                           onClick: () => setShowGenerateProductsModal(false),
+                           className: 'px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors'
+                       }, 'Cancel'),
+                       React.createElement('button', {
+                           key: 'generate-btn',
+                           onClick: generateProducts,
+                           disabled: loadingProducts,
+                           className: 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                       }, loadingProducts ? 'Generating...' : 'Generate')
+                   ])
+               ])
+           ]),
+
+           // Products Table Modal
+           productsFromCloud.length > 0 && React.createElement('div', {
+               key: 'products-table-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
+                           `Generated products for "${productsFromCloud[0]?.brand || 'Unknown Brand'}"`
+                       ),
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: () => setProductsFromCloud([]),
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, '✕')
+                   ]),
+                   React.createElement('div', { key: 'body', className: 'px-6 py-4 overflow-y-auto max-h-[60vh]' }, [
+                       React.createElement('div', { key: 'table-container', className: 'overflow-x-auto' }, [
+                           React.createElement('table', { key: 'products-table', className: 'w-full text-sm' }, [
+                               React.createElement('thead', { key: 'table-head' }, [
+                                   React.createElement('tr', { key: 'header-row', className: 'border-b dark:border-gray-700' }, [
+                                       React.createElement('th', { key: 'select-header', className: 'text-left py-2 px-3 dark:text-white' }, 'Select'),
+                                       React.createElement('th', { key: 'collection-header', className: 'text-left py-2 px-3 dark:text-white' }, 'Collection'),
+                                       React.createElement('th', { key: 'name-header', className: 'text-left py-2 px-3 dark:text-white' }, 'Product Name'),
+                                       React.createElement('th', { key: 'price-header', className: 'text-left py-2 px-3 dark:text-white' }, 'Price'),
+                                       React.createElement('th', { key: 'description-header', className: 'text-left py-2 px-3 dark:text-white' }, 'Short Description'),
+                                       React.createElement('th', { key: 'sku-header', className: 'text-left py-2 px-3 dark:text-white' }, 'SKU'),
+                                       React.createElement('th', { key: 'details-header', className: 'text-left py-2 px-3 dark:text-white' }, 'Details')
+                                   ])
+                               ]),
+                               React.createElement('tbody', { key: 'table-body' }, 
+                                   productsFromCloud.map((product, index) => [
+                                       React.createElement('tr', { 
+                                           key: `product-row-${index}`,
+                                           className: `border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedProducts.some(p => p.sku === product.sku) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`
+                                       }, [
+                                           React.createElement('td', { key: 'select-cell', className: 'py-2 px-3' }, [
+                                               React.createElement('input', {
+                                                   key: 'checkbox',
+                                                   type: 'checkbox',
+                                                   checked: selectedProducts.some(p => p.sku === product.sku),
+                                                   onChange: () => toggleProductSelection(product),
+                                                   className: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                               })
+                                           ]),
+                                           React.createElement('td', { key: 'collection-cell', className: 'py-2 px-3 dark:text-white' }, product.collection || 'N/A'),
+                                           React.createElement('td', { key: 'name-cell', className: 'py-2 px-3 dark:text-white font-medium' }, product.product_name),
+                                           React.createElement('td', { key: 'price-cell', className: 'py-2 px-3 dark:text-white' }, product.pricing?.price || 'N/A'),
+                                           React.createElement('td', { key: 'description-cell', className: 'py-2 px-3 dark:text-white' }, product.short_description || 'N/A'),
+                                           React.createElement('td', { key: 'sku-cell', className: 'py-2 px-3 dark:text-white font-mono text-xs' }, product.sku),
+                                           React.createElement('td', { key: 'details-cell', className: 'py-2 px-3' }, [
+                                               React.createElement('button', {
+                                                   key: 'expand-btn',
+                                                   onClick: () => toggleProductExpansion(product.sku),
+                                                   className: 'text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
+                                               }, expandedProducts.has(product.sku) ? '−' : '+')
+                                           ])
+                                       ]),
+                                       // Expanded details row
+                                       expandedProducts.has(product.sku) && React.createElement('tr', { 
+                                           key: `product-details-${index}`,
+                                           className: 'bg-gray-50 dark:bg-gray-700/30'
+                                       }, [
+                                           React.createElement('td', { 
+                                               key: 'details-content',
+                                               colSpan: 7,
+                                               className: 'py-4 px-3'
+                                           }, [
+                                               React.createElement('div', { key: 'details-container', className: 'space-y-3' }, [
+                                                   React.createElement('div', { key: 'description-section' }, [
+                                                       React.createElement('h4', { key: 'description-title', className: 'font-medium text-gray-900 dark:text-white mb-2' }, 'Description'),
+                                                       React.createElement('p', { key: 'description-text', className: 'text-gray-700 dark:text-gray-300 text-sm' }, product.description || 'No description available')
+                                                   ]),
+                                                   product.dimensions && React.createElement('div', { key: 'dimensions-section' }, [
+                                                       React.createElement('h4', { key: 'dimensions-title', className: 'font-medium text-gray-900 dark:text-white mb-2' }, 'Dimensions'),
+                                                       React.createElement('p', { key: 'dimensions-text', className: 'text-gray-700 dark:text-gray-300 text-sm' }, product.dimensions.dimensions || 'N/A')
+                                                   ]),
+                                                   product.special_features && product.special_features.length > 0 && React.createElement('div', { key: 'features-section' }, [
+                                                       React.createElement('h4', { key: 'features-title', className: 'font-medium text-gray-900 dark:text-white mb-2' }, 'Special Features'),
+                                                       React.createElement('ul', { key: 'features-list', className: 'list-disc list-inside text-gray-700 dark:text-gray-300 text-sm space-y-1' },
+                                                           product.special_features.map((feature, featureIndex) => 
+                                                               React.createElement('li', { key: `feature-${featureIndex}` }, feature)
+                                                           )
+                                                       )
+                                                   ]),
+                                                   product.care_instructions && React.createElement('div', { key: 'care-section' }, [
+                                                       React.createElement('h4', { key: 'care-title', className: 'font-medium text-gray-900 dark:text-white mb-2' }, 'Care Instructions'),
+                                                       React.createElement('p', { key: 'care-text', className: 'text-gray-700 dark:text-gray-300 text-sm' }, product.care_instructions)
+                                                   ]),
+                                                   product.warranty && React.createElement('div', { key: 'warranty-section' }, [
+                                                       React.createElement('h4', { key: 'warranty-title', className: 'font-medium text-gray-900 dark:text-white mb-2' }, 'Warranty'),
+                                                       React.createElement('p', { key: 'warranty-text', className: 'text-gray-700 dark:text-gray-300 text-sm' }, product.warranty)
+                                                   ])
+                                               ])
+                                           ])
+                                       ])
+                                   ]).flat()
+                               )
+                           ])
+                       ])
+                   ]),
+                   React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('div', { key: 'selection-info', className: 'text-sm text-gray-600 dark:text-gray-400' }, 
+                           `${selectedProducts.length} of ${productsFromCloud.length} products selected`
+                       ),
+                       React.createElement('div', { key: 'action-buttons', className: 'flex gap-3' }, [
+                           React.createElement('button', {
+                               key: 'close-btn',
+                               onClick: () => setProductsFromCloud([]),
+                               className: 'px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors'
+                           }, 'Close'),
+                           React.createElement('button', {
+                               key: 'create-btn',
+                               onClick: createSelectedProducts,
+                               disabled: selectedProducts.length === 0 || creatingProducts,
+                               className: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                           }, creatingProducts ? 'Creating...' : `Create ${selectedProducts.length} Products`)
+                       ])
+                   ])
+               ])
+           ]),
 
            // Members Modal
            showMembersModal && React.createElement('div', {

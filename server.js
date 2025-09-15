@@ -572,6 +572,85 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
+// Delete all products endpoint
+app.delete('/api/products', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM products');
+    res.json({ message: 'All products deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting all products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create multiple products endpoint
+app.post('/api/products/create', async (req, res) => {
+  try {
+    const products = req.body;
+    
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ error: 'Products array is required and cannot be empty' });
+    }
+
+    const results = [];
+    
+    for (const product of products) {
+      try {
+        // Extract price from pricing object and convert to number
+        let price = 0;
+        if (product.pricing && product.pricing.price) {
+          // Remove $ and other non-numeric characters, then parse
+          const priceStr = product.pricing.price.replace(/[^0-9.]/g, '');
+          price = parseFloat(priceStr) || 0;
+        }
+
+        // Insert product into database
+        const result = await pool.query(
+          `INSERT INTO products (name, price, category, stock, image, created_at, updated_at) 
+           VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+           RETURNING *`,
+          [
+            product.product_name || 'Unknown Product',
+            price,
+            product.collection || 'General',
+            0, // Default stock
+            '📦' // Default image
+          ]
+        );
+        
+        results.push({
+          success: true,
+          product: result.rows[0],
+          originalData: product
+        });
+      } catch (productError) {
+        console.error(`Error creating product ${product.product_name}:`, productError);
+        results.push({
+          success: false,
+          error: productError.message,
+          originalData: product
+        });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failureCount = results.filter(r => !r.success).length;
+
+    res.json({
+      message: `Created ${successCount} products successfully${failureCount > 0 ? `, ${failureCount} failed` : ''}`,
+      results: results,
+      summary: {
+        total: products.length,
+        successful: successCount,
+        failed: failureCount
+      }
+    });
+  } catch (err) {
+    console.error('Error creating products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Customers / Loyalty System
 app.get('/api/customers', async (req, res) => {
   try {
