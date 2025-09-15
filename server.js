@@ -664,7 +664,8 @@ app.post('/api/products/check-existing', async (req, res) => {
       return res.json({ existingSkus: [] });
     }
 
-    // Check which SKUs already exist in the products table
+    // Check which product names already exist in the products table
+    // We'll check by product name since that's what we store in the products table
     const placeholders = skus.map((_, index) => `$${index + 1}`).join(',');
     const result = await pool.query(
       `SELECT name FROM products WHERE name IN (${placeholders})`,
@@ -688,6 +689,30 @@ app.post('/api/generated-products/save', async (req, res) => {
       return res.status(400).json({ error: 'Batch ID and products array are required' });
     }
 
+    // First, ensure the table exists
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS generated_products (
+          id SERIAL PRIMARY KEY,
+          batch_id VARCHAR(100) NOT NULL,
+          product_data JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by VARCHAR(100) DEFAULT 'system'
+        )
+      `);
+      
+      // Create indexes if they don't exist
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch_id)
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_generated_products_created_at ON generated_products(created_at)
+      `);
+    } catch (createErr) {
+      console.error('Error creating generated_products table:', createErr);
+      // Continue anyway, table might already exist
+    }
+
     // Save each product as a separate record with the same batch_id
     for (const product of products) {
       await pool.query(
@@ -709,6 +734,30 @@ app.post('/api/generated-products/save', async (req, res) => {
 
 app.get('/api/generated-products/history', async (req, res) => {
   try {
+    // First, check if the table exists and create it if it doesn't
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS generated_products (
+          id SERIAL PRIMARY KEY,
+          batch_id VARCHAR(100) NOT NULL,
+          product_data JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by VARCHAR(100) DEFAULT 'system'
+        )
+      `);
+      
+      // Create indexes if they don't exist
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch_id)
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_generated_products_created_at ON generated_products(created_at)
+      `);
+    } catch (createErr) {
+      console.error('Error creating generated_products table:', createErr);
+      // Continue anyway, table might already exist
+    }
+
     // Get all generated products grouped by batch_id
     const result = await pool.query(`
       SELECT 

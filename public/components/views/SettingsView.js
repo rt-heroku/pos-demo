@@ -813,10 +813,10 @@ window.Views.SettingsView = ({
         // Check if products already exist in the database
         const checkExistingProducts = async (products) => {
             try {
-                const skus = products.map(p => p.sku);
+                const productNames = products.map(p => p.product_name);
                 const response = await window.API.call('/products/check-existing', {
                     method: 'POST',
-                    body: JSON.stringify({ skus: skus })
+                    body: JSON.stringify({ skus: productNames }) // Using skus parameter name for compatibility
                 });
                 return response.existingSkus || [];
             } catch (error) {
