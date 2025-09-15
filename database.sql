@@ -59,11 +59,22 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     subtotal DECIMAL(10,2) NOT NULL
 );
 
+-- Create generated products table to store AI-generated product data
+CREATE TABLE IF NOT EXISTS generated_products (
+    id SERIAL PRIMARY KEY,
+    batch_id VARCHAR(100) NOT NULL,
+    product_data JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100) DEFAULT 'system'
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_customers_loyalty_number ON customers(loyalty_number);
 CREATE INDEX IF NOT EXISTS idx_transactions_customer_id ON transactions(customer_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_transaction_items_transaction_id ON transaction_items(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch_id);
+CREATE INDEX IF NOT EXISTS idx_generated_products_created_at ON generated_products(created_at);
 
 
 -- Function to generate loyalty number
@@ -1541,3 +1552,116 @@ BEGIN
     RETURN COALESCE(user_perms->p_module->>p_action, 'false')::BOOLEAN;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- AI Generated Products Table
+CREATE TABLE public.generated_products (
+    id int GENERATED ALWAYS AS IDENTITY NOT NULL,
+    batch int NULL,
+    brand varchar NULL,
+    segment varchar NULL,
+    num_of_products int NULL,
+    generated_product json NULL,
+    prompt text NULL, -- text for longer prompts
+    raw_response text NULL, -- text for longer responses
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP, -- Added timestamp
+    CONSTRAINT generated_products_pk PRIMARY KEY (id)
+);
+
+-- Function to get the next batch number
+CREATE OR REPLACE FUNCTION get_next_batch_number()
+RETURNS INTEGER AS $$
+BEGIN
+    RETURN COALESCE((SELECT MAX(batch) FROM public.generated_products), 0) + 1;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Alternative function that uses a sequence for batch numbers (more robust for concurrent inserts)
+CREATE SEQUENCE batch_number_seq START 1;
+
+CREATE OR REPLACE FUNCTION get_next_batch_number_seq()
+RETURNS INTEGER AS $$
+BEGIN
+    RETURN nextval('batch_number_seq');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Select script to get the last batch
+SELECT MAX(batch) as last_batch_number FROM public.generated_products;
+
+-- Select script to get all records from the last batch
+SELECT * 
+FROM public.generated_products 
+WHERE batch = (SELECT MAX(batch) FROM public.generated_products);
+
+-- Select script with pagination for large datasets
+SELECT id, batch, brand, segment, num_of_products, 
+       generated_product, created_at
+FROM public.generated_products 
+ORDER BY id DESC 
+LIMIT 50 OFFSET 0;
+
+-- Example insert statements
+-- SELECT get_next_batch_number();
+
+-- Insert with function to get next batch number
+/*INSERT INTO public.generated_products (
+    batch, 
+    brand, 
+    segment, 
+    num_of_products, 
+    generated_product, 
+    prompt, 
+    raw_response
+) VALUES (
+    get_next_batch_number(), -- Use function to get next batch
+    'Nike',
+    'Athletic Wear',
+    '100',
+    '{"product_name": "Air Max Pro", "price": 150.99, "features": ["breathable", "lightweight"]}',
+    'Generate a new athletic shoe product for Nike targeting runners',
+    'json```{"product_name": "Air Max Pro", "price": 150.99, "features": ["breathable", "lightweight"]}```'
+);
+*/
+
+-- EXAMPLE: Insert with sequence-based batch number (recommended for concurrent operations)
+/*
+INSERT INTO public.generated_products (
+    batch, 
+    brand, 
+    segment, 
+    num_of_products, 
+    generated_product, 
+    prompt, 
+    raw_response
+) VALUES (
+    get_next_batch_number_seq(), 
+    'Adidas',
+    'Sports Equipment',
+    '75',
+    '{"product_name": "UltraBoost Runner", "category": "running shoes", "target_audience": "professional athletes"}',
+    'Create a premium running shoe for professional athletes',
+    'Here is the product: {"product_name": "UltraBoost Runner", "category": "running shoes", "target_audience": "professional athletes"}'
+);
+*/
+
+-- EXAMPLE: Insert multiple records in the same batch
+/*
+WITH batch_num AS (SELECT get_next_batch_number() as batch_id)
+INSERT INTO public.generated_products (
+    batch, brand, segment, num_of_products, generated_product, prompt, raw_response
+)
+SELECT 
+    batch_id,
+    brand_data.brand,
+    brand_data.segment,
+    brand_data.num_of_products,
+    brand_data.product,
+    brand_data.prompt_text,
+    brand_data.raw_resp
+FROM batch_num,
+(VALUES 
+    ('Puma', 'Footwear', '80', '{"name": "Speed Cat", "type": "racing shoe"}', 'Create racing shoe', 'Response: {"name": "Speed Cat", "type": "racing shoe"}'),
+    ('Puma', 'Apparel', '90', '{"name": "Track Jacket", "material": "polyester"}', 'Create track jacket', 'json```{"name": "Track Jacket", "material": "polyester"}```')
+) AS brand_data(brand, segment, num_of_products, product, prompt_text, raw_resp);
+*/

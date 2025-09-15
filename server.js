@@ -651,6 +651,90 @@ app.post('/api/products/create', async (req, res) => {
   }
 });
 
+// Check existing products endpoint
+app.post('/api/products/check-existing', async (req, res) => {
+  try {
+    const { skus } = req.body;
+    
+    if (!Array.isArray(skus)) {
+      return res.status(400).json({ error: 'SKUs array is required' });
+    }
+
+    if (skus.length === 0) {
+      return res.json({ existingSkus: [] });
+    }
+
+    // Check which SKUs already exist in the products table
+    const placeholders = skus.map((_, index) => `$${index + 1}`).join(',');
+    const result = await pool.query(
+      `SELECT name FROM products WHERE name IN (${placeholders})`,
+      skus
+    );
+
+    const existingSkus = result.rows.map(row => row.name);
+    res.json({ existingSkus: existingSkus });
+  } catch (err) {
+    console.error('Error checking existing products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Generated Products endpoints
+app.post('/api/generated-products/save', async (req, res) => {
+  try {
+    const { batchId, products, metadata } = req.body;
+    
+    if (!batchId || !products || !Array.isArray(products)) {
+      return res.status(400).json({ error: 'Batch ID and products array are required' });
+    }
+
+    // Save each product as a separate record with the same batch_id
+    for (const product of products) {
+      await pool.query(
+        'INSERT INTO generated_products (batch_id, product_data, created_by) VALUES ($1, $2, $3)',
+        [batchId, JSON.stringify(product), 'system']
+      );
+    }
+
+    res.json({ 
+      message: `Saved ${products.length} products to batch ${batchId}`,
+      batchId: batchId,
+      productCount: products.length
+    });
+  } catch (err) {
+    console.error('Error saving generated products:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/generated-products/history', async (req, res) => {
+  try {
+    // Get all generated products grouped by batch_id
+    const result = await pool.query(`
+      SELECT 
+        batch_id,
+        COUNT(*) as total_products,
+        MIN(created_at) as created_at,
+        array_agg(product_data ORDER BY id) as products
+      FROM generated_products 
+      GROUP BY batch_id 
+      ORDER BY created_at DESC
+    `);
+
+    const batches = result.rows.map(row => ({
+      batchId: row.batch_id,
+      totalProducts: parseInt(row.total_products),
+      createdAt: row.created_at,
+      products: row.products
+    }));
+
+    res.json(batches);
+  } catch (err) {
+    console.error('Error fetching generated products history:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Customers / Loyalty System
 app.get('/api/customers', async (req, res) => {
   try {
