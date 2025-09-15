@@ -2914,7 +2914,6 @@ sfdc.account=`;
                                    ])
                                ])
                    )
-               ])
            ]),
 
            React.createElement(window.Modals.SystemSettingModal, {
