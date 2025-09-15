@@ -42,6 +42,9 @@ window.Views.SettingsView = ({
     }) => {
         const { Settings, Plus, Upload, Moon, Sun, MapPin, Edit, Save, X, Image, Trash2, Database, Key, Copy, CheckCircle, Users, LogOut, RefreshCw } = window.Icons;
         
+        // Simple icon component for products
+        const ProductsIcon = ({ size = 18 }) => React.createElement('span', { style: { fontSize: size } }, '📦');
+        
         const [activeTab, setActiveTab] = React.useState('locations');
         const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
         const [editingLocation, setEditingLocation] = React.useState(null);
@@ -1437,7 +1440,7 @@ sfdc.account=`;
                         key: 'products-tab',
                         tab: 'products', 
                         label: 'Product Management', 
-                        icon: '📦',
+                        icon: ProductsIcon,
                         active: activeTab === 'products' 
                     })
                 ]),
