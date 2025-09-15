@@ -2979,7 +2979,7 @@ sfdc.account=`;
                                            React.createElement('option', { 
                                                key: `batch-${batch.batchId}`, 
                                                value: batch.batchId 
-                                           }, `Batch ${batch.batchId} (${batch.totalProducts} products)`)
+                                           }, `Batch ${batch.batchId} - ${batch.brand || 'Unknown Brand'} (${batch.totalProducts} products)`)
                                        )
                                    ])
                                ])
@@ -3006,7 +3006,7 @@ sfdc.account=`;
                                                        `Batch ${batch.batchId}`
                                                    ),
                                                    React.createElement('p', { key: 'batch-meta', className: 'text-sm text-gray-600 dark:text-gray-400' }, 
-                                                       `${batch.totalProducts} products • Generated ${new Date(batch.createdAt).toLocaleDateString()}`
+                                                       `${batch.totalProducts} products • ${batch.brand || 'Unknown Brand'} • ${batch.segment || 'No Segment'} • Generated ${new Date(batch.createdAt).toLocaleDateString()}`
                                                    )
                                                ]),
                                                React.createElement('div', { key: 'batch-actions' }, [
@@ -3025,25 +3025,28 @@ sfdc.account=`;
                                                                console.log('🔍 [DEBUG] First product keys:', Object.keys(batch.products[0] || {}));
                                                            }
                                                            
-                                                           // Ensure products are properly formatted
-                                                           const formattedProducts = batch.products.map((product, index) => {
-                                                               console.log(`🔍 [DEBUG] Processing product ${index}:`, product);
-                                                               console.log(`🔍 [DEBUG] Product ${index} type:`, typeof product);
-                                                               
-                                                               // If product is a string, try to parse it
-                                                               if (typeof product === 'string') {
-                                                                   try {
-                                                                       const parsed = JSON.parse(product);
-                                                                       console.log(`🔍 [DEBUG] Parsed product ${index}:`, parsed);
-                                                                       return parsed;
-                                                                   } catch (e) {
-                                                                       console.error('❌ [ERROR] Error parsing product:', e, 'Product:', product);
-                                                                       return product;
+                                                           // Ensure products are properly formatted and flatten any nested arrays
+                                                           const formattedProducts = batch.products
+                                                               .flat() // Flatten any nested arrays
+                                                               .filter(product => product !== null && product !== undefined) // Remove null/undefined products
+                                                               .map((product, index) => {
+                                                                   console.log(`🔍 [DEBUG] Processing product ${index}:`, product);
+                                                                   console.log(`🔍 [DEBUG] Product ${index} type:`, typeof product);
+                                                                   
+                                                                   // If product is a string, try to parse it
+                                                                   if (typeof product === 'string') {
+                                                                       try {
+                                                                           const parsed = JSON.parse(product);
+                                                                           console.log(`🔍 [DEBUG] Parsed product ${index}:`, parsed);
+                                                                           return parsed;
+                                                                       } catch (e) {
+                                                                           console.error('❌ [ERROR] Error parsing product:', e, 'Product:', product);
+                                                                           return product;
+                                                                       }
                                                                    }
-                                                               }
-                                                               console.log(`🔍 [DEBUG] Product ${index} is already an object:`, product);
-                                                               return product;
-                                                           });
+                                                                   console.log(`🔍 [DEBUG] Product ${index} is already an object:`, product);
+                                                                   return product;
+                                                               });
                                                            
                                                            console.log('🔍 [DEBUG] Final formatted products:', formattedProducts);
                                                            if (formattedProducts.length > 0) {
