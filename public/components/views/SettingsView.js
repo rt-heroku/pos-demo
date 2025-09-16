@@ -2732,6 +2732,16 @@ sfdc.account=`;
                                    }, `Batch ${batch.batchId} - ${batch.brand || 'Unknown Brand'} (${batch.totalProducts} products)`)
                                )
                            ])
+                       ]),
+                       React.createElement('button', {
+                           key: 'refresh-btn',
+                           onClick: loadGeneratedHistory,
+                           disabled: loadingHistory,
+                           className: 'px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 min-w-[120px] justify-center',
+                           title: 'Refresh generated products history'
+                       }, [
+                           React.createElement('span', { key: 'refresh-icon', className: loadingHistory ? 'animate-spin' : '' }, '🔄'),
+                           loadingHistory ? 'Refreshing...' : 'Refresh'
                        ])
                    ]),
 
