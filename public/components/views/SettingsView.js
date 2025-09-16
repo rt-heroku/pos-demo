@@ -727,17 +727,17 @@ window.Views.SettingsView = ({
 
             setCreatingProducts(true);
             try {
-                const response = await window.API.call('/products/create', {
+                const response = await window.API.call('/products/import', {
                     method: 'POST',
                     body: JSON.stringify(selectedProducts)
                 });
 
-                alert(`Successfully created ${selectedProducts.length} products!`);
+                alert(`Successfully imported ${selectedProducts.length} products to MuleSoft!`);
                 setSelectedProducts([]);
                 setProductsFromCloud([]);
             } catch (error) {
-                console.error('Failed to create products:', error);
-                alert(`Failed to create products: ${error.message}`);
+                console.error('Failed to import products:', error);
+                alert(`Failed to import products: ${error.message}`);
             } finally {
                 setCreatingProducts(false);
             }

@@ -664,6 +664,55 @@ app.post('/api/products/create', async (req, res) => {
   }
 });
 
+// Import products to MuleSoft endpoint
+app.post('/api/products/import', async (req, res) => {
+  try {
+    const products = req.body;
+    
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ error: 'Products array is required and cannot be empty' });
+    }
+
+    // Get MuleSoft endpoint from system settings
+    const settingsResult = await pool.query(
+      'SELECT setting_value FROM system_settings WHERE setting_key = $1',
+      ['mulesoft_loyalty_sync_endpoint']
+    );
+
+    if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
+      return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+    }
+
+    const mulesoftEndpoint = settingsResult.rows[0].setting_value;
+    const importUrl = `${mulesoftEndpoint}/products/import`;
+
+    // Forward the request to MuleSoft
+    const mulesoftResponse = await fetch(importUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(products)
+    });
+
+    if (!mulesoftResponse.ok) {
+      const errorText = await mulesoftResponse.text();
+      console.error('MuleSoft API error:', errorText);
+      return res.status(mulesoftResponse.status).json({ 
+        error: 'MuleSoft API error', 
+        details: errorText 
+      });
+    }
+
+    const importResults = await mulesoftResponse.json();
+    res.json(importResults);
+
+  } catch (err) {
+    console.error('Error importing products to MuleSoft:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Check existing products endpoint
 app.post('/api/products/check-existing', async (req, res) => {
   try {
