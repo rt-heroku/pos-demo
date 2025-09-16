@@ -860,6 +860,10 @@ window.Views.SettingsView = ({
             }
         };
 
+        const sendToLoyalty = () => {
+            alert('Coming soon! This feature will allow you to sync your products with Loyalty Cloud.');
+        };
+
         const parseDatabaseCredentialsYAML = (databaseUrl) => {
             try {
                 const url = new URL(databaseUrl);
@@ -2598,13 +2602,13 @@ sfdc.account=`;
            // Product Management Tab Content
            activeTab === 'products' && currentUser?.role === 'admin' && React.createElement('div', { key: 'products-content', className: 'space-y-6' }, [
                // Modern Product Management Section
-               React.createElement('div', { key: 'product-management-section', className: 'bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl shadow-lg border border-purple-200 dark:border-purple-800 p-8' }, [
+               React.createElement('div', { key: 'product-management-section', className: 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg border dark:border-gray-700 p-8' }, [
                    React.createElement('div', { key: 'section-header', className: 'flex items-center gap-3 mb-8' }, [
-                       React.createElement('div', { key: 'icon-container', className: 'w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg' }, [
+                       React.createElement('div', { key: 'icon-container', className: 'w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shadow-lg' }, [
                            React.createElement('span', { key: 'icon', className: 'text-2xl' }, '📦')
                        ]),
                        React.createElement('div', { key: 'title-section' }, [
-                           React.createElement('h2', { key: 'title', className: 'text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent' }, 
+                           React.createElement('h2', { key: 'title', className: 'text-2xl font-bold text-gray-900 dark:text-white' }, 
                                'Product Management'
                            ),
                            React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
@@ -2669,11 +2673,29 @@ sfdc.account=`;
                                disabled: !mulesoftConfig.endpoint,
                                className: 'w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed'
                            }, 'Generate Products')
+                       ]),
+
+                       // Send to Loyalty Card
+                       React.createElement('div', { key: 'loyalty-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-orange-200 dark:border-orange-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-orange-600 dark:text-orange-400 text-lg' }, '🎯')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Send to Loyalty')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Sync your products with Loyalty Cloud for enhanced customer engagement'
+                           ),
+                           React.createElement('button', {
+                               key: 'loyalty-btn',
+                               onClick: sendToLoyalty,
+                               className: 'w-full px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
+                           }, 'Send to Loyalty')
                        ])
                    ]),
 
                    // Create Products Button (when products are loaded)
-                   productsFromCloud.length > 0 && React.createElement('div', { key: 'create-section', className: 'mt-8 p-6 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl border border-purple-200 dark:border-purple-800' }, [
+                   productsFromCloud.length > 0 && React.createElement('div', { key: 'create-section', className: 'mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800' }, [
                        React.createElement('div', { key: 'create-header', className: 'flex items-center justify-between mb-4' }, [
                            React.createElement('div', { key: 'create-info' }, [
                                React.createElement('h3', { key: 'create-title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Ready to Create Products'),
