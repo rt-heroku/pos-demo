@@ -497,8 +497,7 @@ window.Views.SettingsView = ({
                     await window.API.systemSettings.set(key, value, settingOptions);
                 }
                 
-                await loadSystemSettings();
-                return true;
+                await loadSystemSettings();                return true;
             } catch (error) {
                 console.error(`Failed to save ${key}:`, error);
                 alert(`Failed to save ${key}: ${error.message}`);
@@ -704,10 +703,14 @@ window.Views.SettingsView = ({
                     })
                 });
                 
-                setProductsFromCloud(productsData);
+                // Clear the modal and refresh the generated history
+                setShowGenerateProductsModal(false);
+                setProductsFromCloud([]);
                 setSelectedProducts([]);
                 setExpandedProducts(new Set());
-                setShowGenerateProductsModal(false);
+                
+                // Refresh the generated history to show the new batch
+                await loadGeneratedHistory();
             } catch (error) {
                 console.error('Failed to generate products:', error);
                 alert(`Failed to generate products: ${error.message}`);

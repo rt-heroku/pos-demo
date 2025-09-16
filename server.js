@@ -45,7 +45,12 @@ const pool = new Pool({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: true, // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 
 // Static file serving with cache control
@@ -584,6 +589,14 @@ app.delete('/api/products', async (req, res) => {
 });
 
 // Create multiple products endpoint
+// Handle CORS preflight for products/create
+app.options('/api/products/create', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.sendStatus(200);
+});
+
 app.post('/api/products/create', async (req, res) => {
   try {
     const products = req.body;
