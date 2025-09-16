@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+
+	<!-- HTTP Listener Configuration -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+
+	<!-- Database Configuration -->
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="b2c3d4e5-f6g7-8901-bcde-f23456789012" >
+		<db:postgresql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+
+	<!-- Flow: Product Import -->
+	<flow name="product-import-flow" doc:id="c3d4e5f6-g7h8-9012-cdef-345678901234" >
+		<http:listener doc:name="Listener" doc:id="d4e5f6g7-h8i9-0123-defg-456789012345" config-ref="HTTP_Listener_config" path="/products/import"/>
+		
+		<!-- Transform input JSON to database format -->
+		<ee:transform doc:name="Transform Product Data" doc:id="e5f6g7h8-i9j0-1234-efgh-567890123456">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+
+// Extract main product data
+var productData = payload
+
+// Transform to products table format
+{
+	"name": productData.product_name,
+	"price": productData.pricing.price replace "$" with "" replace "," with "" as Number,
+	"category": productData.collection default "General",
+	"stock": 0, // Default stock
+	"sku": productData.sku,
+	"brand": productData.brand,
+	"collection": productData.collection,
+	"description": productData.description default "",
+	"dimensions": productData.dimensions.dimensions default "",
+	"weight": null, // Not provided in input
+	"main_image_url": productData.dimensions.images.main_image_url default "",
+	"is_active": true,
+	"featured": false,
+	"sort_order": 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+		<!-- Insert into products table -->
+		<db:insert doc:name="Insert Product" doc:id="f6g7h8i9-j0k1-2345-fghi-678901234567" config-ref="Database_Config">
+			<db:sql><![CDATA[INSERT INTO products (name, price, category, stock, sku, brand, collection, description, dimensions, weight, main_image_url, is_active, featured, sort_order) 
+VALUES (:name, :price, :category, :stock, :sku, :brand, :collection, :description, :dimensions, :weight, :main_image_url, :is_active, :featured, :sort_order) 
+RETURNING id]]></db:sql>
+		</db:insert>
+
+		<!-- Store product ID for subsequent operations -->
+		<set-variable value="#[payload[0].id]" doc:name="Set Product ID" doc:id="g7h8i9j0-k1l2-3456-ghij-789012345678" variableName="productId"/>
+
+		<!-- Insert product images -->
+		<ee:transform doc:name="Transform Images" doc:id="h8i9j0k1-l2m3-4567-hijk-890123456789">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+
+var productData = vars.originalPayload
+var productId = vars.productId
+
+// Main image
+var mainImage = {
+	"product_id": productId,
+	"image_url": productData.dimensions.images.main_image_url,
+	"alt_text": productData.dimensions.images.alt_text default "",
+	"is_primary": true,
+	"sort_order": 0
+}
+
+// Additional images
+var additionalImages = productData.dimensions.images.additional_images default [] map (image, index) -> {
+	"product_id": productId,
+	"image_url": image.url,
+	"alt_text": image.alt_text default "",
+	"is_primary": false,
+	"sort_order": index + 1
+}
+
+// Combine all images
+[mainImage] ++ additionalImages]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+		<!-- Insert product images -->
+		<foreach doc:name="Insert Images" doc:id="i9j0k1l2-m3n4-5678-ijkl-901234567890">
+			<db:insert config-ref="Database_Config">
+				<db:sql><![CDATA[INSERT INTO product_images (product_id, image_url, alt_text, is_primary, sort_order) 
+VALUES (:product_id, :image_url, :alt_text, :is_primary, :sort_order)]]></db:sql>
+			</db:insert>
+		</foreach>
+
+		<!-- Insert product features -->
+		<ee:transform doc:name="Transform Features" doc:id="j0k1l2m3-n4o5-6789-jklm-012345678901">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+
+var productData = vars.originalPayload
+var productId = vars.productId
+
+// Extract features from dimensions
+var dimensionFeatures = productData.dimensions.features default [] map (feature) -> {
+	"product_id": productId,
+	"feature_name": feature[0],
+	"feature_value": feature[1]
+}
+
+// Extract materials
+var materialFeatures = productData.dimensions.materials default [] map (material) -> {
+	"product_id": productId,
+	"feature_name": "Material: " ++ material[0],
+	"feature_value": material[1]
+}
+
+// Extract finish
+var finishFeatures = productData.dimensions.finish default [] map (finish) -> {
+	"product_id": productId,
+	"feature_name": "Finish: " ++ finish[0],
+	"feature_value": finish[1]
+}
+
+// Combine all features
+dimensionFeatures ++ materialFeatures ++ finishFeatures]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+		<!-- Insert product features -->
+		<foreach doc:name="Insert Features" doc:id="k1l2m3n4-o5p6-7890-klmn-123456789012">
+			<db:insert config-ref="Database_Config">
+				<db:sql><![CDATA[INSERT INTO product_features (product_id, feature_name, feature_value) 
+VALUES (:product_id, :feature_name, :feature_value)]]></db:sql>
+			</db:insert>
+		</foreach>
+
+		<!-- Return success response -->
+		<ee:transform doc:name="Success Response" doc:id="l2m3n4o5-p6q7-8901-lmno-234567890123">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+{
+	"success": true,
+	"message": "Product imported successfully",
+	"product_id": vars.productId,
+	"product_name": vars.originalPayload.product_name
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+		<!-- Error handling -->
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="m3n4o5p6-q7r8-9012-mnop-345678901234" type="ANY">
+				<ee:transform doc:name="Error Response" doc:id="n4o5p6q7-r8s9-0123-nopq-456789012345">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+{
+	"success": false,
+	"error": error.description,
+	"message": "Failed to import product"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+
+</mule>
