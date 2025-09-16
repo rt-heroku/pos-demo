@@ -580,7 +580,13 @@ app.delete('/api/products/:id', async (req, res) => {
 // Delete all products endpoint
 app.delete('/api/products', async (req, res) => {
   try {
+    // Delete referencing records first to avoid foreign key constraint violations
+    await pool.query('DELETE FROM transaction_items WHERE product_id IS NOT NULL');
+    await pool.query('DELETE FROM work_order_products WHERE product_id IS NOT NULL');
+    
+    // Now delete all products (other tables have ON DELETE CASCADE)
     await pool.query('DELETE FROM products');
+    
     res.json({ message: 'All products deleted successfully' });
   } catch (err) {
     console.error('Error deleting all products:', err);
