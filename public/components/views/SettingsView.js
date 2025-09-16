@@ -724,12 +724,23 @@ window.Views.SettingsView = ({
 
             setCreatingProducts(true);
             try {
-                const response = await window.API.call('/products/create', {
+                const response = await fetch(`${mulesoftConfig.endpoint}/products/import`, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(selectedProducts)
                 });
 
-                alert(`Successfully created ${selectedProducts.length} products!`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const importResults = await response.json();
+                const successCount = importResults.filter(result => result.success).length;
+
+                alert(`Successfully created ${successCount} products!`);
                 setSelectedProducts([]);
                 setProductsFromCloud([]);
             } catch (error) {
