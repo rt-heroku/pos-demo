@@ -2759,12 +2759,13 @@ sfdc.account=`;
                            key: 'refresh-btn',
                            onClick: loadGeneratedHistory,
                            disabled: loadingHistory,
-                           className: 'px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 min-w-[120px] justify-center',
+                           className: 'p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                            title: 'Refresh generated products history'
-                       }, [
-                           React.createElement('span', { key: 'refresh-icon', className: loadingHistory ? 'animate-spin' : '' }, '🔄'),
-                           loadingHistory ? 'Refreshing...' : 'Refresh'
-                       ])
+                       }, React.createElement(RefreshCw, { 
+                           key: 'refresh-icon',
+                           size: 16,
+                           className: loadingHistory ? 'animate-spin' : ''
+                       }))
                    ]),
 
                    // History Content
