@@ -1502,7 +1502,7 @@ SELECT
     true
 FROM roles r 
 WHERE r.name = 'admin'
-ON CONFLICT (username) DO NOTHING;
+;
 
 -- Add user_id to existing tables for audit trail
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user INTEGER REFERENCES users(id);
