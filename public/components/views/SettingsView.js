@@ -502,7 +502,8 @@ window.Views.SettingsView = ({
                     await window.API.systemSettings.set(key, value, settingOptions);
                 }
                 
-                await loadSystemSettings();                return true;
+                await loadSystemSettings();
+                return true;
             } catch (error) {
                 console.error(`Failed to save ${key}:`, error);
                 alert(`Failed to save ${key}: ${error.message}`);
@@ -643,7 +644,7 @@ window.Views.SettingsView = ({
             setShowTestDataOutput(true);
             
             try {
-                const response = await window.API.call('/api/load-test-data', {
+                const response = await window.API.call('/load-test-data', {
                     method: 'POST'
                 });
                 
