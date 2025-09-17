@@ -601,10 +601,21 @@ app.post('/api/load-test-data', async (req, res) => {
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     
-    // Execute psql command to load sample data
-    const command = `psql ${process.env.DATABASE_URL} -f load_sample_data.sql`;
+    // Parse DATABASE_URL to handle SSL parameters properly
+    const databaseUrl = process.env.DATABASE_URL;
+    const url = new URL(databaseUrl);
     
-    console.log('Executing command:', command);
+    // Extract connection parameters
+    const host = url.hostname;
+    const port = url.port || '5432';
+    const database = url.pathname.substring(1); // Remove leading slash
+    const username = url.username;
+    const password = url.password;
+    
+    // Construct psql command with proper SSL handling
+    const command = `PGPASSWORD="${password}" psql -h ${host} -p ${port} -U ${username} -d ${database} -f load_sample_data.sql --set=sslmode=require`;
+    
+    console.log('Executing command:', command.replace(password, '***'));
     
     const { stdout, stderr } = await execAsync(command);
     
