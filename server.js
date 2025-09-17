@@ -594,6 +594,47 @@ app.delete('/api/products', async (req, res) => {
   }
 });
 
+// Load test data endpoint
+app.post('/api/load-test-data', async (req, res) => {
+  try {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    // Execute psql command to load sample data
+    const command = `psql ${process.env.DATABASE_URL} -f load_sample_data.sql`;
+    
+    console.log('Executing command:', command);
+    
+    const { stdout, stderr } = await execAsync(command);
+    
+    // Combine stdout and stderr for complete output
+    const output = {
+      stdout: stdout || '',
+      stderr: stderr || '',
+      success: !stderr || stderr.includes('INSERT') || stderr.includes('UPDATE') || stderr.includes('SELECT')
+    };
+    
+    res.json({
+      success: true,
+      message: 'Test data loaded successfully',
+      output: output
+    });
+    
+  } catch (error) {
+    console.error('Error loading test data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load test data',
+      output: {
+        stdout: '',
+        stderr: error.message,
+        success: false
+      }
+    });
+  }
+});
+
 // Create multiple products endpoint
 // Handle CORS preflight for products/create
 app.options('/api/products/create', (req, res) => {

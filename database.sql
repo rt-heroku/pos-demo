@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS transaction_items CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS generated_products CASCADE;
 
 -- Create products table
 CREATE TABLE IF NOT EXISTS products (
@@ -59,23 +60,47 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     subtotal DECIMAL(10,2) NOT NULL
 );
 
--- Create generated products table to store AI-generated product data
-CREATE TABLE IF NOT EXISTS generated_products (
-    id SERIAL PRIMARY KEY,
-    batch_id VARCHAR(100) NOT NULL,
-    product_data JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100) DEFAULT 'system'
+-- AI Generated Products Table
+CREATE TABLE public.generated_products (
+    id int GENERATED ALWAYS AS IDENTITY NOT NULL,
+    batch int NULL,
+    brand varchar NULL,
+    segment varchar NULL,
+    num_of_products int NULL,
+    generated_product json NULL,
+    prompt text NULL, -- text for longer prompts
+    raw_response text NULL, -- text for longer responses
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP, -- Added timestamp
+    CONSTRAINT generated_products_pk PRIMARY KEY (id)
 );
+
+-- Function to get the next batch number
+CREATE OR REPLACE FUNCTION get_next_batch_number()
+RETURNS INTEGER AS $$
+BEGIN
+    RETURN COALESCE((SELECT MAX(batch) FROM public.generated_products), 0) + 1;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Alternative function that uses a sequence for batch numbers (more robust for concurrent inserts)
+CREATE SEQUENCE batch_number_seq START 1;
+
+CREATE OR REPLACE FUNCTION get_next_batch_number_seq()
+RETURNS INTEGER AS $$
+BEGIN
+    RETURN nextval('batch_number_seq');
+END;
+$$ LANGUAGE plpgsql;
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_customers_loyalty_number ON customers(loyalty_number);
 CREATE INDEX IF NOT EXISTS idx_transactions_customer_id ON transactions(customer_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_transaction_items_transaction_id ON transaction_items(transaction_id);
-CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch_id);
+CREATE INDEX IF NOT EXISTS idx_generated_products_batch_id ON generated_products(batch);
+CREATE INDEX IF NOT EXISTS idx_generated_products_brand_id ON generated_products(brand);
+CREATE INDEX IF NOT EXISTS idx_generated_products_segment_id ON generated_products(segment);
 CREATE INDEX IF NOT EXISTS idx_generated_products_created_at ON generated_products(created_at);
-
 
 -- Function to generate loyalty number
 CREATE OR REPLACE FUNCTION generate_loyalty_number() RETURNS TEXT AS $$
@@ -199,89 +224,6 @@ BEGIN
     RETURN new_sku;
 END;
 $$ LANGUAGE plpgsql;
-
--- Update existing products with enhanced data (sample data based on Tumi examples)
-INSERT INTO public.products ("name",price,category,stock,image,created_at,updated_at,sku,product_type,laptop_size,brand,collection,material,gender,color,description,dimensions,weight,warranty_info,care_instructions,main_image_url,is_active,featured,sort_order,sf_id) VALUES
-     ('Alpha Bravo Business Backpack',395.00,'Backpacks',14,'🎒','2025-08-01 14:57:51.790811','2025-08-04 16:50:21.345291','TUM-BAG-002','Backpack','15"','TUMI','Alpha Bravo','Ballistic Nylon','Unisex','Anthracite','This compact backpack with a streamlined silhouette has smart organization for commuting and travel gear, as well as a dedicated padded laptop compartment.','17.5" x 12.5" x 7"',3.80,'','','https://tumi.scene7.com/is/image/Tumi/1426141041_main?wid=1020&hei=1238',true,true,0,'01tHo000004zTtgIAE'),
-     ('Voyageur Celina Backpack',275.00,'Backpacks',16,'🎒','2025-08-01 14:57:51.790811','2025-08-04 17:56:14.077857','TUM-BAG-003','Backpack','13"','TUMI','Voyageur','Nylon','Women','Black','Lightweight everyday backpack with modern design','15" x 11" x 5"',2.10,'','','https://tumi.scene7.com/is/image/Tumi/146566T522_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtvIAE'),
-     ('Alpha Continental Carry-On',1050.00,'Carry-On',11,'🧳','2025-08-01 14:57:51.790811','2025-08-08 14:25:17.900774','TUM-LUG-003','Luggage','','TUMI','Alpha','Ballistic Nylon','Unisex','Black','Versatile and compact, this case makes taking your business on the road a breeze. With the option of being carried or wheeled, it gives you flexibility wherever you need to travel.','22" x 14" x 9"',8.90,'','','https://tumi.scene7.com/is/image/Tumi/1171571041_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtWIAU'),
-     ('19 Degree Extended Trip Case',950.00,'Luggage',6,'🧳','2025-08-01 14:57:51.790811','2025-08-08 14:28:36.550216','TUM-CASE-01','Luggage','','TUMI','','','Unisex','','','',NULL,'','','https://tumi.scene7.com/is/image/Tumi/1171611041_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtlIAE'),
-     ('Harrison Nylon Portfolio',225.00,'Accessories',24,'💼','2025-08-01 14:57:51.790811','2025-08-04 17:51:04.211511','TUM-ACC-001','Portfolio','12"','TUMI','Harrison','Nylon','Unisex','Navy','Carry what you need in style for daily commutes or as a personal item when you fly. This elevated messenger includes thoughtfully placed pockets to carry and organize your laptop, work documents, and more','13" x 10" x 1"',0.80,'','','https://tumi.scene7.com/is/image/Tumi/1524241041_main?wid=1020&hei=1238',true,false,0,'01tHo000004zTtqIAE');
-
-
--- Insert sample customers with loyalty numbers
-INSERT INTO customers (loyalty_number, name, email, phone, points, total_spent, visit_count, last_visit) VALUES
-('LOY001', 'John Doe', 'john@email.com', '555-0123', 150, 75.50, 12, '2025-07-25 14:30:00'),
-('LOY002', 'Jane Smith', 'jane@email.com', '555-0456', 220, 110.25, 18, '2025-07-28 10:15:00'),
-('LOY003', 'Mike Johnson', 'mike@email.com', '555-0789', 80, 40.00, 6, '2025-07-20 16:45:00'),
-('LOY004', 'Sarah Wilson', 'sarah@email.com', '555-0321', 350, 175.75, 25, '2025-07-29 12:00:00');
-
--- Insert sample transactions
-INSERT INTO public.transactions (customer_id,subtotal,tax,total,payment_method,amount_received,change_amount,points_earned,points_redeemed,created_at) VALUES
-     (1,1445.00,115.60,1560.60,'cash',1560.60,NULL,1560,0,'2025-08-05 15:33:37.880566'),
-     (2,1450.00,116.00,1566.00,'cash',1566.00,NULL,1566,0,'2025-08-05 15:07:48.454387'),
-     (3,950.00,76.00,1026.00,'cash',1026.00,NULL,1026,0,'2025-08-05 19:12:52.504183'),
-     (4,825.00,66.00,891.00,'cash',891.00,NULL,891,0,'2025-08-05 19:13:14.823182');
-
--- Insert sample transaction items
-INSERT INTO public.transaction_items (transaction_id,product_id,product_name,product_price,quantity,subtotal) VALUES
-     (34,13,'19 Degree Extended Trip Case',950.00,1,950.00),
-     (34,12,'Voyageur Celina Backpack',275.00,1,275.00),
-     (34,15,'Harrison Nylon Portfolio',225.00,1,225.00),
-     (35,11,'Alpha Bravo Business Backpack',395.00,1,395.00),
-     (35,14,'Alpha Continental Carry-On',1050.00,1,1050.00),
-     (36,13,'19 Degree Extended Trip Case',950.00,1,950.00),
-     (37,12,'Voyageur Celina Backpack',275.00,3,825.00);
-
-
--- Insert sample product features
-INSERT INTO product_features (product_id, feature_name, feature_value) VALUES
-(1, 'Expandable', 'Yes'),
-(1, 'Lock Type', 'TSA Combination Lock'),
-(1, 'Wheel Type', '4 Dual Spinner Wheels'),
-(1, 'Handle Type', 'Telescoping Handle'),
-(1, 'Interior Organization', 'Compression Straps'),
-(2, 'Laptop Compartment', 'Padded 15" compartment'),
-(2, 'USB Port', 'Integrated charging port'),
-(2, 'Organizational Pockets', 'Multiple interior pockets'),
-(2, 'Water Resistant', 'Weather-resistant exterior');
-
--- Insert sample product images
-
--- Add features for new products
-INSERT INTO product_features (product_id, feature_name, feature_value) VALUES
--- Alpha Bravo Backpack features
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'Water Resistant', 'Yes'),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'Organizational Pockets', '15+ pockets'),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'Laptop Protection', 'Padded compartment'),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-002'), 'Durability', 'Military-spec ballistic nylon'),
-
--- Voyageur Carson features
-((SELECT id FROM products WHERE sku = 'TUM-BAG-003'), 'Weight', 'Ultra-lightweight'),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-003'), 'Style', 'Feminine design'),
-((SELECT id FROM products WHERE sku = 'TUM-BAG-003'), 'Comfort', 'Padded shoulder straps'),
-
--- 19 Degree Extended Trip features
-((SELECT id FROM products WHERE sku = 'TUM-LUG-002'), 'Capacity', '120 Liters'),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-002'), 'Expandable', 'Up to 25% more space'),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-002'), 'Security', 'Integrated TSA lock'),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-002'), 'Wheels', '4 dual spinner wheels'),
-
--- Alpha Continental features
-((SELECT id FROM products WHERE sku = 'TUM-LUG-003'), 'Access', 'Dual-sided access'),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-003'), 'Organization', 'Garment compartment'),
-((SELECT id FROM products WHERE sku = 'TUM-LUG-003'), 'Durability', 'FXT ballistic nylon'),
-
--- Harrison Portfolio features
-((SELECT id FROM products WHERE sku = 'TUM-ACC-001'), 'Slim Profile', 'Ultra-thin design'),
-((SELECT id FROM products WHERE sku = 'TUM-ACC-001'), 'Protection', 'Padded tablet sleeve'),
-((SELECT id FROM products WHERE sku = 'TUM-ACC-001'), 'Organization', 'Document compartments');
-
-
-
--- Aug 06 
--- Enhanced Database Schema for Multi-Location POS System with Service Management
--- This builds upon the existing schema with new location-based features
 
 -- Create locations table (core table for multi-location support)
 CREATE TABLE IF NOT EXISTS locations (
@@ -499,36 +441,6 @@ CREATE TRIGGER trigger_log_work_order_status_change
     FOR EACH ROW
     EXECUTE FUNCTION log_work_order_status_change();
 
--- Insert sample locations
-INSERT INTO locations (store_code, store_name, brand, address_line1, city, state, zip_code, tax_rate, manager_name) VALUES
-('NYC001', 'Manhattan Flagship', 'TUMI', '350 Madison Avenue', 'New York', 'NY', '10017', 0.08875, 'John Manager'),
-('LAX001', 'Beverly Hills Store', 'TUMI', '9570 Wilshire Boulevard', 'Beverly Hills', 'CA', '90212', 0.1025, 'Jane Store Manager'),
-('CHI001', 'Michigan Avenue', 'TUMI', '900 N Michigan Avenue', 'Chicago', 'IL', '60611', 0.1025, 'Mike Regional Manager')
-ON CONFLICT (store_code) DO NOTHING;
-
--- Insert sample location inventory (migrate existing product stock)
-INSERT INTO location_inventory (location_id, product_id, quantity)
-SELECT 1 as location_id, id, stock FROM products WHERE stock > 0
-ON CONFLICT (location_id, product_id) DO NOTHING;
-
--- Update existing transactions to have location_id (assign to first location)
-UPDATE transactions SET location_id = 1 WHERE location_id IS NULL;
-
--- Insert sample work orders
-INSERT INTO work_orders (location_id, customer_id, subject, work_type, priority, status, description) VALUES
-(1, 1, 'Zipper Repair on Alpha Backpack', 'Repair', 'Medium', 'New', 'Customer reports zipper is stuck and needs professional repair'),
-(1, 2, 'Wheel Replacement on 19 Degree Luggage', 'Repair', 'High', 'Scheduled', 'One wheel is damaged and needs replacement'),
-(2, 3, 'Leather Conditioning Service', 'Maintenance', 'Low', 'In Progress', 'Annual leather conditioning for briefcase'),
-(2, 4, 'Custom Monogram Addition', 'Customization', 'Medium', 'Completed', 'Add customer initials to new purchase')
-ON CONFLICT (work_order_number) DO NOTHING;
-
--- Insert work order products
-INSERT INTO work_order_products (work_order_id, product_id, product_name, product_sku, issue_description) VALUES
-(1, 2, 'Alpha Bravo Business Backpack', 'TUM-BAG-002', 'Main zipper stuck, requires replacement'),
-(2, 4, '19 Degree Extended Trip Case', 'TUM-LUG-004', 'Front right wheel damaged, wobbles when rolling'),
-(3, 1, 'Harrison Nylon Portfolio', 'TUM-ACC-001', 'Leather shows wear, needs conditioning'),
-(4, 3, 'Alpha Continental Carry-On', 'TUM-LUG-003', 'New purchase, add monogram to front panel');
-
 -- Create view for location inventory with product details
 CREATE OR REPLACE VIEW location_inventory_view AS
 SELECT 
@@ -560,10 +472,6 @@ JOIN customers c ON wo.customer_id = c.id
 JOIN locations l ON wo.location_id = l.id
 LEFT JOIN work_order_products wop ON wo.id = wop.work_order_id
 GROUP BY wo.id, c.name, c.loyalty_number, c.email, l.store_name, l.store_code;
-
--- Insert default user settings (for browser-based usage)
-INSERT INTO user_settings (user_identifier, theme_mode) VALUES ('default_user', 'light')
-ON CONFLICT (user_identifier) DO NOTHING;
 
 
 ALTER TABLE customers 
@@ -833,35 +741,6 @@ SET
     marketing_consent = true
 WHERE loyalty_number IN ('LOY001', 'LOY002', 'LOY003', 'LOY004');
 
--- Create some sample customer activity logs for existing transactions
-INSERT INTO customer_activity_log (customer_id, activity_type, description, points_change, transaction_id, created_by)
-SELECT 
-    t.customer_id,
-    'purchase',
-    'Historical purchase transaction #' || t.id,
-    COALESCE(t.points_earned, 0) - COALESCE(t.points_redeemed, 0),
-    t.id,
-    'data_migration'
-FROM transactions t
-WHERE t.customer_id IS NOT NULL
-ON CONFLICT DO NOTHING;
-
--- Create some sample customer preferences
-INSERT INTO customer_preferences (customer_id, preference_key, preference_value)
-SELECT 
-    c.id,
-    'notification_method',
-    CASE 
-        WHEN c.email IS NOT NULL THEN 'email'
-        WHEN c.phone IS NOT NULL THEN 'sms'
-        ELSE 'none'
-    END
-FROM customers c
-WHERE c.is_active = true
-ON CONFLICT (customer_id, preference_key) DO NOTHING;
-
--- Enhanced Customer Database Schema with Status, Tiers, and Member Types
--- Run these commands to update your customer management system
 
 -- First, update the customers table with new fields
 ALTER TABLE customers 
@@ -887,20 +766,6 @@ CREATE TABLE IF NOT EXISTS customer_tier_rules (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Insert default tier rules
-INSERT INTO customer_tier_rules (tier_name, min_spending, min_visits, min_points, calculation_multiplier, benefits) VALUES
-('Bronze', 0.00, 0, 0, 1.00, 'Basic loyalty benefits, 1x points earning'),
-('Silver', 250.00, 5, 100, 1.25, 'Enhanced benefits, 1.25x points earning, priority support'),
-('Gold', 750.00, 15, 500, 1.50, 'Premium benefits, 1.5x points earning, exclusive offers'),
-('Platinum', 2000.00, 30, 1500, 2.00, 'VIP benefits, 2x points earning, personal concierge service')
-ON CONFLICT (tier_name) DO UPDATE SET
-    min_spending = EXCLUDED.min_spending,
-    min_visits = EXCLUDED.min_visits,
-    min_points = EXCLUDED.min_points,
-    calculation_multiplier = EXCLUDED.calculation_multiplier,
-    benefits = EXCLUDED.benefits,
-    updated_at = CURRENT_TIMESTAMP;
 
 -- Function to calculate customer tier based on spending, visits, and points
 CREATE OR REPLACE FUNCTION calculate_customer_tier(
@@ -1150,31 +1015,6 @@ FROM customers c
 LEFT JOIN customer_tier_rules ctr ON c.customer_tier = ctr.tier_name
 ORDER BY c.tier_calculation_number DESC, c.total_spent DESC;
 
--- Update existing customers with new fields
-UPDATE customers 
-SET 
-    member_status = 'Active',
-    enrollment_date = created_at::DATE,
-    member_type = 'Individual';
-
--- Recalculate all customer tiers for existing customers
-SELECT recalculate_all_customer_tiers() as updated_customers;
-
--- Create some sample corporate customers
-INSERT INTO customers (loyalty_number, name, email, phone, member_type, member_status, enrollment_date, notes) VALUES
-('CRP001', 'TechCorp Solutions', 'purchasing@techcorp.com', '(555) 987-6543', 'Corporate', 'Active', CURRENT_DATE - INTERVAL '6 months', 'Corporate account for bulk purchases'),
-('CRP002', 'Global Industries LLC', 'admin@globalindustries.com', '(555) 876-5432', 'Corporate', 'Active', CURRENT_DATE - INTERVAL '1 year', 'Large enterprise customer, quarterly orders')
-ON CONFLICT (loyalty_number) DO NOTHING;
-
--- Update some existing customers with different statuses for testing
-UPDATE customers 
-SET member_status = CASE 
-    WHEN loyalty_number = 'LOY003' THEN 'Inactive'
-    WHEN loyalty_number = 'LOY004' THEN 'Under Fraud Investigation'
-    ELSE member_status
-END
-WHERE loyalty_number IN ('LOY003', 'LOY004');
-
 -- Function to get customer tier summary
 CREATE OR REPLACE FUNCTION get_customer_tier_summary()
 RETURNS TABLE (
@@ -1286,37 +1126,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Insert default system settings
-INSERT INTO system_settings (setting_key, setting_value, description, category) VALUES
-('company_name', 'TUMI Store', 'Company name displayed on receipts and reports', 'general'),
-('currency_symbol', '$', 'Currency symbol for displaying prices', 'general'),
-('currency_code', 'USD', 'ISO currency code', 'general'),
-('date_format', 'MM/DD/YYYY', 'Date format for display', 'general'),
-('time_format', '12h', 'Time format (12h or 24h)', 'general'),
-('tax_inclusive', 'false', 'Whether prices include tax', 'pos'),
-('default_tax_rate', '0.08', 'Default tax rate for new locations', 'pos'),
-('points_per_dollar', '1', 'Loyalty points earned per dollar spent', 'loyalty'),
-('points_redemption_rate', '100', 'Points needed for $1 discount', 'loyalty'),
-('low_stock_threshold', '5', 'Stock level to trigger low stock warning', 'inventory'),
-('receipt_footer_text', 'Thank you for your business!', 'Text shown at bottom of receipts', 'pos'),
-('enable_work_orders', 'true', 'Enable work order management system', 'general'),
-('enable_multi_location', 'true', 'Enable multi-location support', 'general'),
-('session_timeout_minutes', '30', 'Session timeout in minutes', 'general'),
-('max_discount_percentage', '50', 'Maximum discount percentage allowed', 'pos'),
-('require_customer_email', 'false', 'Require email for new customers', 'loyalty'),
-('auto_generate_sku', 'true', 'Automatically generate SKUs for new products', 'inventory'),
-('enable_barcode_scanning', 'false', 'Enable barcode scanning support', 'pos'),
-('smtp_host', '', 'SMTP server for sending emails', 'email'),
-('smtp_port', '587', 'SMTP port', 'email'),
-('smtp_user', '', 'SMTP username', 'email'),
-('smtp_from_email', '', 'From email address', 'email'),
-('backup_enabled', 'false', 'Enable automatic backups', 'general'),
-('backup_frequency_hours', '24', 'Backup frequency in hours', 'general'),
-('journal_type_id', '0lEHo000000E5sgMAC' , 'Journal Type', 'Loyalty'),
-('journal_subtype_id', '0lSHo000000E107MAC' , 'Journal Sub-Type', 'Loyalty'),
-('loyalty_program_id', '0lpHo000000xTCMIA2' , 'JLoyalty Program Id', 'Loyalty' ,
-)
-ON CONFLICT (setting_key) DO NOTHING;
 
 -- Example of using the function in a query
 -- SELECT 
@@ -1408,45 +1217,6 @@ CREATE INDEX IF NOT EXISTS idx_user_activity_log_created_at ON user_activity_log
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 
--- Insert default roles
-INSERT INTO roles (name, description, permissions) VALUES
-('admin', 'Full system access with all permissions', 
- '{"pos": {"read": true, "write": true, "delete": true}, 
-   "inventory": {"read": true, "write": true, "delete": true}, 
-   "customers": {"read": true, "write": true, "delete": true}, 
-   "transactions": {"read": true, "write": true, "delete": true}, 
-   "reports": {"read": true, "write": true}, 
-   "settings": {"read": true, "write": true, "delete": true}, 
-   "users": {"read": true, "write": true, "delete": true}, 
-   "locations": {"read": true, "write": true, "delete": true}}'),
-('manager', 'Store management with limited admin access', 
- '{"pos": {"read": true, "write": true}, 
-   "inventory": {"read": true, "write": true}, 
-   "customers": {"read": true, "write": true}, 
-   "transactions": {"read": true, "write": true}, 
-   "reports": {"read": true, "write": true}, 
-   "settings": {"read": true}, 
-   "users": {"read": true}, 
-   "locations": {"read": true, "write": true}}'),
-('cashier', 'Basic POS operations and customer service', 
- '{"pos": {"read": true, "write": true}, 
-   "inventory": {"read": true}, 
-   "customers": {"read": true, "write": true}, 
-   "transactions": {"read": true, "write": true}, 
-   "reports": {"read": true}, 
-   "settings": {"read": true}, 
-   "users": {"read": true}, 
-   "locations": {"read": true}}'),
-('viewer', 'Read-only access for reporting and monitoring', 
- '{"pos": {"read": true}, 
-   "inventory": {"read": true}, 
-   "customers": {"read": true}, 
-   "transactions": {"read": true}, 
-   "reports": {"read": true}, 
-   "settings": {"read": true}, 
-   "users": {"read": true}, 
-   "locations": {"read": true}}')
-ON CONFLICT (name) DO NOTHING;
 
 -- Function to hash passwords (using bcrypt simulation)
 CREATE OR REPLACE FUNCTION hash_password(password TEXT) RETURNS TEXT AS $$
@@ -1490,19 +1260,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Insert default admin user (password: P@$$word1)
-INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active) 
-SELECT 
-    'admin',
-    'admin@pos-system.com',
-    hash_password('P@$$word1'),
-    'System',
-    'Administrator',
-    r.id,
-    true
-FROM roles r 
-WHERE r.name = 'admin'
-;
 
 -- Add user_id to existing tables for audit trail
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user INTEGER REFERENCES users(id);
@@ -1554,37 +1311,118 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- AI Generated Products Table
-CREATE TABLE public.generated_products (
-    id int GENERATED ALWAYS AS IDENTITY NOT NULL,
-    batch int NULL,
-    brand varchar NULL,
-    segment varchar NULL,
-    num_of_products int NULL,
-    generated_product json NULL,
-    prompt text NULL, -- text for longer prompts
-    raw_response text NULL, -- text for longer responses
-    created_at timestamp DEFAULT CURRENT_TIMESTAMP, -- Added timestamp
-    CONSTRAINT generated_products_pk PRIMARY KEY (id)
-);
+-- Insert sample locations
+INSERT INTO locations (store_code, store_name, brand, address_line1, city, state, zip_code, tax_rate, manager_name) VALUES
+('NYC001', 'Manhattan Flagship', 'TUMI', '350 Madison Avenue', 'New York', 'NY', '10017', 0.08875, 'John Manager'),
+('LAX001', 'Beverly Hills Store', 'TUMI', '9570 Wilshire Boulevard', 'Beverly Hills', 'CA', '90212', 0.1025, 'Jane Store Manager'),
+('CHI001', 'Michigan Avenue', 'TUMI', '900 N Michigan Avenue', 'Chicago', 'IL', '60611', 0.1025, 'Mike Regional Manager')
+ON CONFLICT (store_code) DO NOTHING;
 
--- Function to get the next batch number
-CREATE OR REPLACE FUNCTION get_next_batch_number()
-RETURNS INTEGER AS $$
-BEGIN
-    RETURN COALESCE((SELECT MAX(batch) FROM public.generated_products), 0) + 1;
-END;
-$$ LANGUAGE plpgsql;
+-- Insert default user settings (for browser-based usage)
+INSERT INTO user_settings (user_identifier, theme_mode) VALUES ('default_user', 'light')
+ON CONFLICT (user_identifier) DO NOTHING;
 
--- Alternative function that uses a sequence for batch numbers (more robust for concurrent inserts)
-CREATE SEQUENCE batch_number_seq START 1;
+-- Insert default tier rules
+INSERT INTO customer_tier_rules (tier_name, min_spending, min_visits, min_points, calculation_multiplier, benefits) VALUES
+('Bronze', 0.00, 0, 0, 1.00, 'Basic loyalty benefits, 1x points earning'),
+('Silver', 250.00, 5, 100, 1.25, 'Enhanced benefits, 1.25x points earning, priority support'),
+('Gold', 750.00, 15, 500, 1.50, 'Premium benefits, 1.5x points earning, exclusive offers'),
+('Platinum', 2000.00, 30, 1500, 2.00, 'VIP benefits, 2x points earning, personal concierge service')
+ON CONFLICT (tier_name) DO UPDATE SET
+    min_spending = EXCLUDED.min_spending,
+    min_visits = EXCLUDED.min_visits,
+    min_points = EXCLUDED.min_points,
+    calculation_multiplier = EXCLUDED.calculation_multiplier,
+    benefits = EXCLUDED.benefits,
+    updated_at = CURRENT_TIMESTAMP;
 
-CREATE OR REPLACE FUNCTION get_next_batch_number_seq()
-RETURNS INTEGER AS $$
-BEGIN
-    RETURN nextval('batch_number_seq');
-END;
-$$ LANGUAGE plpgsql;
+INSERT INTO system_settings (setting_key,setting_value,setting_type,description,category,is_encrypted,is_active,created_at,updated_at,created_by,updated_by) VALUES
+	 ('company_name','FAKE Store','text','Company name displayed on receipts and reports','general',false,true,null,null,NULL,NULL),
+	 ('currency_symbol','$','text','Currency symbol for displaying prices','general',false,true,null,null,NULL,NULL),
+	 ('currency_code','USD','text','ISO currency code','general',false,true,null,null,NULL,NULL),
+	 ('date_format','MM/DD/YYYY','text','Date format for display','general',false,true,null,null,NULL,NULL),
+	 ('time_format','12h','text','Time format (12h or 24h)','general',false,true,null,null,NULL,NULL),
+	 ('tax_inclusive','false','text','Whether prices include tax','pos',false,true,null,null,NULL,NULL),
+	 ('default_tax_rate','0.08','text','Default tax rate for new locations','pos',false,true,null,null,NULL,NULL),
+	 ('points_per_dollar','1','text','Loyalty points earned per dollar spent','loyalty',false,true,null,null,NULL,NULL),
+	 ('points_redemption_rate','100','text','Points needed for $1 discount','loyalty',false,true,null,null,NULL,NULL),
+	 ('low_stock_threshold','5','text','Stock level to trigger low stock warning','inventory',false,true,null,null,NULL,NULL);
+INSERT INTO system_settings (setting_key,setting_value,setting_type,description,category,is_encrypted,is_active,created_at,updated_at,created_by,updated_by) VALUES
+	 ('receipt_footer_text','Thank you for your business!','text','Text shown at bottom of receipts','pos',false,true,null,null,NULL,NULL),
+	 ('enable_work_orders','true','text','Enable work order management system','general',false,true,null,null,NULL,NULL),
+	 ('enable_multi_location','true','text','Enable multi-location support','general',false,true,null,null,NULL,NULL),
+	 ('session_timeout_minutes','30','text','Session timeout in minutes','general',false,true,null,null,NULL,NULL),
+	 ('max_discount_percentage','50','text','Maximum discount percentage allowed','pos',false,true,null,null,NULL,NULL),
+	 ('require_customer_email','false','text','Require email for new customers','loyalty',false,true,null,null,NULL,NULL),
+	 ('auto_generate_sku','true','text','Automatically generate SKUs for new products','inventory',false,true,null,null,NULL,NULL),
+	 ('enable_barcode_scanning','false','text','Enable barcode scanning support','pos',false,true,null,null,NULL,NULL),
+	 ('sf_api_key','asdlfjherlkgncvs4xxz','text',NULL,'integration',false,true,NULL,NULL,'admin','admin'),
+	 ('mulesoft_loyalty_sync_endpoint','https://loyalty-sync-w4i20p.5sc6y6-4.usa-e2.cloudhub.io','text','Protocol, hostname and port where the MuleSoft API is deployed','integration',false,true,NULL,NULL,'admin','admin');
+INSERT INTO system_settings (setting_key,setting_value,setting_type,description,category,is_encrypted,is_active,created_at,updated_at,created_by,updated_by) VALUES
+	 ('journal_subtype_id','','text','Journal Sub-Type','loyalty',false,true,NULL,NULL,'admin'),
+	 ('journal_type_id','','text','Journal Type','loyalty',false,true,NULL,NULL,'admin'),
+	 ('loyalty_program_id','','text','JLoyalty Program Id','loyalty',false,true,NULL,NULL,'admin'),
+	 ('enrollment_journal_subtype_id','','text',NULL,'integration',false,true,NULL,NULL,'admin','admin');
+-- Insert default roles
+INSERT INTO roles (name, description, permissions) VALUES
+('admin', 'Full system access with all permissions', 
+ '{"pos": {"read": true, "write": true, "delete": true}, 
+   "inventory": {"read": true, "write": true, "delete": true}, 
+   "customers": {"read": true, "write": true, "delete": true}, 
+   "transactions": {"read": true, "write": true, "delete": true}, 
+   "reports": {"read": true, "write": true}, 
+   "settings": {"read": true, "write": true, "delete": true}, 
+   "users": {"read": true, "write": true, "delete": true}, 
+   "locations": {"read": true, "write": true, "delete": true}}'),
+('manager', 'Store management with limited admin access', 
+ '{"pos": {"read": true, "write": true}, 
+   "inventory": {"read": true, "write": true}, 
+   "customers": {"read": true, "write": true}, 
+   "transactions": {"read": true, "write": true}, 
+   "reports": {"read": true, "write": true}, 
+   "settings": {"read": true}, 
+   "users": {"read": true}, 
+   "locations": {"read": true, "write": true}}'),
+('cashier', 'Basic POS operations and customer service', 
+ '{"pos": {"read": true, "write": true}, 
+   "inventory": {"read": true}, 
+   "customers": {"read": true, "write": true}, 
+   "transactions": {"read": true, "write": true}, 
+   "reports": {"read": true}, 
+   "settings": {"read": true}, 
+   "users": {"read": true}, 
+   "locations": {"read": true}}'),
+('viewer', 'Read-only access for reporting and monitoring', 
+ '{"pos": {"read": true}, 
+   "inventory": {"read": true}, 
+   "customers": {"read": true}, 
+   "transactions": {"read": true}, 
+   "reports": {"read": true}, 
+   "settings": {"read": true}, 
+   "users": {"read": true}, 
+   "locations": {"read": true}}')
+ON CONFLICT (name) DO NOTHING;
+-- Insert default admin user (password: P@$$word1)
+INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active) 
+SELECT 
+    'admin',
+    'admin@pos.com',
+    hash_password('P@$$word1'),
+    'System',
+    'Administrator',
+    r.id,
+    true
+FROM roles r 
+WHERE r.name = 'admin'
+ON CONFLICT (email) DO NOTHING;
+;
+
+/*
+
+-- Example insert statements
+-- SELECT get_next_batch_number();
+
+-- Insert with function to get next batch number
 
 -- Select script to get the last batch
 SELECT MAX(batch) as last_batch_number FROM public.generated_products;
@@ -1601,11 +1439,7 @@ FROM public.generated_products
 ORDER BY id DESC 
 LIMIT 50 OFFSET 0;
 
--- Example insert statements
--- SELECT get_next_batch_number();
-
--- Insert with function to get next batch number
-/*INSERT INTO public.generated_products (
+INSERT INTO public.generated_products (
     batch, 
     brand, 
     segment, 

@@ -81,6 +81,11 @@ window.Views.SettingsView = ({
         const [syncResults, setSyncResults] = React.useState(null);
         const [showSyncResults, setShowSyncResults] = React.useState(false);
         
+        // Test data loading state
+        const [loadingTestData, setLoadingTestData] = React.useState(false);
+        const [testDataOutput, setTestDataOutput] = React.useState('');
+        const [showTestDataOutput, setShowTestDataOutput] = React.useState(false);
+        
         // Products management state
         const [showDeleteProductsModal, setShowDeleteProductsModal] = React.useState(false);
         const [showGenerateProductsModal, setShowGenerateProductsModal] = React.useState(false);
@@ -627,6 +632,50 @@ window.Views.SettingsView = ({
             setSyncResults(null);
         };
 
+        // Test data loading function
+        const loadTestData = async () => {
+            if (!confirm('This will load sample data into your database. This may add duplicate records. Continue?')) {
+                return;
+            }
+
+            setLoadingTestData(true);
+            setTestDataOutput('');
+            setShowTestDataOutput(true);
+            
+            try {
+                const response = await window.API.call('/api/load-test-data', {
+                    method: 'POST'
+                });
+                
+                if (response.success) {
+                    const output = response.output;
+                    let fullOutput = '';
+                    
+                    if (output.stdout) {
+                        fullOutput += 'STDOUT:\n' + output.stdout + '\n\n';
+                    }
+                    
+                    if (output.stderr) {
+                        fullOutput += 'STDERR:\n' + output.stderr + '\n\n';
+                    }
+                    
+                    setTestDataOutput(fullOutput || 'Test data loaded successfully with no output.');
+                } else {
+                    setTestDataOutput('Error: ' + (response.error || 'Unknown error occurred'));
+                }
+            } catch (error) {
+                console.error('Failed to load test data:', error);
+                setTestDataOutput('Failed to load test data: ' + error.message);
+            } finally {
+                setLoadingTestData(false);
+            }
+        };
+
+        const closeTestDataOutput = () => {
+            setShowTestDataOutput(false);
+            setTestDataOutput('');
+        };
+
         // Products Management Functions
         const loadProductsFromCloud = async () => {
             if (!mulesoftConfig.endpoint) {
@@ -874,7 +923,8 @@ db:
 
 #Mule AI Chain Configuration
 mac:
-  inference_key: ""
+  heroku.inference_key: ""
+  openai_key: ""
 
 #Salesforce configurations
 sfdc:
@@ -895,7 +945,8 @@ db:
 
 #Mule AI Chain Configuration
 mac:
-  inference_key: ""
+  heroku.inference_key: ""
+  openai_key: ""
 
 #Salesforce configurations
 sfdc:
@@ -925,10 +976,11 @@ db.password=${password}
 db.database=${database}
 
 #Mule AI Chain Configuration
-mac.inference_key=
+mac.heroku.inference_key=
+mac.openai_key=
 
 #Salesforce configurations
-sfdc.url=http://login.salesforce.com/
+sfdc.url=http://login.salesforce.com/services/Soap/u/64.0
 sfdc.token=
 sfdc.password=
 sfdc.account=`;
@@ -943,10 +995,11 @@ db.password=
 db.database=
 
 #Mule AI Chain Configuration
-mac.inference_key=
+mac.heroku.inference_key=
+mac.openai_key=
 
 #Salesforce configurations
-sfdc.url=http://login.salesforce.com/
+sfdc.url=http://login.salesforce.com/services/Soap/u/64.0
 sfdc.token=
 sfdc.password=
 sfdc.account=`;
@@ -1824,6 +1877,29 @@ sfdc.account=`;
                         ])
                     ]),
 
+                    // Load Test Data Section
+                    React.createElement('div', { key: 'load-test-data-section', className: 'mt-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg' }, [
+                        React.createElement('h4', { key: 'load-test-data-title', className: 'text-sm font-medium mb-3 dark:text-white' }, 
+                            'Load Test Data'
+                        ),
+                        React.createElement('p', { key: 'load-test-data-description', className: 'text-xs text-gray-600 dark:text-gray-400 mb-4' }, 
+                            'Load sample data into the database for testing and development purposes'
+                        ),
+                        React.createElement('button', {
+                            key: 'load-test-data-btn',
+                            onClick: loadTestData,
+                            disabled: loadingTestData,
+                            className: 'flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                        }, [
+                            loadingTestData && React.createElement('div', { 
+                                key: 'loading-spinner',
+                                className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                            }),
+                            React.createElement('span', { key: 'btn-text' }, 
+                                loadingTestData ? 'Loading Test Data...' : 'Load Test Data'
+                            )
+                        ])
+                    ]),
 
                     // Encrypted Settings Section
                     React.createElement('div', { key: 'encrypted-settings-section', className: 'mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800' }, [
@@ -3528,6 +3604,44 @@ sfdc.account=`;
                            key: 'close-btn',
                            onClick: closeSyncResults,
                            className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                       }, 'Close')
+                   ])
+               ])
+           ]),
+
+           // Test Data Output Modal
+           showTestDataOutput && React.createElement('div', {
+               key: 'test-data-output-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', { 
+                   key: 'modal',
+                   className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden'
+               }, [
+                   React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
+                       React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
+                           'Test Data Loading Output'
+                       ),
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: closeTestDataOutput,
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                       }, React.createElement(X, { size: 24 }))
+                   ]),
+                   
+                   React.createElement('div', { key: 'content', className: 'p-6' }, [
+                       React.createElement('div', { key: 'output-container', className: 'bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto' }, [
+                           React.createElement('pre', { key: 'output-text', className: 'whitespace-pre-wrap' }, 
+                               testDataOutput || 'No output available'
+                           )
+                       ])
+                   ]),
+
+                   React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t dark:border-gray-700 flex gap-3 justify-end' }, [
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: closeTestDataOutput,
+                           className: 'px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors'
                        }, 'Close')
                    ])
                ])
