@@ -612,9 +612,12 @@ app.post('/api/load-test-data', async (req, res) => {
     const username = url.username;
     const password = url.password;
     
+    const urlWithSSL = databaseUrl.includes('?') 
+  ? `${databaseUrl}&sslmode=require`
+  : `${databaseUrl}?sslmode=require`;
     // Construct psql command with proper SSL handling
     //const command = `PGPASSWORD="${password}" psql -h ${host} -p ${port} -U ${username} -d ${database} -f load_sample_data.sql --set=sslmode=require`;
-    const command = `psql "${databaseUrl}" -f load_sample_data.sql --set=sslmode=require`;
+    const command = `psql "${urlWithSSL}" -f load_sample_data.sql --set=sslmode=require`;
     
     console.log('Executing command:', command.replace(password, '***'));
     
