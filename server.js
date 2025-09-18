@@ -898,6 +898,35 @@ app.get('/api/generated-products/history', async (req, res) => {
   }
 });
 
+// Delete a specific batch from generated products
+app.delete('/api/generated-products/delete-batch', async (req, res) => {
+  try {
+    const { batchId } = req.body;
+    
+    if (!batchId) {
+      return res.status(400).json({ error: 'Batch ID is required' });
+    }
+
+    // Delete all records for this batch
+    const result = await pool.query(
+      'DELETE FROM generated_products WHERE batch = $1',
+      [batchId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Batch not found' });
+    }
+
+    res.json({ 
+      message: `Batch ${batchId} deleted successfully`,
+      deletedCount: result.rowCount
+    });
+  } catch (err) {
+    console.error('Error deleting batch:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Customers / Loyalty System
 app.get('/api/customers', async (req, res) => {
   try {

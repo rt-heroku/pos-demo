@@ -849,6 +849,25 @@ window.Views.SettingsView = ({
             }
         };
 
+        const deleteBatch = async (batchId) => {
+            if (!confirm(`Are you sure you want to delete Batch ${batchId}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                await window.API.call('/generated-products/delete-batch', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ batchId: batchId })
+                });
+                
+                alert(`Batch ${batchId} deleted successfully`);
+                await loadGeneratedHistory(); // Refresh the history
+            } catch (error) {
+                console.error('Failed to delete batch:', error);
+                alert(`Failed to delete batch: ${error.message}`);
+            }
+        };
+
         const openGeneratedHistory = () => {
             setShowGeneratedHistoryModal(true);
             loadGeneratedHistory();
@@ -2879,7 +2898,16 @@ sfdc.account=`;
                                                    `${batch.totalProducts} products • ${batch.brand || 'Unknown Brand'} • ${batch.segment || 'No Segment'} • Generated ${new Date(batch.createdAt).toLocaleDateString()}`
                                                )
                                            ]),
-                                           React.createElement('div', { key: 'batch-actions' }, [
+                                           React.createElement('div', { key: 'batch-actions', className: 'flex items-center gap-2' }, [
+                                               React.createElement('button', {
+                                                   key: 'delete-batch-btn',
+                                                   onClick: () => deleteBatch(batch.batchId),
+                                                   className: 'p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors',
+                                                   title: 'Delete this batch'
+                                               }, React.createElement(Trash2, { 
+                                                   key: 'delete-icon',
+                                                   size: 16
+                                               })),
                                                React.createElement('button', {
                                                    key: 'view-batch-btn',
                                                    onClick: () => {
@@ -3312,7 +3340,16 @@ sfdc.account=`;
                                                        `${batch.totalProducts} products • ${batch.brand || 'Unknown Brand'} • ${batch.segment || 'No Segment'} • Generated ${new Date(batch.createdAt).toLocaleDateString()}`
                                                    )
                                                ]),
-                                               React.createElement('div', { key: 'batch-actions' }, [
+                                               React.createElement('div', { key: 'batch-actions', className: 'flex items-center gap-2' }, [
+                                                   React.createElement('button', {
+                                                       key: 'delete-batch-btn',
+                                                       onClick: () => deleteBatch(batch.batchId),
+                                                       className: 'p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors',
+                                                       title: 'Delete this batch'
+                                                   }, React.createElement(Trash2, { 
+                                                       key: 'delete-icon',
+                                                       size: 16
+                                                   })),
                                                    React.createElement('button', {
                                                        key: 'view-batch-btn',
                                                        onClick: () => {

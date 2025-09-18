@@ -196,6 +196,13 @@ const POSApp = () => {
         }
     }, [userSettings.theme_mode]);
 
+    // Refresh products when POS tab is selected (like inventory tab does)
+    useEffect(() => {
+        if (currentView === 'pos' && isAuthenticated && selectedLocation) {
+            loadDetailedProducts();
+        }
+    }, [currentView, isAuthenticated, selectedLocation]);
+
     // Initialize theme from localStorage
     const initializeTheme = () => {
         const savedTheme = localStorage.getItem('theme');
