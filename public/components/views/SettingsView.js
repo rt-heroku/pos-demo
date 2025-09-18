@@ -487,6 +487,12 @@ window.Views.SettingsView = ({
 
         const saveMulesoftSetting = async (key, value, encrypt = false) => {
             try {
+                // Skip saving if value is empty or null
+                if (!value || value.trim() === '') {
+                    console.log(`Skipping save for ${key} - empty value`);
+                    return true;
+                }
+                
                 const existingSetting = systemSettings.find(s => s.setting_key === key);
                 
                 const settingOptions = {
@@ -546,7 +552,7 @@ window.Views.SettingsView = ({
                 journalSubtypeId: '' // Reset subtype when type changes
             }));
             await saveMulesoftSetting('journal_type_id', value);
-            await saveMulesoftSetting('journal_subtype_id', '');
+            // Don't save empty subtype - it will be skipped by saveMulesoftSetting
         };
 
         const handleJournalSubtypeChange = async (value) => {
