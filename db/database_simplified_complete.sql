@@ -115,6 +115,8 @@ CREATE TABLE products (
 CREATE TABLE customers (
     id SERIAL PRIMARY KEY,
     loyalty_number VARCHAR(20) UNIQUE NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(20),
@@ -457,6 +459,8 @@ CREATE INDEX idx_products_active ON products(is_active);
 -- Customers indexes
 CREATE INDEX idx_customers_loyalty_number ON customers(loyalty_number);
 CREATE INDEX idx_customers_name ON customers(LOWER(name));
+CREATE INDEX idx_customers_first_name ON customers(LOWER(first_name));
+CREATE INDEX idx_customers_last_name ON customers(LOWER(last_name));
 CREATE INDEX idx_customers_email ON customers(LOWER(email));
 CREATE INDEX idx_customers_phone ON customers(phone);
 CREATE INDEX idx_customers_active ON customers(is_active);
