@@ -1138,7 +1138,7 @@ INSERT INTO system_settings (setting_key, setting_value, setting_type, descripti
 ('auto_generate_sku', 'true', 'text', 'Automatically generate SKUs for new products', 'inventory', false, true, 'admin', 'admin'),
 ('enable_barcode_scanning', 'false', 'text', 'Enable barcode scanning support', 'pos', false, true, 'admin', 'admin'),
 ('sf_api_key', 'asdlfjherlkgncvs4xxz', 'text', NULL, 'integration', false, true, 'admin', 'admin'),
-('mulesoft_loyalty_sync_endpoint', 'https://loyalty-sync-w4i20p.5sc6y6-4.usa-e2.cloudhub.io', 'text', 'Protocol, hostname and port where the MuleSoft API is deployed', 'integration', false, true, 'admin', 'admin'),
+('mulesoft_loyalty_sync_endpoint', '', 'text', 'Protocol, hostname and port where the MuleSoft API is deployed', 'integration', false, true, 'admin', 'admin'),
 ('journal_subtype_id', '', 'text', 'Journal Sub-Type', 'loyalty', false, true, 'admin', 'admin'),
 ('journal_type_id', '', 'text', 'Journal Type', 'loyalty', false, true, 'admin', 'admin'),
 ('loyalty_program_id', '', 'text', 'Loyalty Program Id', 'loyalty', false, true, 'admin', 'admin'),

@@ -1236,13 +1236,25 @@ app.delete('/api/customers/:id', async (req, res) => {
 app.post('/api/customers/enhanced', async (req, res) => {
   try {
     const { 
-      name, email, phone, loyalty_number, points, notes, 
-      member_status, member_type, enrollment_date, customer_tier 
+      name, first_name, last_name, email, phone, loyalty_number, points, notes, 
+      member_status, member_type, enrollment_date, customer_tier, date_of_birth 
     } = req.body;
     
-    // Validate required fields
-    if (!name || !name.trim()) {
+    // Validate required fields - prefer first_name/last_name over name
+    const customerName = name || (first_name && last_name ? `${first_name.trim()} ${last_name.trim()}`.trim() : '');
+    const customerFirstName = first_name || (name ? name.split(' ')[0] : '');
+    const customerLastName = last_name || (name ? name.split(' ').slice(1).join(' ') : '');
+    
+    if (!customerName || !customerName.trim()) {
       return res.status(400).json({ error: 'Customer name is required' });
+    }
+    
+    if (!customerFirstName || !customerFirstName.trim()) {
+      return res.status(400).json({ error: 'First name is required' });
+    }
+    
+    if (!customerLastName || !customerLastName.trim()) {
+      return res.status(400).json({ error: 'Last name is required' });
     }
     
     // Validate email format if provided
@@ -1326,14 +1338,16 @@ app.post('/api/customers/enhanced', async (req, res) => {
     
     const result = await pool.query(`
       INSERT INTO customers (
-        loyalty_number, name, email, phone, points, notes, 
-        member_status, member_type, enrollment_date, customer_tier, tier_calculation_number
+        loyalty_number, name, first_name, last_name, email, phone, points, notes, 
+        member_status, member_type, enrollment_date, customer_tier, tier_calculation_number, date_of_birth
       ) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
       RETURNING *
     `, [
       finalLoyaltyNumber, 
-      name.trim(), 
+      customerName.trim(), 
+      customerFirstName.trim(),
+      customerLastName.trim(),
       email || null, 
       phone || null, 
       initialPoints, 
@@ -1342,7 +1356,8 @@ app.post('/api/customers/enhanced', async (req, res) => {
       member_type || 'Individual',
       finalEnrollmentDate,
       customer_tier || 'Bronze',
-      tierCalcNumber
+      tierCalcNumber,
+      date_of_birth || null
     ]);
     
     // Log customer creation activity (optional, won't fail if function doesn't exist)
@@ -1360,6 +1375,68 @@ app.post('/api/customers/enhanced', async (req, res) => {
       );
     } catch (logError) {
       console.warn('Activity logging not available:', logError.message);
+    }
+    
+    // Call MuleSoft API to create member in loyalty system
+    try {
+      const mulesoftEndpoint = await pool.query(
+        "SELECT setting_value FROM system_settings WHERE setting_key = 'mulesoft_loyalty_sync_endpoint'"
+      );
+      
+      if (mulesoftEndpoint.rows.length > 0 && mulesoftEndpoint.rows[0].setting_value) {
+        const endpoint = mulesoftEndpoint.rows[0].setting_value.trim();
+        
+        // Validate that it's a URL
+        try {
+          new URL(endpoint);
+          
+          // Get loyalty program ID
+          const loyaltyProgramResult = await pool.query(
+            "SELECT setting_value FROM system_settings WHERE setting_key = 'loyalty_program_id'"
+          );
+          const loyaltyProgramId = loyaltyProgramResult.rows.length > 0 ? loyaltyProgramResult.rows[0].setting_value : null;
+          
+          // Prepare member data for MuleSoft API
+          const memberData = {
+            id: result.rows[0].id,
+            first_name: customerFirstName,
+            last_name: customerLastName,
+            name: customerName,
+            loyalty_number: finalLoyaltyNumber,
+            enrollment_date: finalEnrollmentDate.toISOString().split('T')[0],
+            sf_loyalty_program_id: loyaltyProgramId,
+            sf_id: result.rows[0].sf_id || null,
+            address_line1: result.rows[0].address_line1 || null,
+            address_line2: result.rows[0].address_line2 || null,
+            city: result.rows[0].city || null,
+            state: result.rows[0].state || null,
+            zip_code: result.rows[0].zip_code || null,
+            phone: phone || null,
+            email: email || null,
+            date_of_birth: date_of_birth || null
+          };
+          
+          // Call MuleSoft API
+          const mulesoftResponse = await fetch(`${endpoint}/member/create`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(memberData)
+          });
+          
+          if (!mulesoftResponse.ok) {
+            console.warn('MuleSoft API call failed:', mulesoftResponse.status, mulesoftResponse.statusText);
+          } else {
+            console.log('Member successfully created in MuleSoft loyalty system');
+          }
+        } catch (urlError) {
+          console.warn('Invalid MuleSoft endpoint URL:', endpoint);
+        }
+      }
+    } catch (mulesoftError) {
+      console.warn('MuleSoft API integration error:', mulesoftError.message);
+      // Don't fail the customer creation if MuleSoft call fails
     }
     
     res.json(result.rows[0]);

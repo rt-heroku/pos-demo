@@ -15,7 +15,8 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
     const { X, User, Save } = window.Icons;
 
     const [formData, setFormData] = React.useState({
-        name: '',
+        first_name: '',
+        last_name: '',
         email: '',
         phone: '',
         loyalty_number: '',
@@ -24,7 +25,8 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         member_status: 'Active',
         member_type: 'Individual',
         enrollment_date: new Date().toISOString().split('T')[0],
-        customer_tier: 'Bronze'
+        customer_tier: 'Bronze',
+        date_of_birth: ''
     });
 
     const [errors, setErrors] = React.useState({});
@@ -32,8 +34,14 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
     // Initialize form data when customer changes
     React.useEffect(() => {
         if (customer) {
+            // Split existing name into first and last name if available
+            const nameParts = (customer.name || '').split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
             setFormData({
-                name: customer.name || '',
+                first_name: customer.first_name || firstName,
+                last_name: customer.last_name || lastName,
                 email: customer.email || '',
                 phone: customer.phone || '',
                 loyalty_number: customer.loyalty_number || '',
@@ -42,12 +50,14 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 member_status: customer.member_status || 'Active',
                 member_type: customer.member_type || 'Individual',
                 enrollment_date: customer.enrollment_date ? customer.enrollment_date.split('T')[0] : new Date().toISOString().split('T')[0],
-                customer_tier: customer.customer_tier || 'Bronze'
+                customer_tier: customer.customer_tier || 'Bronze',
+                date_of_birth: customer.date_of_birth ? customer.date_of_birth.split('T')[0] : ''
             });
         } else {
             // Reset form for new customer
             setFormData({
-                name: '',
+                first_name: '',
+                last_name: '',
                 email: '',
                 phone: '',
                 loyalty_number: '',
@@ -56,7 +66,8 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 member_status: 'Active',
                 member_type: 'Individual',
                 enrollment_date: new Date().toISOString().split('T')[0],
-                customer_tier: 'Bronze'
+                customer_tier: 'Bronze',
+                date_of_birth: ''
             });
         }
         setErrors({});
@@ -74,8 +85,12 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = 'Customer name is required';
+        if (!formData.first_name.trim()) {
+            newErrors.first_name = 'First name is required';
+        }
+
+        if (!formData.last_name.trim()) {
+            newErrors.last_name = 'Last name is required';
         }
 
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -103,6 +118,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
         const saveData = {
             ...formData,
+            name: `${formData.first_name.trim()} ${formData.last_name.trim()}`.trim(), // Combine first and last name
             points: parseInt(formData.points) || 0
         };
 
@@ -126,7 +142,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
     }, [
         React.createElement('div', {
             key: 'modal',
-            className: 'bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden'
+            className: 'bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'
         }, [
             // Header
             React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [
@@ -142,7 +158,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
             ]),
 
             // Form Content
-            React.createElement('div', { key: 'content', className: 'p-6 space-y-6' }, [
+            React.createElement('div', { key: 'content', className: 'p-6 space-y-6 overflow-y-auto flex-1' }, [
                 // Basic Information
                 React.createElement('div', { key: 'member-container', className: 'space-y-4' }, [
                     React.createElement('h3', { key: 'member-type-header', className: 'text-lg font-semibold text-gray-900 border-b pb-2' }, 'Member Type'),
@@ -174,22 +190,40 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                     ),
 
                     React.createElement('div', { key: 'member-info-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
-                        // Customer Name
-                        React.createElement('div', { key: 'name' }, [
-                            React.createElement('label', { key: 'name-label', className: 'block text-sm font-medium mb-2' }, 'Customer Name *'),
+                        // First Name
+                        React.createElement('div', { key: 'first-name' }, [
+                            React.createElement('label', { key: 'first-name-label', className: 'block text-sm font-medium mb-2' }, 'First Name *'),
                             React.createElement('input', {
-                                key: 'name-input',
+                                key: 'first-name-input',
                                 type: 'text',
-                                value: formData.name,
-                                onChange: (e) => handleInputChange('name', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'
+                                value: formData.first_name,
+                                onChange: (e) => handleInputChange('first_name', e.target.value),
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.first_name ? 'border-red-500' : 'border-gray-300'
                                     }`,
-                                placeholder: 'Enter customer name'
+                                placeholder: 'Enter first name'
                             }),
-                            errors.name && React.createElement('p', {
-                                key: 'name-error',
+                            errors.first_name && React.createElement('p', {
+                                key: 'first-name-error',
                                 className: 'text-red-500 text-sm mt-1'
-                            }, errors.name)
+                            }, errors.first_name)
+                        ]),
+
+                        // Last Name
+                        React.createElement('div', { key: 'last-name' }, [
+                            React.createElement('label', { key: 'last-name-label', className: 'block text-sm font-medium mb-2' }, 'Last Name *'),
+                            React.createElement('input', {
+                                key: 'last-name-input',
+                                type: 'text',
+                                value: formData.last_name,
+                                onChange: (e) => handleInputChange('last_name', e.target.value),
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.last_name ? 'border-red-500' : 'border-gray-300'
+                                    }`,
+                                placeholder: 'Enter last name'
+                            }),
+                            errors.last_name && React.createElement('p', {
+                                key: 'last-name-error',
+                                className: 'text-red-500 text-sm mt-1'
+                            }, errors.last_name)
                         ]),
 
                         // Email
@@ -229,6 +263,23 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 key: 'phone-error',
                                 className: 'text-red-500 text-sm mt-1'
                             }, errors.phone)
+                        ]),
+
+                        // Date of Birth
+                        React.createElement('div', { key: 'date-of-birth' }, [
+                            React.createElement('label', { key: 'date-of-birth-label', className: 'block text-sm font-medium mb-2' }, 'Date of Birth'),
+                            React.createElement('input', {
+                                key: 'date-of-birth-input',
+                                type: 'date',
+                                value: formData.date_of_birth,
+                                onChange: (e) => handleInputChange('date_of_birth', e.target.value),
+                                max: new Date().toISOString().split('T')[0], // Can't be future date
+                                className: 'w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement('p', {
+                                key: 'date-of-birth-note',
+                                className: 'text-gray-500 text-xs mt-1'
+                            }, 'Optional - used for birthday promotions')
                         ]),
 
                         // Loyalty Number (only for new customers or display for existing)
@@ -458,7 +509,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 React.createElement('button', {
                     key: 'save-button',
                     onClick: handleSave,
-                    disabled: loading || !formData.name.trim(),
+                    disabled: loading || !formData.first_name.trim() || !formData.last_name.trim(),
                     className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
                 }, [
                     loading && React.createElement('div', {
