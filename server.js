@@ -731,6 +731,12 @@ app.post('/api/products/import', async (req, res) => {
   try {
     const products = req.body;
     
+    // Log the POST body for debugging
+    console.log('=== MuleSoft Products Import Request ===');
+    console.log('Number of products:', products.length);
+    console.log('Products data:', JSON.stringify(products, null, 2));
+    console.log('==========================================');
+    
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: 'Products array is required and cannot be empty' });
     }
@@ -747,6 +753,8 @@ app.post('/api/products/import', async (req, res) => {
 
     const mulesoftEndpoint = settingsResult.rows[0].setting_value;
     const importUrl = `${mulesoftEndpoint}/products/import`;
+
+    console.log('MuleSoft endpoint:', importUrl);
 
     // Forward the request to MuleSoft
     const mulesoftResponse = await fetch(importUrl, {
@@ -1435,7 +1443,9 @@ app.post('/api/customers/enhanced', async (req, res) => {
         }
       }
     } catch (mulesoftError) {
-      console.warn('MuleSoft API integration error:', mulesoftError.message);
+      console.log('MuleSoft API integration Full error:', mulesoftError);
+      console.warn('MuleSoft API integration error message:', mulesoftError.message);
+      console.warn('MuleSoft API integration error detailed message:', mulesoftError.detailedMessage);
       // Don't fail the customer creation if MuleSoft call fails
     }
     

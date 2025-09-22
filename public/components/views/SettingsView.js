@@ -697,6 +697,10 @@ window.Views.SettingsView = ({
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const productsData = await response.json();
+                console.log('=== Products from MuleSoft API ===');
+                console.log('Products data:', productsData);
+                console.log('First product:', productsData[0]);
+                console.log('===================================');
                 setProductsFromCloud(productsData);
                 setSelectedProducts([]);
                 setExpandedProducts(new Set());
@@ -813,14 +817,27 @@ window.Views.SettingsView = ({
         };
 
         const toggleProductSelection = (product) => {
+            console.log('=== Product Selection Debug ===');
+            console.log('Product being toggled:', product);
+            console.log('Product SKU:', product.sku);
+            console.log('Current selected products:', selectedProducts);
+            console.log('Current selected SKUs:', selectedProducts.map(p => p.sku));
+            
             setSelectedProducts(prev => {
                 const isSelected = prev.some(p => p.sku === product.sku);
+                console.log('Is product selected?', isSelected);
+                
                 if (isSelected) {
-                    return prev.filter(p => p.sku !== product.sku);
+                    const newSelection = prev.filter(p => p.sku !== product.sku);
+                    console.log('Removing product, new selection:', newSelection);
+                    return newSelection;
                 } else {
-                    return [...prev, product];
+                    const newSelection = [...prev, product];
+                    console.log('Adding product, new selection:', newSelection);
+                    return newSelection;
                 }
             });
+            console.log('================================');
         };
 
         const toggleProductExpansion = (sku) => {
@@ -2928,6 +2945,10 @@ sfdc.account=`;
                                                                    return product;
                                                            });
                                                        
+                                                       console.log('=== Products from Generated History ===');
+                                                       console.log('Formatted products:', formattedProducts);
+                                                       console.log('First product:', formattedProducts[0]);
+                                                       console.log('========================================');
                                                        setProductsFromCloud(formattedProducts);
                                                        setSelectedProducts([]);
                                                        setExpandedProducts(new Set());
@@ -3151,7 +3172,7 @@ sfdc.account=`;
                }, [
                    React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center' }, [
                        React.createElement('h2', { key: 'title', className: 'text-xl font-bold dark:text-white' }, 
-                           `Generated products for "${productsFromCloud[0]?.brand || 'Unknown Brand'}"`
+                           `Generated products for "${productsFromCloud[0]?.brand || productsFromCloud[0]?.collection || 'Unknown Brand'}"`
                        ),
                        React.createElement('button', {
                            key: 'close-btn',
@@ -3370,6 +3391,10 @@ sfdc.account=`;
                                                                    return product;
                                                                });
                                                            
+                                                           console.log('=== Products from Generated History Modal ===');
+                                                           console.log('Formatted products:', formattedProducts);
+                                                           console.log('First product:', formattedProducts[0]);
+                                                           console.log('=============================================');
                                                            setProductsFromCloud(formattedProducts);
                                                            setSelectedProducts([]);
                                                            setExpandedProducts(new Set());
