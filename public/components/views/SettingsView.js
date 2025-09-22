@@ -820,15 +820,28 @@ window.Views.SettingsView = ({
             console.log('=== Product Selection Debug ===');
             console.log('Product being toggled:', product);
             console.log('Product SKU:', product.sku);
+            console.log('Product name:', product.product_name);
             console.log('Current selected products:', selectedProducts);
-            console.log('Current selected SKUs:', selectedProducts.map(p => p.sku));
             
             setSelectedProducts(prev => {
-                const isSelected = prev.some(p => p.sku === product.sku);
+                // Create a more robust unique identifier that works even without SKU
+                const getProductId = (p) => {
+                    // Try SKU first, then fall back to a combination of name and other unique fields
+                    if (p.sku && p.sku.trim()) {
+                        return p.sku;
+                    }
+                    // Fallback to a combination of name and other fields for uniqueness
+                    return `${p.product_name || 'unnamed'}_${p.collection || 'no-collection'}_${p.pricing?.price || 'no-price'}`;
+                };
+                
+                const productId = getProductId(product);
+                const isSelected = prev.some(p => getProductId(p) === productId);
+                
+                console.log('Product ID:', productId);
                 console.log('Is product selected?', isSelected);
                 
                 if (isSelected) {
-                    const newSelection = prev.filter(p => p.sku !== product.sku);
+                    const newSelection = prev.filter(p => getProductId(p) !== productId);
                     console.log('Removing product, new selection:', newSelection);
                     return newSelection;
                 } else {
@@ -3196,19 +3209,35 @@ sfdc.account=`;
                                ]),
                                React.createElement('tbody', { key: 'table-body' }, 
                                    productsFromCloud.map((product, index) => [
-                                       React.createElement('tr', { 
-                                           key: `product-row-${index}`,
-                                           className: `border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedProducts.some(p => p.sku === product.sku) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`
-                                       }, [
-                                           React.createElement('td', { key: 'select-cell', className: 'py-2 px-3' }, [
-                                               React.createElement('input', {
-                                                   key: 'checkbox',
-                                                   type: 'checkbox',
-                                                   checked: selectedProducts.some(p => p.sku === product.sku),
-                                                   onChange: () => toggleProductSelection(product),
-                                                   className: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
-                                               })
-                                           ]),
+                                           React.createElement('tr', { 
+                                               key: `product-row-${index}`,
+                                               className: `border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedProducts.some(p => {
+                                                   const getProductId = (prod) => {
+                                                       if (prod.sku && prod.sku.trim()) {
+                                                           return prod.sku;
+                                                       }
+                                                       return `${prod.product_name || 'unnamed'}_${prod.collection || 'no-collection'}_${prod.pricing?.price || 'no-price'}`;
+                                                   };
+                                                   return getProductId(p) === getProductId(product);
+                                               }) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`
+                                           }, [
+                                               React.createElement('td', { key: 'select-cell', className: 'py-2 px-3' }, [
+                                                   React.createElement('input', {
+                                                       key: 'checkbox',
+                                                       type: 'checkbox',
+                                                       checked: selectedProducts.some(p => {
+                                                           const getProductId = (prod) => {
+                                                               if (prod.sku && prod.sku.trim()) {
+                                                                   return prod.sku;
+                                                               }
+                                                               return `${prod.product_name || 'unnamed'}_${prod.collection || 'no-collection'}_${prod.pricing?.price || 'no-price'}`;
+                                                           };
+                                                           return getProductId(p) === getProductId(product);
+                                                       }),
+                                                       onChange: () => toggleProductSelection(product),
+                                                       className: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                                   })
+                                               ]),
                                            React.createElement('td', { key: 'collection-cell', className: 'py-2 px-3 dark:text-white' }, product.collection || 'N/A'),
                                            React.createElement('td', { key: 'name-cell', className: 'py-2 px-3 dark:text-white font-medium' }, product.product_name),
                                            React.createElement('td', { key: 'price-cell', className: 'py-2 px-3 dark:text-white' }, product.pricing?.price || 'N/A'),
