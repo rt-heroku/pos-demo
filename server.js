@@ -726,6 +726,86 @@ app.post('/api/products/create', async (req, res) => {
   }
 });
 
+// Get all unique product types from products table
+app.get('/api/products/types', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT product_type 
+      FROM products 
+      WHERE product_type IS NOT NULL AND product_type != ''
+      ORDER BY product_type
+    `);
+    
+    const productTypes = result.rows.map(row => row.product_type);
+    res.json(productTypes);
+  } catch (err) {
+    console.error('Error fetching product types:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Find product image using MuleSoft API
+app.post('/api/products/image/find', async (req, res) => {
+  try {
+    const { productName, sku, brand } = req.body;
+    
+    if (!productName && !sku) {
+      return res.status(400).json({ error: 'Product name or SKU is required' });
+    }
+
+    // Get MuleSoft endpoint from system settings
+    const settingsResult = await pool.query(
+      'SELECT setting_value FROM system_settings WHERE setting_key = $1',
+      ['mulesoft_loyalty_sync_endpoint']
+    );
+
+    if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
+      return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+    }
+
+    const mulesoftEndpoint = settingsResult.rows[0].setting_value;
+    const findImageUrl = `${mulesoftEndpoint}/products/image/find`;
+
+    // Prepare search parameters
+    const searchParams = {
+      productName: productName || '',
+      sku: sku || '',
+      brand: brand || ''
+    };
+
+    console.log('=== MuleSoft Image Find Request ===');
+    console.log('Search parameters:', searchParams);
+    console.log('MuleSoft endpoint:', findImageUrl);
+    console.log('===================================');
+
+    // Call MuleSoft API to find image
+    const mulesoftResponse = await fetch(findImageUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(searchParams)
+    });
+
+    if (!mulesoftResponse.ok) {
+      const errorText = await mulesoftResponse.text();
+      console.error('MuleSoft image find API error:', errorText);
+      return res.status(mulesoftResponse.status).json({ 
+        error: 'MuleSoft API error', 
+        details: errorText 
+      });
+    }
+
+    const imageResult = await mulesoftResponse.json();
+    console.log('MuleSoft image find response:', imageResult);
+
+    res.json(imageResult);
+  } catch (err) {
+    console.error('Error finding product image:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Import products to MuleSoft endpoint
 app.post('/api/products/import', async (req, res) => {
   try {

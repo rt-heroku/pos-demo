@@ -43,6 +43,9 @@ window.Modals.ProductModal = function ProductModal({
     const [activeTab, setActiveTab] = React.useState('basic');
     const [newFeature, setNewFeature] = React.useState({ name: '', value: '' });
     const [newImage, setNewImage] = React.useState({ url: '', alt: '', isPrimary: false });
+    const [productTypes, setProductTypes] = React.useState([]);
+    const [loadingProductTypes, setLoadingProductTypes] = React.useState(false);
+    const [findingImage, setFindingImage] = React.useState(false);
 
     // Initialize form data when product changes
     React.useEffect(() => {
@@ -101,6 +104,74 @@ window.Modals.ProductModal = function ProductModal({
             });
         }
     }, [product]);
+
+    // Load product types when modal opens
+    React.useEffect(() => {
+        if (show) {
+            loadProductTypes();
+        }
+    }, [show]);
+
+    const loadProductTypes = async () => {
+        setLoadingProductTypes(true);
+        try {
+            const response = await fetch('/api/products/types');
+            if (response.ok) {
+                const types = await response.json();
+                setProductTypes(types);
+            } else {
+                console.error('Failed to load product types');
+            }
+        } catch (error) {
+            console.error('Error loading product types:', error);
+        } finally {
+            setLoadingProductTypes(false);
+        }
+    };
+
+    const findImage = async (type = 'main') => {
+        if (!formData.name && !formData.sku) {
+            alert('Please enter a product name or SKU to find an image');
+            return;
+        }
+
+        setFindingImage(true);
+        try {
+            const response = await fetch('/api/products/image/find', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productName: formData.name,
+                    sku: formData.sku,
+                    brand: formData.brand
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.imageUrl) {
+                    if (type === 'main') {
+                        handleInputChange('mainImageUrl', result.imageUrl);
+                    } else {
+                        setNewImage(prev => ({ ...prev, url: result.imageUrl }));
+                    }
+                    alert('Image found and added successfully!');
+                } else {
+                    alert('No image found for this product');
+                }
+            } else {
+                const error = await response.json();
+                alert(`Failed to find image: ${error.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error finding image:', error);
+            alert(`Failed to find image: ${error.message}`);
+        } finally {
+            setFindingImage(false);
+        }
+    };
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -329,16 +400,15 @@ window.Modals.ProductModal = function ProductModal({
                             React.createElement('select', {
                                 value: formData.productType,
                                 onChange: (e) => handleInputChange('productType', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                disabled: loadingProductTypes,
+                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50'
                             }, [
-                                React.createElement('option', { key: 'empty', value: '' }, 'Select Type'),
-                                React.createElement('option', { key: 'luggage', value: 'Luggage' }, 'Luggage'),
-                                React.createElement('option', { key: 'backpack', value: 'Backpack' }, 'Backpack'),
-                                React.createElement('option', { key: 'briefcase', value: 'Briefcase' }, 'Briefcase'),
-                                React.createElement('option', { key: 'duffel', value: 'Duffel' }, 'Duffel'),
-                                React.createElement('option', { key: 'tote', value: 'Tote' }, 'Tote'),
-                                React.createElement('option', { key: 'portfolio', value: 'Portfolio' }, 'Portfolio'),
-                                React.createElement('option', { key: 'accessory', value: 'Accessory' }, 'Accessory')
+                                React.createElement('option', { key: 'empty', value: '' }, 
+                                    loadingProductTypes ? 'Loading types...' : 'Select Type'
+                                ),
+                                ...productTypes.map(type => 
+                                    React.createElement('option', { key: type, value: type }, type)
+                                )
                             ])
                         ]),
 
@@ -539,14 +609,30 @@ window.Modals.ProductModal = function ProductModal({
                     // Main Image URL
                     React.createElement('div', { key: 'main-image' }, [
                         React.createElement('label', { key: 'main-image-label', className: 'block text-sm font-medium mb-2' }, 'Main Image URL'),
-                        React.createElement('input', {
-                            key: 'main-image-input',
-                            type: 'url',
-                            value: formData.mainImageUrl,
-                            onChange: (e) => handleInputChange('mainImageUrl', e.target.value),
-                            className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
-                            placeholder: 'https://example.com/product-image.jpg'
-                        })
+                        React.createElement('div', { key: 'main-image-container', className: 'flex gap-2' }, [
+                            React.createElement('input', {
+                                key: 'main-image-input',
+                                type: 'url',
+                                value: formData.mainImageUrl,
+                                onChange: (e) => handleInputChange('mainImageUrl', e.target.value),
+                                className: 'flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                placeholder: 'https://example.com/product-image.jpg'
+                            }),
+                            React.createElement('button', {
+                                key: 'main-image-find-btn',
+                                type: 'button',
+                                onClick: () => findImage('main'),
+                                disabled: findingImage,
+                                className: 'px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2',
+                                title: 'Find image using MuleSoft API'
+                            }, [
+                                findingImage ? React.createElement('div', { 
+                                    key: 'loading-spinner',
+                                    className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                                }) : React.createElement(Image, { key: 'find-icon', size: 16 }),
+                                React.createElement('span', { key: 'btn-text' }, findingImage ? 'Finding...' : 'Find')
+                            ])
+                        ])
                     ]),
 
                     // Additional Images
@@ -555,7 +641,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Add new image form
                         React.createElement('div', { key: 'additional-images-form', className: 'bg-gray-50 p-4 rounded-lg mb-4' }, [
-                            React.createElement('div', { key: 'additional-images-form-container', className: 'grid grid-cols-1 md:grid-cols-3 gap-4 mb-3' }, [
+                            React.createElement('div', { key: 'additional-images-form-container', className: 'grid grid-cols-1 md:grid-cols-4 gap-4 mb-3' }, [
                                 React.createElement('input', {
                                     key: 'additional-images-form-input',
                                     type: 'url',
@@ -583,6 +669,20 @@ window.Modals.ProductModal = function ProductModal({
                                         }),
                                         React.createElement('span', { className: 'text-sm' }, 'Primary')
                                     ])
+                                ]),
+                                React.createElement('button', {
+                                    key: 'additional-images-form-find-btn',
+                                    type: 'button',
+                                    onClick: () => findImage('additional'),
+                                    disabled: findingImage,
+                                    className: 'px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 text-sm',
+                                    title: 'Find image using MuleSoft API'
+                                }, [
+                                    findingImage ? React.createElement('div', { 
+                                        key: 'loading-spinner',
+                                        className: 'animate-spin rounded-full h-3 w-3 border-b-2 border-white' 
+                                    }) : React.createElement(Image, { key: 'find-icon', size: 14 }),
+                                    React.createElement('span', { key: 'btn-text' }, findingImage ? 'Finding...' : 'Find')
                                 ])
                             ]),
                             React.createElement('button', {
