@@ -9,7 +9,7 @@ window.Modals.LoadFromCloudModal = function LoadFromCloudModal({
 }) {
     if (!show) return null;
 
-    const { X, Download, AlertCircle, CheckCircle, Loader } = window.Icons;
+    const { X, Download, AlertCircle, CheckCircle, RefreshCw } = window.Icons;
 
     const [catalogs, setCatalogs] = React.useState([]);
     const [selectedCatalog, setSelectedCatalog] = React.useState('');
@@ -177,7 +177,7 @@ window.Modals.LoadFromCloudModal = function LoadFromCloudModal({
                         disabled: !selectedCatalog || loadingProducts,
                         className: 'w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                     }, [
-                        loadingProducts ? React.createElement(Loader, { 
+                        loadingProducts ? React.createElement(RefreshCw, { 
                             key: 'loading-spinner',
                             size: 20,
                             className: 'animate-spin' 
