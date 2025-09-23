@@ -9,7 +9,7 @@ window.Modals.LoadFromCloudModal = function LoadFromCloudModal({
 }) {
     if (!show) return null;
 
-    const { X, Download, AlertCircle, CheckCircle, RefreshCw } = window.Icons;
+    const { X, Save, AlertCircle, CheckCircle, RefreshCw } = window.Icons;
 
     const [catalogs, setCatalogs] = React.useState([]);
     const [selectedCatalog, setSelectedCatalog] = React.useState('');
@@ -181,7 +181,7 @@ window.Modals.LoadFromCloudModal = function LoadFromCloudModal({
                             key: 'loading-spinner',
                             size: 20,
                             className: 'animate-spin' 
-                        }) : React.createElement(Download, { key: 'download-icon', size: 20 }),
+                        }) : React.createElement(Save, { key: 'save-icon', size: 20 }),
                         React.createElement('span', { key: 'btn-text' }, 
                             loadingProducts ? 'Loading Products...' : 'Load Products'
                         )
