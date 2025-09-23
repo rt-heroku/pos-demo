@@ -82,9 +82,10 @@ window.Views.SettingsView = ({
         const [showSyncResults, setShowSyncResults] = React.useState(false);
         
         // Test data loading state
-        const [loadingTestData, setLoadingTestData] = React.useState(false);
-        const [testDataOutput, setTestDataOutput] = React.useState('');
-        const [showTestDataOutput, setShowTestDataOutput] = React.useState(false);
+    const [loadingTestData, setLoadingTestData] = React.useState(false);
+    const [testDataOutput, setTestDataOutput] = React.useState('');
+    const [showTestDataOutput, setShowTestDataOutput] = React.useState(false);
+    const [showLoadFromCloudModal, setShowLoadFromCloudModal] = React.useState(false);
         
         // Products management state
         const [showDeleteProductsModal, setShowDeleteProductsModal] = React.useState(false);
@@ -681,6 +682,15 @@ window.Views.SettingsView = ({
         const closeTestDataOutput = () => {
             setShowTestDataOutput(false);
             setTestDataOutput('');
+        };
+
+        const closeLoadFromCloudModal = () => {
+            setShowLoadFromCloudModal(false);
+        };
+
+        const handleProductsLoaded = () => {
+            // Refresh the existing products list when products are loaded from cloud
+            loadExistingProducts();
         };
 
         // Products Management Functions
@@ -2771,10 +2781,10 @@ sfdc.account=`;
                            ),
                            React.createElement('button', {
                                key: 'load-btn',
-                               onClick: loadProductsFromCloud,
-                               disabled: !mulesoftConfig.endpoint || loadingProducts,
+                               onClick: () => setShowLoadFromCloudModal(true),
+                               disabled: !mulesoftConfig.endpoint,
                                className: 'w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed'
-                           }, loadingProducts ? 'Loading...' : 'Load from Loyalty Cloud')
+                           }, 'Load from Loyalty Cloud')
                        ]),
 
                        // Generate Products Card
@@ -3743,6 +3753,14 @@ sfdc.account=`;
                        }, 'Close')
                    ])
                ])
-           ])
+           ]),
+
+           // Load from Cloud Modal
+           showLoadFromCloudModal && React.createElement(window.Modals.LoadFromCloudModal, {
+               key: 'load-from-cloud-modal',
+               show: showLoadFromCloudModal,
+               onClose: closeLoadFromCloudModal,
+               onProductsLoaded: handleProductsLoaded
+           })
        ]);
     };

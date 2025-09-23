@@ -744,6 +744,107 @@ app.get('/api/products/types', async (req, res) => {
   }
 });
 
+// Get catalogs from MuleSoft API
+app.get('/api/loyalty/catalogs', async (req, res) => {
+  try {
+    // Get MuleSoft endpoint from system settings
+    const settingsResult = await pool.query(
+      'SELECT setting_value FROM system_settings WHERE setting_key = $1',
+      ['mulesoft_loyalty_sync_endpoint']
+    );
+
+    if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
+      return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+    }
+
+    const mulesoftEndpoint = settingsResult.rows[0].setting_value;
+    const catalogsUrl = `${mulesoftEndpoint}/loyalty/catalogs`;
+
+    console.log('=== MuleSoft Catalogs Request ===');
+    console.log('MuleSoft endpoint:', catalogsUrl);
+    console.log('==================================');
+
+    // Call MuleSoft API to get catalogs
+    const mulesoftResponse = await fetch(catalogsUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!mulesoftResponse.ok) {
+      const errorText = await mulesoftResponse.text();
+      console.error('MuleSoft catalogs API error:', errorText);
+      return res.status(mulesoftResponse.status).json({ 
+        error: 'MuleSoft API error', 
+        details: errorText 
+      });
+    }
+
+    const catalogs = await mulesoftResponse.json();
+    console.log('MuleSoft catalogs response:', catalogs);
+
+    res.json(catalogs);
+  } catch (err) {
+    console.error('Error fetching catalogs:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Load products from selected catalog using MuleSoft API
+app.post('/api/loyalty/products/load', async (req, res) => {
+  try {
+    const { catalogId } = req.body;
+    
+    if (!catalogId) {
+      return res.status(400).json({ error: 'Catalog ID is required' });
+    }
+
+    // Get MuleSoft endpoint from system settings
+    const settingsResult = await pool.query(
+      'SELECT setting_value FROM system_settings WHERE setting_key = $1',
+      ['mulesoft_loyalty_sync_endpoint']
+    );
+
+    if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
+      return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+    }
+
+    const mulesoftEndpoint = settingsResult.rows[0].setting_value;
+    const loadProductsUrl = `${mulesoftEndpoint}/loyalty/products/load?catalog=${catalogId}`;
+
+    console.log('=== MuleSoft Load Products Request ===');
+    console.log('Catalog ID:', catalogId);
+    console.log('MuleSoft endpoint:', loadProductsUrl);
+    console.log('=====================================');
+
+    // Call MuleSoft API to load products
+    const mulesoftResponse = await fetch(loadProductsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!mulesoftResponse.ok) {
+      const errorText = await mulesoftResponse.text();
+      console.error('MuleSoft load products API error:', errorText);
+      return res.status(mulesoftResponse.status).json({ 
+        error: 'MuleSoft API error', 
+        details: errorText 
+      });
+    }
+
+    const result = await mulesoftResponse.json();
+    console.log('MuleSoft load products response:', result);
+
+    res.json(result);
+  } catch (err) {
+    console.error('Error loading products from catalog:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Find product image using MuleSoft API
 app.post('/api/products/image/find', async (req, res) => {
   try {
