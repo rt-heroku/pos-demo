@@ -359,7 +359,6 @@ const POSApp = () => {
                     brand: product.brand || '', collection: product.collection || '',
                     material: product.material || '', color: product.color || '',
                     product_type: product.product_type || product.category,
-                    gender: product.gender || 'Unisex',
                     description: product.description || '', is_active: product.is_active !== false,
                     featured: product.featured || false
                 }));

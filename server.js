@@ -2140,8 +2140,7 @@ app.post('/api/products/enhanced', async (req, res) => {
     await client.query('BEGIN');
     
     const { 
-      name, price, category, stock, image, sku, productType, laptopSize, 
-      brand, collection, material, gender, color, description, dimensions, 
+      name, price, category, stock, image, sku, productType,       brand, collection, material, color, description, dimensions, 
       weight, warrantyInfo, careInstructions, mainImageUrl, isActive, 
       featured, images, features 
     } = req.body;
@@ -2157,13 +2156,13 @@ app.post('/api/products/enhanced', async (req, res) => {
     const productResult = await client.query(`
       INSERT INTO products (
         name, price, category, stock, image, sku, product_type,
-        brand, collection, material, gender, color, description, dimensions,
+        brand, collection, material, color, description, dimensions,
         weight, warranty_info, care_instructions, main_image_url, is_active, featured
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
       RETURNING *
     `, [
       name, price, category, stock, image || '📦', finalSku, productType, laptopSize,
-      brand, collection, material, gender, color, description, dimensions,
+      brand, collection, material, color, description, dimensions,
       weight, warrantyInfo, careInstructions, mainImageUrl, isActive !== false, featured || false
     ]);
     
@@ -2211,8 +2210,7 @@ app.put('/api/products/:id/enhanced', async (req, res) => {
     
     const { id } = req.params;
     const { 
-      name, price, category, stock, image, sku, productType, laptopSize, 
-      brand, collection, material, gender, color, description, dimensions, 
+      name, price, category, stock, image, sku, productType,       brand, collection, material, color, description, dimensions, 
       weight, warrantyInfo, careInstructions, mainImageUrl, isActive, 
       featured, images, features 
     } = req.body;
@@ -2222,13 +2220,13 @@ app.put('/api/products/:id/enhanced', async (req, res) => {
       UPDATE products SET 
         name = $1, price = $2, category = $3, stock = $4, image = $5, sku = $6, 
         product_type = $7, brand = $8, collection = $9, 
-        material = $10, gender = $11, color = $12, description = $13, 
-        dimensions = $14, weight = $15, warranty_info = $16, care_instructions = $17, 
-        main_image_url = $18, is_active = $19, featured = $20, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $21 RETURNING *
+        material = $10, color = $11, description = $12, 
+        dimensions = $13, weight = $14, warranty_info = $15, care_instructions = $16, 
+        main_image_url = $17, is_active = $18, featured = $19, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $20 RETURNING *
     `, [
       name, price, category, stock, image, sku, productType,
-      brand, collection, material, gender, color, description, dimensions,
+      brand, collection, material, color, description, dimensions,
       weight, warrantyInfo, careInstructions, mainImageUrl, isActive, featured, id
     ]);
     
@@ -2463,8 +2461,8 @@ app.get('/api/products/filters', async (req, res) => {
 app.get('/api/products/search', async (req, res) => {
   try {
     const { 
-      q, brand, collection, material, productType, color, gender, 
-      minPrice, maxPrice, category, inStock, featured, laptopSize 
+      q, brand, collection, material, productType, color, 
+      minPrice, maxPrice, category, inStock, featured 
     } = req.query;
     
     // Start with basic query - use existing columns that definitely exist
@@ -2514,11 +2512,6 @@ app.get('/api/products/search', async (req, res) => {
       params.push(color);
     }
     
-    if (gender) {
-      paramCount++;
-      query += ` AND COALESCE(p.gender, '') = $${paramCount}`;
-      params.push(gender);
-    }
     
     if (category) {
       paramCount++;

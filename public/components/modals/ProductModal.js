@@ -21,11 +21,9 @@ window.Modals.ProductModal = function ProductModal({
         category: '',
         stock: '',
         productType: '',
-        laptopSize: '',
         brand: '',
         collection: '',
         material: '',
-        gender: 'Unisex',
         color: '',
         description: '',
         dimensions: '',
@@ -83,11 +81,9 @@ window.Modals.ProductModal = function ProductModal({
                 category: '',
                 stock: '',
                 productType: '',
-                laptopSize: '',
                 brand: '',
                 collection: '',
                 material: '',
-                gender: 'Unisex',
                 color: '',
                 description: '',
                 dimensions: '',
@@ -503,36 +499,7 @@ window.Modals.ProductModal = function ProductModal({
                             })
                         ]),
 
-                        // Gender
-                        React.createElement('div', { key: 'gender' }, [
-                            React.createElement('label', { key: 'gender-label', className: 'block text-sm font-medium mb-2' }, 'Gender'),
-                            React.createElement('select', {
-                                key: 'gender-select',
-                                value: formData.gender,
-                                onChange: (e) => handleInputChange('gender', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                            }, [
-                                React.createElement('option', { key: 'unisex', value: 'Unisex' }, 'Unisex'),
-                                React.createElement('option', { key: 'men', value: 'Men' }, 'Men'),
-                                React.createElement('option', { key: 'women', value: 'Women' }, 'Women')
-                            ])
-                        ]),
 
-                        // Laptop Size
-                        React.createElement('div', { key: 'laptopSize' }, [
-                            React.createElement('label', { key: 'laptop-size-label', className: 'block text-sm font-medium mb-2' }, 'Laptop Size'),
-                            React.createElement('select', {
-                                key: 'laptop-size-select',
-                                value: formData.laptopSize,
-                                onChange: (e) => handleInputChange('laptopSize', e.target.value),
-                                className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                            }, [
-                                React.createElement('option', { key: 'none', value: '' }, 'Not Applicable'),
-                                React.createElement('option', { key: '13', value: '13"' }, 'Up to 13"'),
-                                React.createElement('option', { key: '15', value: '15"' }, 'Up to 15"'),
-                                React.createElement('option', { key: '17', value: '17"' }, 'Up to 17"')
-                            ])
-                        ]),
 
                         // Dimensions
                         React.createElement('div', { key: 'dimensions' }, [
