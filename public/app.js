@@ -359,7 +359,7 @@ const POSApp = () => {
                     brand: product.brand || '', collection: product.collection || '',
                     material: product.material || '', color: product.color || '',
                     product_type: product.product_type || product.category,
-                    laptop_size: product.laptop_size || '', gender: product.gender || 'Unisex',
+                    gender: product.gender || 'Unisex',
                     description: product.description || '', is_active: product.is_active !== false,
                     featured: product.featured || false
                 }));

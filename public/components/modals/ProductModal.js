@@ -57,7 +57,6 @@ window.Modals.ProductModal = function ProductModal({
                 category: product.category || '',
                 stock: product.stock?.toString() || '',
                 productType: product.product_type || '',
-                laptopSize: product.laptop_size || '',
                 brand: product.brand || '',
                 collection: product.collection || '',
                 material: product.material || '',

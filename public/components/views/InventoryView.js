@@ -242,10 +242,6 @@ window.Views.InventoryView = ({
                             key: 'color',
                             className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'
                         }, product.color),
-                        product.laptop_size && React.createElement('span', {
-                            key: 'laptop',
-                            className: 'px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded'
-                        }, `💻 ${product.laptop_size}`),
                         product.gender && product.gender !== 'Unisex' && React.createElement('span', {
                             key: 'gender',
                             className: 'px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded'

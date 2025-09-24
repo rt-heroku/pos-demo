@@ -2156,7 +2156,7 @@ app.post('/api/products/enhanced', async (req, res) => {
     // Create product
     const productResult = await client.query(`
       INSERT INTO products (
-        name, price, category, stock, image, sku, product_type, laptop_size,
+        name, price, category, stock, image, sku, product_type,
         brand, collection, material, gender, color, description, dimensions,
         weight, warranty_info, care_instructions, main_image_url, is_active, featured
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
@@ -2221,13 +2221,13 @@ app.put('/api/products/:id/enhanced', async (req, res) => {
     const productResult = await client.query(`
       UPDATE products SET 
         name = $1, price = $2, category = $3, stock = $4, image = $5, sku = $6, 
-        product_type = $7, laptop_size = $8, brand = $9, collection = $10, 
-        material = $11, gender = $12, color = $13, description = $14, 
-        dimensions = $15, weight = $16, warranty_info = $17, care_instructions = $18, 
-        main_image_url = $19, is_active = $20, featured = $21, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $22 RETURNING *
+        product_type = $7, brand = $8, collection = $9, 
+        material = $10, gender = $11, color = $12, description = $13, 
+        dimensions = $14, weight = $15, warranty_info = $16, care_instructions = $17, 
+        main_image_url = $18, is_active = $19, featured = $20, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $21 RETURNING *
     `, [
-      name, price, category, stock, image, sku, productType, laptopSize,
+      name, price, category, stock, image, sku, productType,
       brand, collection, material, gender, color, description, dimensions,
       weight, warrantyInfo, careInstructions, mainImageUrl, isActive, featured, id
     ]);
@@ -2526,11 +2526,6 @@ app.get('/api/products/search', async (req, res) => {
       params.push(category);
     }
     
-    if (laptopSize) {
-      paramCount++;
-      query += ` AND COALESCE(p.laptop_size, '') = $${paramCount}`;
-      params.push(laptopSize);
-    }
     
     if (minPrice) {
       paramCount++;
