@@ -10,7 +10,7 @@ window.Modals.DataLoaderModal = function({
 }) {
     if (!show) return null;
 
-    const { X, Upload, MapPin, Eye, Play, CheckCircle, AlertCircle } = window.Icons;
+    const { X, Upload, MapPin, Eye, Save, CheckCircle, AlertCircle } = window.Icons;
 
     const [step, setStep] = React.useState(1); // 1: Upload, 2: Mapping, 3: Preview, 4: Process
     const [jobId, setJobId] = React.useState(null);
@@ -149,7 +149,7 @@ window.Modals.DataLoaderModal = function({
             case 1: return React.createElement(Upload, { size: 20 });
             case 2: return React.createElement(MapPin, { size: 20 });
             case 3: return React.createElement(Eye, { size: 20 });
-            case 4: return React.createElement(Play, { size: 20 });
+            case 4: return React.createElement(Save, { size: 20 });
             default: return React.createElement(Upload, { size: 20 });
         }
     };

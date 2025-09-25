@@ -139,7 +139,7 @@ window.Components.ProcessDataStep = function({
                 key: 'status-content',
                 className: 'flex items-center justify-center gap-4'
             }, [
-                getStatusIcon(),
+                React.createElement('div', { key: 'status-icon' }, getStatusIcon()),
                 React.createElement('div', {
                     key: 'status-text',
                     className: 'text-center'
