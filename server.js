@@ -4163,7 +4163,17 @@ app.post('/api/loyalty/products/send', async (req, res) => {
       }
       
       // Call MuleSoft API to send products
-      const muleSoftResponse = await fetch('https://your-mulesoft-instance.cloudhub.io/loyalty/products/send', {
+      const settingsResult = await pool.query(
+        'SELECT setting_value FROM system_settings WHERE setting_key = $1',
+        ['mulesoft_loyalty_sync_endpoint']
+      );
+  
+      if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
+        return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+      }
+  
+      const mulesoftEndpoint = settingsResult.rows[0].setting_value;
+       const muleSoftResponse = await fetch(mulesoftEndpoint + '/loyalty/products/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
