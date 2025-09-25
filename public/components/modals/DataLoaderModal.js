@@ -93,14 +93,7 @@ window.Modals.DataLoaderModal = function({
         
         setProcessing(true);
         try {
-            // Save field mapping first
-            await fetch(`/api/data-loader/mapping/${jobId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fieldMapping })
-            });
-            
-            // Process the data
+            // Process the data (field mapping should already be saved)
             const response = await fetch(`/api/data-loader/process/${jobId}`, {
                 method: 'POST'
             });
