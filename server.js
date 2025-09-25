@@ -3593,19 +3593,22 @@ app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
   
   try {
     const { jobId } = req.params;
-    const { fieldMapping } = req.body;
-    
+    const { fieldMapping, constantValues } = req.body;
     
     if (!fieldMapping || typeof fieldMapping !== 'object') {
       return res.status(400).json({ error: 'Invalid field mapping' });
     }
     
-    // Update job with field mapping
+    if (!constantValues || typeof constantValues !== 'object') {
+      return res.status(400).json({ error: 'Invalid constant values' });
+    }
+    
+    // Update job with field mapping and constant values
     await client.query(`
       UPDATE data_loader_jobs 
-      SET field_mapping = $1, status = 'mapping', updated_at = CURRENT_TIMESTAMP
-      WHERE job_id = $2
-    `, [JSON.stringify(fieldMapping), jobId]);
+      SET field_mapping = $1, constant_values = $2, status = 'mapping', updated_at = CURRENT_TIMESTAMP
+      WHERE job_id = $3
+    `, [JSON.stringify(fieldMapping), JSON.stringify(constantValues), jobId]);
     
     res.json({ success: true });
     
@@ -3699,6 +3702,8 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
     const job = jobResult.rows[0];
     const mapping = job.field_mapping ? 
       (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
+    const constants = job.constant_values ? 
+      (typeof job.constant_values === 'string' ? JSON.parse(job.constant_values) : job.constant_values) : {};
     
     // Process each row
     const rowsResult = await client.query(`
@@ -3713,18 +3718,26 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
         const rawData = row.raw_data;
         const mappedData = {};
         
-        // Apply field mapping
-        // console.log('=== Data Mapping Debug ===');
-        // console.log('Job ID:', jobId);
-        // console.log('Job Type:', job.type);
-        // console.log('Raw Data:', rawData);
-        // console.log('Field Mapping:', mapping);
-        // console.log('Mapped Data:', mappedData);
-        // console.log('==========================');
-
-        Object.entries(mapping).forEach(([csvField, dbField]) => {
-          if (rawData[csvField] !== undefined) {
-            mappedData[dbField] = rawData[csvField];
+        // Apply field mapping (multiple DB fields per CSV field)
+        Object.entries(mapping).forEach(([csvField, dbFields]) => {
+          if (rawData[csvField] !== undefined && Array.isArray(dbFields)) {
+            dbFields.forEach(dbField => {
+              mappedData[dbField] = rawData[csvField];
+            });
+          }
+        });
+        
+        // Apply constant values
+        Object.entries(constants).forEach(([dbField, constantData]) => {
+          if (constantData && constantData.value !== undefined) {
+            // Convert value based on type
+            let value = constantData.value;
+            if (constantData.type === 'number') {
+              value = parseFloat(value);
+            } else if (constantData.type === 'boolean') {
+              value = ['true', '1', 'yes'].includes(value.toString().toLowerCase());
+            }
+            mappedData[dbField] = value;
           }
         });
         // Debug: Display contents of mappedData
