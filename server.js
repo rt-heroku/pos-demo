@@ -3634,7 +3634,8 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
     }
     
     const job = jobResult.rows[0];
-    const mapping = job.field_mapping ? JSON.parse(job.field_mapping) : {};
+    const mapping = job.field_mapping ? 
+      (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
     
     // Get sample rows
     const rowsResult = await client.query(`
@@ -3695,7 +3696,8 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
     }
     
     const job = jobResult.rows[0];
-    const mapping = job.field_mapping ? JSON.parse(job.field_mapping) : {};
+    const mapping = job.field_mapping ? 
+      (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
     
     // Process each row
     const rowsResult = await client.query(`
