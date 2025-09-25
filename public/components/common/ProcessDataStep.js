@@ -130,6 +130,58 @@ window.Components.ProcessDataStep = function({
             }, 'Review the import settings and start the data import process')
         ]),
 
+        // Import settings (only show before processing starts)
+        !processing && !importResult && React.createElement('div', {
+            key: 'import-settings',
+            className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'
+        }, [
+            React.createElement('div', {
+                key: 'settings-header',
+                className: 'flex items-center gap-2 mb-3'
+            }, [
+                React.createElement(Save, {
+                    key: 'settings-icon',
+                    size: 16,
+                    className: 'text-blue-600'
+                }),
+                React.createElement('span', {
+                    key: 'settings-title',
+                    className: 'font-medium text-blue-900 dark:text-blue-100'
+                }, 'Import Settings')
+            ]),
+            React.createElement('div', {
+                key: 'settings-content',
+                className: 'grid grid-cols-2 gap-4 text-sm'
+            }, [
+                React.createElement('div', {
+                    key: 'job-id',
+                    className: 'space-y-1'
+                }, [
+                    React.createElement('div', {
+                        key: 'job-label',
+                        className: 'text-blue-800 dark:text-blue-200'
+                    }, 'Job ID:'),
+                    React.createElement('div', {
+                        key: 'job-value',
+                        className: 'font-mono text-blue-900 dark:text-blue-100 text-xs'
+                    }, jobId)
+                ]),
+                React.createElement('div', {
+                    key: 'status-info',
+                    className: 'space-y-1'
+                }, [
+                    React.createElement('div', {
+                        key: 'status-label',
+                        className: 'text-blue-800 dark:text-blue-200'
+                    }, 'Status:'),
+                    React.createElement('div', {
+                        key: 'status-value',
+                        className: 'font-medium text-blue-900 dark:text-blue-100'
+                    }, 'Ready to Import')
+                ])
+            ])
+        ]),
+
         // Status section
         React.createElement('div', {
             key: 'status-section',
