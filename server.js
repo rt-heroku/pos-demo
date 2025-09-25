@@ -3645,7 +3645,7 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
     `, [jobId, parseInt(limit)]);
     
     const previewData = rowsResult.rows.map(row => {
-      const rawData = JSON.parse(row.raw_data);
+      const rawData = row.raw_data;
       const mappedData = {};
       
       // Apply field mapping
