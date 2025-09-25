@@ -193,7 +193,7 @@ window.Components.FieldMappingStep = function({
                 }, 'CSV Fields'),
                 React.createElement('div', {
                     key: 'csv-list',
-                    className: 'space-y-2 max-h-96 overflow-y-auto'
+                    className: 'space-y-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2'
                 }, csvFields.map(csvField => {
                     const mappedDbField = getMappedDbField(csvField);
                     const isUnmapped = !mappedDbField;
@@ -244,7 +244,7 @@ window.Components.FieldMappingStep = function({
                 }, 'Database Fields'),
                 React.createElement('div', {
                     key: 'db-list',
-                    className: 'space-y-2 max-h-96 overflow-y-auto'
+                    className: 'space-y-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2'
                 }, dbFields.map(dbField => {
                     const isMapped = Object.values(fieldMapping).includes(dbField);
                     const mappedCsvField = Object.keys(fieldMapping).find(csvField => fieldMapping[csvField] === dbField);
