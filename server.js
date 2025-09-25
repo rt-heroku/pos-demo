@@ -3709,7 +3709,7 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
     
     for (const row of rowsResult.rows) {
       try {
-        const rawData = JSON.parse(row.raw_data);
+        const rawData = row.raw_data;
         const mappedData = {};
         
         // Apply field mapping
