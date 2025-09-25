@@ -3595,9 +3595,6 @@ app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
     const { jobId } = req.params;
     const { fieldMapping } = req.body;
     
-    console.log('Received field mapping:', fieldMapping);
-    console.log('Field mapping type:', typeof fieldMapping);
-    console.log('Field mapping keys:', Object.keys(fieldMapping || {}));
     
     if (!fieldMapping || typeof fieldMapping !== 'object') {
       return res.status(400).json({ error: 'Invalid field mapping' });
@@ -3723,8 +3720,6 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
           }
         });
         
-        console.log('Mapped data:', mappedData);
-        console.log('Mapping:', mapping);
         
         // Insert into appropriate table
         if (job.type === 'products') {
