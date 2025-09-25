@@ -3614,11 +3614,25 @@ app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
     }
     
     // Update job with field mapping and constant values
-    await client.query(`
+    console.log('Updating database with:');
+    console.log('Field Mapping JSON:', JSON.stringify(fieldMapping));
+    console.log('Constant Values JSON:', JSON.stringify(constantValues));
+    
+    const result = await client.query(`
       UPDATE data_loader_jobs 
       SET field_mapping = $1, constant_values = $2, status = 'mapping', updated_at = CURRENT_TIMESTAMP
       WHERE job_id = $3
     `, [JSON.stringify(fieldMapping), JSON.stringify(constantValues), jobId]);
+    
+    console.log('Database update result:', result.rowCount, 'rows affected');
+    
+    // Verify the update by reading back the data
+    const verifyResult = await client.query(`
+      SELECT field_mapping, constant_values FROM data_loader_jobs WHERE job_id = $1
+    `, [jobId]);
+    
+    console.log('Verification - Field Mapping:', verifyResult.rows[0]?.field_mapping);
+    console.log('Verification - Constant Values:', verifyResult.rows[0]?.constant_values);
     
     res.json({ success: true });
     
@@ -3720,7 +3734,7 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
     
     // Get job info
     const jobResult = await client.query(`
-      SELECT type, field_mapping FROM data_loader_jobs WHERE job_id = $1
+      SELECT type, field_mapping, constant_values FROM data_loader_jobs WHERE job_id = $1
     `, [jobId]);
     
     if (!jobResult.rows.length) {
@@ -3728,10 +3742,19 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
     }
     
     const job = jobResult.rows[0];
+    console.log('=== PROCESS ENDPOINT DEBUG ===');
+    console.log('Raw job data from DB:', job);
+    console.log('Raw field_mapping:', job.field_mapping);
+    console.log('Raw constant_values:', job.constant_values);
+    
     const mapping = job.field_mapping ? 
       (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
     const constants = job.constant_values ? 
       (typeof job.constant_values === 'string' ? JSON.parse(job.constant_values) : job.constant_values) : {};
+    
+    console.log('Parsed mapping:', mapping);
+    console.log('Parsed constants:', constants);
+    console.log('=== END PROCESS ENDPOINT DEBUG ===');
     
     // Process each row
     const rowsResult = await client.query(`
