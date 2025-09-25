@@ -78,6 +78,7 @@ window.Modals.DataLoaderModal = function({
                 setStep(4);
             } else {
                 const error = await response.json();
+                console.error('Preview failed:', error);
                 alert(`Preview failed: ${error.error}`);
             }
         } catch (error) {
@@ -224,7 +225,7 @@ window.Modals.DataLoaderModal = function({
             ]),
 
             // Footer
-            !importResult && React.createElement('div', {
+            step < 4 && React.createElement('div', {
                 key: 'footer',
                 className: 'flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700'
             }, [
