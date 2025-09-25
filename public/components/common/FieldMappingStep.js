@@ -47,6 +47,22 @@ window.Components.FieldMappingStep = function({
         }
     };
 
+    const saveMapping = async (mapping) => {
+        try {
+            const response = await fetch(`/api/data-loader/mapping/${jobId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fieldMapping: mapping })
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to save mapping');
+            }
+        } catch (error) {
+            console.error('Error saving mapping:', error);
+        }
+    };
+
     // Auto-mapping algorithm
     const autoMapFields = (csvFields, dbFields) => {
         const mapping = {};
