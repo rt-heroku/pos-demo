@@ -4131,6 +4131,72 @@ async function parseCSV(buffer) {
   });
 }
 
+// Send products to Loyalty Cloud
+app.post('/api/loyalty/products/send', async (req, res) => {
+  try {
+    // Get all products from the database
+    const client = await pool.connect();
+    
+    try {
+      const productsResult = await client.query(`
+        SELECT id, name, sku, price, category, product_type, brand, collection,
+               material, color, description, dimensions, weight, warranty_info,
+               care_instructions, main_image_url, is_active, featured, stock
+        FROM products 
+        WHERE is_active = true
+        ORDER BY created_at DESC
+      `);
+      
+      const products = productsResult.rows;
+      
+      if (products.length === 0) {
+        return res.json({
+          summary: "No active products found to sync with Loyalty Cloud.",
+          statistics: {
+            totalProcessed: 0,
+            created: 0,
+            updated: 0,
+            failed: 0
+          },
+          failures: null
+        });
+      }
+      
+      // Call MuleSoft API to send products
+      const muleSoftResponse = await fetch('https://your-mulesoft-instance.cloudhub.io/loyalty/products/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.MULESOFT_ACCESS_TOKEN || 'your-token-here'}`
+        },
+        body: JSON.stringify({
+          products: products,
+          syncType: 'full_sync'
+        })
+      });
+      
+      if (!muleSoftResponse.ok) {
+        throw new Error(`MuleSoft API error: ${muleSoftResponse.status} ${muleSoftResponse.statusText}`);
+      }
+      
+      const result = await muleSoftResponse.json();
+      
+      // Return the response from MuleSoft API
+      res.json(result);
+      
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error sending products to Loyalty:', error);
+    res.status(500).json({ 
+      error: 'Failed to send products to Loyalty Cloud',
+      details: error.message 
+    });
+  }
+});
+
 // Serve React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

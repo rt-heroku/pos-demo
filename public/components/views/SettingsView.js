@@ -86,7 +86,9 @@ window.Views.SettingsView = ({
     const [testDataOutput, setTestDataOutput] = React.useState('');
     const [showTestDataOutput, setShowTestDataOutput] = React.useState(false);
     const [showLoadFromCloudModal, setShowLoadFromCloudModal] = React.useState(false);
-    const [showDataLoaderModal, setShowDataLoaderModal] = React.useState(false);
+        const [showDataLoaderModal, setShowDataLoaderModal] = React.useState(false);
+        const [showLoyaltyResultsModal, setShowLoyaltyResultsModal] = React.useState(false);
+        const [loyaltyResults, setLoyaltyResults] = React.useState(null);
         
         // Products management state
         const [showDeleteProductsModal, setShowDeleteProductsModal] = React.useState(false);
@@ -965,8 +967,36 @@ window.Views.SettingsView = ({
             }
         };
 
-        const sendToLoyalty = () => {
-            alert('Coming soon! This feature will allow you to sync your products with Loyalty Cloud.');
+        const sendToLoyalty = async () => {
+            try {
+                setLoading(true);
+                
+                const response = await fetch('/api/loyalty/products/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                setLoyaltyResults(result);
+                setShowLoyaltyResultsModal(true);
+                
+            } catch (error) {
+                console.error('Error sending products to Loyalty:', error);
+                setLoyaltyResults({
+                    summary: 'Failed to send products to Loyalty Cloud',
+                    statistics: { totalProcessed: 0, created: 0, updated: 0, failed: 1 },
+                    failures: [{ product_name: 'System Error', error: error.message }]
+                });
+                setShowLoyaltyResultsModal(true);
+            } finally {
+                setLoading(false);
+            }
         };
 
         const parseDatabaseCredentialsYAML = (databaseUrl) => {
@@ -3792,6 +3822,167 @@ sfdc.account=`;
                    // Refresh the page to show updated data
                    window.location.reload();
                }
-           })
+           }),
+
+           // Loyalty Results Modal
+           showLoyaltyResultsModal && loyaltyResults && React.createElement('div', {
+               key: 'loyalty-results-modal',
+               className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+           }, [
+               React.createElement('div', {
+                   key: 'modal-content',
+                   className: 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden'
+               }, [
+                   // Modal Header
+                   React.createElement('div', {
+                       key: 'modal-header',
+                       className: 'flex items-center justify-between p-6 border-b dark:border-gray-700'
+                   }, [
+                       React.createElement('div', {
+                           key: 'header-content',
+                           className: 'flex items-center gap-3'
+                       }, [
+                           React.createElement('div', {
+                               key: 'icon',
+                               className: 'w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center'
+                           }, [
+                               React.createElement('span', { key: 'icon-text', className: 'text-orange-600 dark:text-orange-400 text-lg' }, '🎯')
+                           ]),
+                           React.createElement('h2', {
+                               key: 'title',
+                               className: 'text-xl font-bold text-gray-900 dark:text-white'
+                           }, 'Loyalty Sync Results')
+                       ]),
+                       React.createElement('button', {
+                           key: 'close-btn',
+                           onClick: () => setShowLoyaltyResultsModal(false),
+                           className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                       }, [
+                           React.createElement('span', { key: 'close-icon', className: 'text-2xl' }, '×')
+                       ])
+                   ]),
+
+                   // Modal Body
+                   React.createElement('div', {
+                       key: 'modal-body',
+                       className: 'p-6 space-y-6 max-h-[60vh] overflow-y-auto'
+                   }, [
+                       // Summary
+                       React.createElement('div', {
+                           key: 'summary-section',
+                           className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'
+                       }, [
+                           React.createElement('h3', {
+                               key: 'summary-title',
+                               className: 'font-semibold text-blue-900 dark:text-blue-100 mb-2'
+                           }, 'Summary'),
+                           React.createElement('p', {
+                               key: 'summary-text',
+                               className: 'text-blue-800 dark:text-blue-200 whitespace-pre-line'
+                           }, loyaltyResults.summary || 'No summary available')
+                       ]),
+
+                       // Statistics
+                       React.createElement('div', {
+                           key: 'statistics-section',
+                           className: 'grid grid-cols-2 md:grid-cols-4 gap-4'
+                       }, [
+                           React.createElement('div', {
+                               key: 'total-processed',
+                               className: 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center'
+                           }, [
+                               React.createElement('div', {
+                                   key: 'total-number',
+                                   className: 'text-2xl font-bold text-gray-900 dark:text-white'
+                               }, loyaltyResults.statistics?.totalProcessed || 0),
+                               React.createElement('div', {
+                                   key: 'total-label',
+                                   className: 'text-sm text-gray-600 dark:text-gray-400'
+                               }, 'Total Processed')
+                           ]),
+                           React.createElement('div', {
+                               key: 'created',
+                               className: 'bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center'
+                           }, [
+                               React.createElement('div', {
+                                   key: 'created-number',
+                                   className: 'text-2xl font-bold text-green-600 dark:text-green-400'
+                               }, loyaltyResults.statistics?.created || 0),
+                               React.createElement('div', {
+                                   key: 'created-label',
+                                   className: 'text-sm text-gray-600 dark:text-gray-400'
+                               }, 'Created')
+                           ]),
+                           React.createElement('div', {
+                               key: 'updated',
+                               className: 'bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center'
+                           }, [
+                               React.createElement('div', {
+                                   key: 'updated-number',
+                                   className: 'text-2xl font-bold text-blue-600 dark:text-blue-400'
+                               }, loyaltyResults.statistics?.updated || 0),
+                               React.createElement('div', {
+                                   key: 'updated-label',
+                                   className: 'text-sm text-gray-600 dark:text-gray-400'
+                               }, 'Updated')
+                           ]),
+                           React.createElement('div', {
+                               key: 'failed',
+                               className: 'bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center'
+                           }, [
+                               React.createElement('div', {
+                                   key: 'failed-number',
+                                   className: 'text-2xl font-bold text-red-600 dark:text-red-400'
+                               }, loyaltyResults.statistics?.failed || 0),
+                               React.createElement('div', {
+                                   key: 'failed-label',
+                                   className: 'text-sm text-gray-600 dark:text-gray-400'
+                               }, 'Failed')
+                           ])
+                       ]),
+
+                       // Failures (if any)
+                       loyaltyResults.failures && loyaltyResults.failures.length > 0 && React.createElement('div', {
+                           key: 'failures-section',
+                           className: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4'
+                       }, [
+                           React.createElement('h3', {
+                               key: 'failures-title',
+                               className: 'font-semibold text-red-900 dark:text-red-100 mb-3'
+                           }, 'Failures'),
+                           React.createElement('div', {
+                               key: 'failures-list',
+                               className: 'space-y-2 max-h-40 overflow-y-auto'
+                           }, loyaltyResults.failures.map((failure, index) => 
+                               React.createElement('div', {
+                                   key: `failure-${index}`,
+                                   className: 'bg-white dark:bg-gray-800 rounded p-3 border border-red-200 dark:border-red-700'
+                               }, [
+                                   React.createElement('div', {
+                                       key: 'failure-product',
+                                       className: 'font-medium text-gray-900 dark:text-white'
+                                   }, failure.product_name || 'Unknown Product'),
+                                   React.createElement('div', {
+                                       key: 'failure-error',
+                                       className: 'text-sm text-red-600 dark:text-red-400 mt-1'
+                                   }, failure.error || 'Unknown error')
+                               ])
+                           ))
+                       ])
+                   ]),
+
+                   // Modal Footer
+                   React.createElement('div', {
+                       key: 'modal-footer',
+                       className: 'flex justify-end p-6 border-t dark:border-gray-700'
+                   }, [
+                       React.createElement('button', {
+                           key: 'close-button',
+                           onClick: () => setShowLoyaltyResultsModal(false),
+                           className: 'px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors'
+                       }, 'Close')
+                   ])
+               ])
+           ])
        ]);
     };
