@@ -47,7 +47,13 @@ window.Components.FieldMappingStep = function({
         }
     };
 
-    const saveMapping = async (mapping) => {
+    const saveMapping = async (mapping, forceSave = false) => {
+        // Don't save empty mappings unless explicitly clearing
+        if (Object.keys(mapping).length === 0 && !forceSave) {
+            console.log('Skipping save of empty mapping');
+            return;
+        }
+        
         try {
             const response = await fetch(`/api/data-loader/mapping/${jobId}`, {
                 method: 'POST',
@@ -125,7 +131,8 @@ window.Components.FieldMappingStep = function({
 
     const handleClearAll = () => {
         setFieldMapping({});
-        saveMapping({});
+        // Explicitly clear the mapping in the backend
+        saveMapping({}, true);
     };
 
     const handleNext = () => {
