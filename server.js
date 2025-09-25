@@ -3885,99 +3885,172 @@ async function insertProduct(client, data) {
   console.log('Data keys:', Object.keys(data));
   console.log('Data values:', Object.values(data));
   
-  const {
-    name, price, category, stock, sku, product_type, brand, collection,
-    material, color, description, dimensions, weight, warranty_info,
-    care_instructions, main_image_url, is_active, featured
-  } = data;
+  const { sku } = data;
   
-  const values = [
-    name, price, category, stock || 0, sku, product_type, brand, collection,
-    material, color, description, dimensions, weight, warranty_info,
-    care_instructions, main_image_url, is_active !== false, featured || false
-  ];
+  if (!sku) {
+    throw new Error('SKU is required for product operations');
+  }
   
-  console.log('Extracted values:', {
-    name, price, category, stock, sku, product_type, brand, collection,
-    material, color, description, dimensions, weight, warranty_info,
-    care_instructions, main_image_url, is_active, featured
-  });
+  // Check if product exists
+  const existingProduct = await client.query(`
+    SELECT id FROM products WHERE sku = $1
+  `, [sku]);
   
-  // console.log('Values array for INSERT:', values);
-  // console.log('Values array length:', values.length);
-  // console.log('Expected parameter count: 18');
-  
-  const result = await client.query(`
-    INSERT INTO products (
+  if (existingProduct.rows.length > 0) {
+    // Product exists - perform UPDATE with only provided fields
+    const updateFields = [];
+    const updateValues = [];
+    let paramCount = 1;
+    
+    // Build dynamic UPDATE query based on provided fields
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && key !== 'sku') {
+        updateFields.push(`${key} = $${paramCount}`);
+        updateValues.push(value);
+        paramCount++;
+      }
+    });
+    
+    if (updateFields.length > 0) {
+      // Add updated_at
+      updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+      
+      // Add SKU as the last parameter for WHERE clause
+      updateValues.push(sku);
+      
+      const updateQuery = `
+        UPDATE products 
+        SET ${updateFields.join(', ')}
+        WHERE sku = $${paramCount}
+        RETURNING id
+      `;
+      
+      console.log('UPDATE query:', updateQuery);
+      console.log('UPDATE values:', updateValues);
+      
+      const result = await client.query(updateQuery, updateValues);
+      console.log('UPDATE successful, product ID:', result.rows[0].id);
+      return result.rows[0].id;
+    } else {
+      // No fields to update, just return existing ID
+      console.log('No fields to update, returning existing product ID:', existingProduct.rows[0].id);
+      return existingProduct.rows[0].id;
+    }
+  } else {
+    // Product doesn't exist - check if we have required fields for INSERT
+    const { name } = data;
+    
+    if (!name) {
+      throw new Error(`Cannot create new product without required field 'name'. SKU: ${sku}`);
+    }
+    
+    // For new products, we need at least name and sku
+    const {
       name, price, category, stock, sku, product_type, brand, collection,
       material, color, description, dimensions, weight, warranty_info,
       care_instructions, main_image_url, is_active, featured
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-    ON CONFLICT (sku) DO UPDATE SET
-      name = EXCLUDED.name,
-      price = EXCLUDED.price,
-      category = EXCLUDED.category,
-      stock = EXCLUDED.stock,
-      product_type = EXCLUDED.product_type,
-      brand = EXCLUDED.brand,
-      collection = EXCLUDED.collection,
-      material = EXCLUDED.material,
-      color = EXCLUDED.color,
-      description = EXCLUDED.description,
-      dimensions = EXCLUDED.dimensions,
-      weight = EXCLUDED.weight,
-      warranty_info = EXCLUDED.warranty_info,
-      care_instructions = EXCLUDED.care_instructions,
-      main_image_url = EXCLUDED.main_image_url,
-      is_active = EXCLUDED.is_active,
-      featured = EXCLUDED.featured,
-      updated_at = CURRENT_TIMESTAMP
-    RETURNING id
-  `, values);
-  
-  console.log('INSERT successful, product ID:', result.rows[0].id);
-  // console.log('=== END INSERT PRODUCT DEBUG ===');
-  
-  return result.rows[0].id;
+    } = data;
+    
+    const values = [
+      name, price, category, stock || 0, sku, product_type, brand, collection,
+      material, color, description, dimensions, weight, warranty_info,
+      care_instructions, main_image_url, is_active !== false, featured || false
+    ];
+    
+    console.log('Creating new product with values:', values);
+    
+    const result = await client.query(`
+      INSERT INTO products (
+        name, price, category, stock, sku, product_type, brand, collection,
+        material, color, description, dimensions, weight, warranty_info,
+        care_instructions, main_image_url, is_active, featured
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING id
+    `, values);
+    
+    console.log('INSERT successful, product ID:', result.rows[0].id);
+    return result.rows[0].id;
+  }
 }
 
 // Helper function to insert customer
 async function insertCustomer(client, data) {
-  const {
-    loyalty_number, first_name, last_name, name, email, phone, points,
-    total_spent, visit_count, last_visit, member_type, member_status,
-    enrollment_date, notes
-  } = data;
+  const { loyalty_number } = data;
   
-  const result = await client.query(`
-    INSERT INTO customers (
+  if (!loyalty_number) {
+    throw new Error('Loyalty number is required for customer operations');
+  }
+  
+  // Check if customer exists
+  const existingCustomer = await client.query(`
+    SELECT id FROM customers WHERE loyalty_number = $1
+  `, [loyalty_number]);
+  
+  if (existingCustomer.rows.length > 0) {
+    // Customer exists - perform UPDATE with only provided fields
+    const updateFields = [];
+    const updateValues = [];
+    let paramCount = 1;
+    
+    // Build dynamic UPDATE query based on provided fields
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && key !== 'loyalty_number') {
+        updateFields.push(`${key} = $${paramCount}`);
+        updateValues.push(value);
+        paramCount++;
+      }
+    });
+    
+    if (updateFields.length > 0) {
+      // Add updated_at
+      updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+      
+      // Add loyalty_number as the last parameter for WHERE clause
+      updateValues.push(loyalty_number);
+      
+      const updateQuery = `
+        UPDATE customers 
+        SET ${updateFields.join(', ')}
+        WHERE loyalty_number = $${paramCount}
+        RETURNING id
+      `;
+      
+      const result = await client.query(updateQuery, updateValues);
+      return result.rows[0].id;
+    } else {
+      // No fields to update, just return existing ID
+      return existingCustomer.rows[0].id;
+    }
+  } else {
+    // Customer doesn't exist - check if we have required fields for INSERT
+    const { first_name, last_name } = data;
+    
+    if (!first_name || !last_name) {
+      throw new Error(`Cannot create new customer without required fields 'first_name' and 'last_name'. Loyalty Number: ${loyalty_number}`);
+    }
+    
+    // For new customers, we need at least first_name, last_name, and loyalty_number
+    const {
       loyalty_number, first_name, last_name, name, email, phone, points,
       total_spent, visit_count, last_visit, member_type, member_status,
       enrollment_date, notes
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-    ON CONFLICT (loyalty_number) DO UPDATE SET
-      first_name = EXCLUDED.first_name,
-      last_name = EXCLUDED.last_name,
-      name = EXCLUDED.name,
-      email = EXCLUDED.email,
-      phone = EXCLUDED.phone,
-      points = EXCLUDED.points,
-      total_spent = EXCLUDED.total_spent,
-      visit_count = EXCLUDED.visit_count,
-      last_visit = EXCLUDED.last_visit,
-      member_type = EXCLUDED.member_type,
-      member_status = EXCLUDED.member_status,
-      enrollment_date = EXCLUDED.enrollment_date,
-      notes = EXCLUDED.notes,
-      updated_at = CURRENT_TIMESTAMP
-    RETURNING id
-  `, [
-    loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,
-    email, phone, points || 0, total_spent || 0, visit_count || 0,
-    last_visit, member_type, member_status, enrollment_date, notes
-  ]);
-  
-  return result.rows[0].id;
+    } = data;
+    
+    const result = await client.query(`
+      INSERT INTO customers (
+        loyalty_number, first_name, last_name, name, email, phone, points,
+        total_spent, visit_count, last_visit, member_type, member_status,
+        enrollment_date, notes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING id
+    `, [
+      loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,
+      email, phone, points || 0, total_spent || 0, visit_count || 0,
+      last_visit, member_type, member_status, enrollment_date, notes
+    ]);
+    
+    return result.rows[0].id;
+  }
 }
 
 // Helper function to parse CSV
