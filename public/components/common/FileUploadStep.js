@@ -6,7 +6,7 @@ window.Components = window.Components || {};
 window.Components.FileUploadStep = function({
     onUpload
 }) {
-    const { Upload, File, AlertCircle } = window.Icons;
+    const { Upload, FileText, AlertCircle } = window.Icons;
 
     const [dragActive, setDragActive] = React.useState(false);
     const [selectedFile, setSelectedFile] = React.useState(null);
@@ -242,7 +242,7 @@ window.Components.FileUploadStep = function({
                     key: 'file-header',
                     className: 'flex items-center gap-3 mb-2'
                 }, [
-                    React.createElement(File, {
+                    React.createElement(FileText, {
                         key: 'file-icon',
                         size: 20,
                         className: 'text-blue-600'

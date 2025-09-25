@@ -10,7 +10,7 @@ window.Components.ProcessDataStep = function({
     onProcess,
     onClose
 }) {
-    const { Play, CheckCircle, AlertCircle, RefreshCw, X } = window.Icons;
+    const { Save, CheckCircle, AlertCircle, RefreshCw, X } = window.Icons;
 
     const [status, setStatus] = React.useState(null);
     const [errors, setErrors] = React.useState([]);
@@ -81,7 +81,7 @@ window.Components.ProcessDataStep = function({
                 className: 'text-red-600'
             });
         } else {
-            return React.createElement(Play, {
+            return React.createElement(Save, {
                 size: 24,
                 className: 'text-blue-600'
             });

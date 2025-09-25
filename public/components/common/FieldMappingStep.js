@@ -7,7 +7,7 @@ window.Components.FieldMappingStep = function({
     jobId,
     onMapping
 }) {
-    const { ArrowRight, CheckCircle, AlertCircle, RefreshCw } = window.Icons;
+    const { TrendingUp, CheckCircle, AlertCircle, RefreshCw } = window.Icons;
 
     const [csvFields, setCsvFields] = React.useState([]);
     const [dbFields, setDbFields] = React.useState([]);
@@ -226,7 +226,7 @@ window.Components.FieldMappingStep = function({
                             key: 'mapped-info',
                             className: 'mt-2 text-sm text-blue-600 dark:text-blue-400'
                         }, [
-                            React.createElement(ArrowRight, { key: 'arrow', size: 14, className: 'inline mr-1' }),
+                            React.createElement(TrendingUp, { key: 'arrow', size: 14, className: 'inline mr-1' }),
                             React.createElement('span', { key: 'mapped-text' }, `Mapped to: ${mappedDbField}`)
                         ])
                     ]);
