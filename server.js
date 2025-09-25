@@ -3714,12 +3714,23 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
         const mappedData = {};
         
         // Apply field mapping
+        console.log('=== Data Mapping Debug ===');
+        console.log('Job ID:', jobId);
+        console.log('Job Type:', job.type);
+        console.log('Raw Data:', rawData);
+        console.log('Field Mapping:', mapping);
+        console.log('Mapped Data:', mappedData);
+        console.log('==========================');
+
         Object.entries(mapping).forEach(([csvField, dbField]) => {
           if (rawData[csvField] !== undefined) {
             mappedData[dbField] = rawData[csvField];
           }
         });
-        
+        // Debug: Display contents of mappedData
+        console.log('=== After Data Mapping Debug ===');
+        console.log('Mapped Data:', mappedData);
+        console.log('==========================');
         
         // Insert into appropriate table
         if (job.type === 'products') {
