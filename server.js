@@ -3719,6 +3719,9 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
           }
         });
         
+        console.log('Mapped data:', mappedData);
+        console.log('Mapping:', mapping);
+        
         // Insert into appropriate table
         if (job.type === 'products') {
           await insertProduct(client, mappedData);
