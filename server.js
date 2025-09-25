@@ -3489,7 +3489,7 @@ app.post('/api/data-loader/upload', upload.single('csvFile'), async (req, res) =
   const client = await pool.connect();
   
   try {
-    const { type } = req.body; // 'products' or 'customers'
+    const { type, maxRows } = req.body; // 'products' or 'customers', maxRows
     const file = req.file;
     
     if (!file) {
@@ -3515,24 +3515,28 @@ app.post('/api/data-loader/upload', upload.single('csvFile'), async (req, res) =
       return res.status(400).json({ error: 'No valid data found in CSV file' });
     }
     
+    // Apply maxRows limit if specified
+    const maxRowsNum = parseInt(maxRows) || 0;
+    const limitedData = maxRowsNum > 0 ? csvData.slice(0, maxRowsNum) : csvData;
+    
     // Create job record
     const jobResult = await client.query(`
       INSERT INTO data_loader_jobs (type, file_name, total_rows, status)
       VALUES ($1, $2, $3, 'pending')
       RETURNING job_id
-    `, [type, file.originalname, csvData.length]);
+    `, [type, file.originalname, limitedData.length]);
     
     const jobId = jobResult.rows[0].job_id;
     
     // Store CSV rows
-    for (let i = 0; i < csvData.length; i++) {
+    for (let i = 0; i < limitedData.length; i++) {
       await client.query(`
         INSERT INTO data_loader_rows (job_id, row_number, raw_data)
         VALUES ($1, $2, $3)
-      `, [jobId, i + 1, JSON.stringify(csvData[i])]);
+      `, [jobId, i + 1, JSON.stringify(limitedData[i])]);
     }
     
-    res.json({ jobId, totalRows: csvData.length });
+    res.json({ jobId, totalRows: limitedData.length });
     
   } catch (error) {
     console.error('Error uploading CSV:', error);
@@ -3630,7 +3634,7 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
     
     // Get job info
     const jobResult = await client.query(`
-      SELECT type, field_mapping FROM data_loader_jobs WHERE job_id = $1
+      SELECT type, field_mapping, constant_values, total_rows FROM data_loader_jobs WHERE job_id = $1
     `, [jobId]);
     
     if (!jobResult.rows.length) {
@@ -3640,6 +3644,8 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
     const job = jobResult.rows[0];
     const mapping = job.field_mapping ? 
       (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
+    const constants = job.constant_values ? 
+      (typeof job.constant_values === 'string' ? JSON.parse(job.constant_values) : job.constant_values) : {};
     
     // Get sample rows
     const rowsResult = await client.query(`
@@ -3653,10 +3659,26 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
       const rawData = row.raw_data;
       const mappedData = {};
       
-      // Apply field mapping
-      Object.entries(mapping).forEach(([csvField, dbField]) => {
-        if (rawData[csvField] !== undefined) {
-          mappedData[dbField] = rawData[csvField];
+      // Apply field mapping (multiple DB fields per CSV field)
+      Object.entries(mapping).forEach(([csvField, dbFields]) => {
+        if (rawData[csvField] !== undefined && Array.isArray(dbFields)) {
+          dbFields.forEach(dbField => {
+            mappedData[dbField] = rawData[csvField];
+          });
+        }
+      });
+      
+      // Apply constant values
+      Object.entries(constants).forEach(([dbField, constantData]) => {
+        if (constantData && constantData.value !== undefined) {
+          // Convert value based on type
+          let value = constantData.value;
+          if (constantData.type === 'number') {
+            value = parseFloat(value);
+          } else if (constantData.type === 'boolean') {
+            value = ['true', '1', 'yes'].includes(value.toString().toLowerCase());
+          }
+          mappedData[dbField] = value;
         }
       });
       

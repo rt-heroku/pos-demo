@@ -12,6 +12,7 @@ window.Components.FileUploadStep = function({
     const [dragActive, setDragActive] = React.useState(false);
     const [selectedFile, setSelectedFile] = React.useState(null);
     const [selectedType, setSelectedType] = React.useState('products');
+    const [maxRows, setMaxRows] = React.useState(0);
     const [uploading, setUploading] = React.useState(false);
 
     const fileInputRef = React.useRef(null);
@@ -69,7 +70,7 @@ window.Components.FileUploadStep = function({
         
         setUploading(true);
         try {
-            await onUpload(selectedFile, selectedType);
+            await onUpload(selectedFile, selectedType, maxRows);
         } catch (error) {
             console.error('Upload error:', error);
             alert(`Upload failed: ${error.message}`);
@@ -180,6 +181,30 @@ window.Components.FileUploadStep = function({
                     ])
                 ])
             ])
+        ]),
+
+        // Max Rows Input
+        React.createElement('div', {
+            key: 'max-rows',
+            className: 'space-y-2'
+        }, [
+            React.createElement('label', {
+                key: 'max-rows-label',
+                className: 'block text-sm font-medium text-gray-700 dark:text-gray-300'
+            }, 'Max Rows to Import'),
+            React.createElement('input', {
+                key: 'max-rows-input',
+                type: 'number',
+                min: '0',
+                value: maxRows,
+                onChange: (e) => setMaxRows(parseInt(e.target.value) || 0),
+                placeholder: '0 = all rows',
+                className: 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+            }),
+            React.createElement('p', {
+                key: 'max-rows-help',
+                className: 'text-sm text-gray-500 dark:text-gray-400'
+            }, 'Enter 0 to import all rows, or specify a number to limit the import')
         ]),
 
         // File Upload Area

@@ -633,7 +633,7 @@ window.Components.FieldMappingStep = function({
                         key: 'modal-close',
                         onClick: () => setShowConstantModal(false),
                         className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                    }, React.createElement('X', { size: 20 }))
+                    }, React.createElement(X, { size: 20 }))
                 ]),
                 React.createElement(ConstantValueForm, {
                     key: 'constant-form',

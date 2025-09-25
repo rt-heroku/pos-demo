@@ -34,10 +34,11 @@ window.Modals.DataLoaderModal = function({
     }, [show]);
 
     // Step 1: File Upload
-    const handleFileUpload = async (file, type) => {
+    const handleFileUpload = async (file, type, maxRows = 0) => {
         const formData = new FormData();
         formData.append('csvFile', file);
         formData.append('type', type);
+        formData.append('maxRows', maxRows.toString());
         
         try {
             const response = await fetch('/api/data-loader/upload', {
