@@ -87,6 +87,9 @@ window.Components.FieldMappingStep = function({
             newMapping[draggedField] = dbField;
             setFieldMapping(newMapping);
             setDraggedField(null);
+            
+            // Save mapping immediately
+            saveMapping(newMapping);
         }
     };
 
@@ -94,14 +97,19 @@ window.Components.FieldMappingStep = function({
         const newMapping = { ...fieldMapping };
         delete newMapping[csvField];
         setFieldMapping(newMapping);
+        
+        // Save mapping immediately
+        saveMapping(newMapping);
     };
 
     const handleAutoMap = () => {
         setFieldMapping(autoMapped);
+        saveMapping(autoMapped);
     };
 
     const handleClearAll = () => {
         setFieldMapping({});
+        saveMapping({});
     };
 
     const handleNext = () => {
