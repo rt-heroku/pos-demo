@@ -169,7 +169,7 @@ window.Modals.DataLoaderModal = function({
                     key: 'title-section',
                     className: 'flex items-center gap-3'
                 }, [
-                    getStepIcon(),
+                    React.createElement('div', { key: 'step-icon' }, getStepIcon()),
                     React.createElement('h2', {
                         key: 'title',
                         className: 'text-xl font-semibold text-gray-900 dark:text-white'
