@@ -3845,11 +3845,32 @@ app.get('/api/data-loader/errors/:jobId', async (req, res) => {
 
 // Helper function to insert product
 async function insertProduct(client, data) {
+  console.log('=== INSERT PRODUCT DEBUG ===');
+  console.log('Raw data received:', data);
+  console.log('Data keys:', Object.keys(data));
+  console.log('Data values:', Object.values(data));
+  
   const {
     name, price, category, stock, sku, product_type, brand, collection,
     material, color, description, dimensions, weight, warranty_info,
     care_instructions, main_image_url, is_active, featured
   } = data;
+  
+  const values = [
+    name, price, category, stock || 0, sku, product_type, brand, collection,
+    material, color, description, dimensions, weight, warranty_info,
+    care_instructions, main_image_url, is_active !== false, featured || false
+  ];
+  
+  console.log('Extracted values:', {
+    name, price, category, stock, sku, product_type, brand, collection,
+    material, color, description, dimensions, weight, warranty_info,
+    care_instructions, main_image_url, is_active, featured
+  });
+  
+  console.log('Values array for INSERT:', values);
+  console.log('Values array length:', values.length);
+  console.log('Expected parameter count: 19');
   
   const result = await client.query(`
     INSERT INTO products (
@@ -3858,11 +3879,10 @@ async function insertProduct(client, data) {
       care_instructions, main_image_url, is_active, featured
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
     RETURNING id
-  `, [
-    name, price, category, stock || 0, sku, product_type, brand, collection,
-    material, color, description, dimensions, weight, warranty_info,
-    care_instructions, main_image_url, is_active !== false, featured || false
-  ]);
+  `, values);
+  
+  console.log('INSERT successful, product ID:', result.rows[0].id);
+  console.log('=== END INSERT PRODUCT DEBUG ===');
   
   return result.rows[0].id;
 }
