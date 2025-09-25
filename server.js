@@ -3913,6 +3913,25 @@ async function insertProduct(client, data) {
       material, color, description, dimensions, weight, warranty_info,
       care_instructions, main_image_url, is_active, featured
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+    ON CONFLICT (sku) DO UPDATE SET
+      name = EXCLUDED.name,
+      price = EXCLUDED.price,
+      category = EXCLUDED.category,
+      stock = EXCLUDED.stock,
+      product_type = EXCLUDED.product_type,
+      brand = EXCLUDED.brand,
+      collection = EXCLUDED.collection,
+      material = EXCLUDED.material,
+      color = EXCLUDED.color,
+      description = EXCLUDED.description,
+      dimensions = EXCLUDED.dimensions,
+      weight = EXCLUDED.weight,
+      warranty_info = EXCLUDED.warranty_info,
+      care_instructions = EXCLUDED.care_instructions,
+      main_image_url = EXCLUDED.main_image_url,
+      is_active = EXCLUDED.is_active,
+      featured = EXCLUDED.featured,
+      updated_at = CURRENT_TIMESTAMP
     RETURNING id
   `, values);
   
@@ -3936,6 +3955,21 @@ async function insertCustomer(client, data) {
       total_spent, visit_count, last_visit, member_type, member_status,
       enrollment_date, notes
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    ON CONFLICT (loyalty_number) DO UPDATE SET
+      first_name = EXCLUDED.first_name,
+      last_name = EXCLUDED.last_name,
+      name = EXCLUDED.name,
+      email = EXCLUDED.email,
+      phone = EXCLUDED.phone,
+      points = EXCLUDED.points,
+      total_spent = EXCLUDED.total_spent,
+      visit_count = EXCLUDED.visit_count,
+      last_visit = EXCLUDED.last_visit,
+      member_type = EXCLUDED.member_type,
+      member_status = EXCLUDED.member_status,
+      enrollment_date = EXCLUDED.enrollment_date,
+      notes = EXCLUDED.notes,
+      updated_at = CURRENT_TIMESTAMP
     RETURNING id
   `, [
     loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,

@@ -191,7 +191,7 @@ window.Modals.DataLoaderModal = function({
             // Content
             React.createElement('div', {
                 key: 'content',
-                className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]'
+                className: 'p-6 overflow-y-auto max-h-[calc(90vh-2000px)]'
             }, [
                 // Step 1: File Upload
                 step === 1 && React.createElement(window.Components.FileUploadStep, {
