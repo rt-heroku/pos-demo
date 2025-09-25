@@ -89,6 +89,7 @@ window.Views.SettingsView = ({
         const [showDataLoaderModal, setShowDataLoaderModal] = React.useState(false);
         const [showLoyaltyResultsModal, setShowLoyaltyResultsModal] = React.useState(false);
         const [loyaltyResults, setLoyaltyResults] = React.useState(null);
+        const [syncingLoyalty, setSyncingLoyalty] = React.useState(false);
         
         // Products management state
         const [showDeleteProductsModal, setShowDeleteProductsModal] = React.useState(false);
@@ -969,7 +970,7 @@ window.Views.SettingsView = ({
 
         const sendToLoyalty = async () => {
             try {
-                setLoading(true);
+                setSyncingLoyalty(true);
                 
                 const response = await fetch('/api/loyalty/products/send', {
                     method: 'POST',
@@ -995,7 +996,7 @@ window.Views.SettingsView = ({
                 });
                 setShowLoyaltyResultsModal(true);
             } finally {
-                setLoading(false);
+                setSyncingLoyalty(false);
             }
         };
 
@@ -2869,8 +2870,13 @@ sfdc.account=`;
                            React.createElement('button', {
                                key: 'loyalty-btn',
                                onClick: sendToLoyalty,
-                               className: 'w-full px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
-                           }, 'Send to Loyalty')
+                               disabled: syncingLoyalty,
+                               className: `w-full px-4 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm ${
+                                   syncingLoyalty 
+                                       ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
+                                       : 'bg-orange-600 hover:bg-orange-700 text-white hover:shadow-md'
+                               }`
+                           }, syncingLoyalty ? 'Syncing...' : 'Send to Loyalty')
                        ])
                    ]),
 
