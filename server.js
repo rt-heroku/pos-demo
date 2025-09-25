@@ -4031,7 +4031,7 @@ async function insertCustomer(client, data) {
     
     // For new customers, we need at least first_name, last_name, and loyalty_number
     const {
-      loyalty_number, first_name, last_name, name, email, phone, points,
+      name, email, phone, points,
       total_spent, visit_count, last_visit, member_type, member_status,
       enrollment_date, notes
     } = data;
