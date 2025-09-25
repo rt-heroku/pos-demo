@@ -3714,13 +3714,13 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
         const mappedData = {};
         
         // Apply field mapping
-        console.log('=== Data Mapping Debug ===');
-        console.log('Job ID:', jobId);
-        console.log('Job Type:', job.type);
-        console.log('Raw Data:', rawData);
-        console.log('Field Mapping:', mapping);
-        console.log('Mapped Data:', mappedData);
-        console.log('==========================');
+        // console.log('=== Data Mapping Debug ===');
+        // console.log('Job ID:', jobId);
+        // console.log('Job Type:', job.type);
+        // console.log('Raw Data:', rawData);
+        // console.log('Field Mapping:', mapping);
+        // console.log('Mapped Data:', mappedData);
+        // console.log('==========================');
 
         Object.entries(mapping).forEach(([csvField, dbField]) => {
           if (rawData[csvField] !== undefined) {
@@ -3728,9 +3728,9 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
           }
         });
         // Debug: Display contents of mappedData
-        console.log('=== After Data Mapping Debug ===');
-        console.log('Mapped Data:', mappedData);
-        console.log('==========================');
+        // console.log('=== After Data Mapping Debug ===');
+        // console.log('Mapped Data:', mappedData);
+        // console.log('==========================');
         
         // Insert into appropriate table
         if (job.type === 'products') {
@@ -3868,21 +3868,21 @@ async function insertProduct(client, data) {
     care_instructions, main_image_url, is_active, featured
   });
   
-  console.log('Values array for INSERT:', values);
-  console.log('Values array length:', values.length);
-  console.log('Expected parameter count: 19');
+  // console.log('Values array for INSERT:', values);
+  // console.log('Values array length:', values.length);
+  // console.log('Expected parameter count: 18');
   
   const result = await client.query(`
     INSERT INTO products (
       name, price, category, stock, sku, product_type, brand, collection,
       material, color, description, dimensions, weight, warranty_info,
       care_instructions, main_image_url, is_active, featured
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
     RETURNING id
   `, values);
   
   console.log('INSERT successful, product ID:', result.rows[0].id);
-  console.log('=== END INSERT PRODUCT DEBUG ===');
+  // console.log('=== END INSERT PRODUCT DEBUG ===');
   
   return result.rows[0].id;
 }
