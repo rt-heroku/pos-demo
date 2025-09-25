@@ -3946,7 +3946,7 @@ async function insertProduct(client, data) {
     
     // For new products, we need at least name and sku
     const {
-      name, price, category, stock, sku, product_type, brand, collection,
+      price, category, stock, product_type, brand, collection,
       material, color, description, dimensions, weight, warranty_info,
       care_instructions, main_image_url, is_active, featured
     } = data;
