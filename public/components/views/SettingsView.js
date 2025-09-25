@@ -86,6 +86,7 @@ window.Views.SettingsView = ({
     const [testDataOutput, setTestDataOutput] = React.useState('');
     const [showTestDataOutput, setShowTestDataOutput] = React.useState(false);
     const [showLoadFromCloudModal, setShowLoadFromCloudModal] = React.useState(false);
+    const [showDataLoaderModal, setShowDataLoaderModal] = React.useState(false);
         
         // Products management state
         const [showDeleteProductsModal, setShowDeleteProductsModal] = React.useState(false);
@@ -2806,6 +2807,24 @@ sfdc.account=`;
                            }, 'Generate Products')
                        ]),
 
+                       // Data Loader Card
+                       React.createElement('div', { key: 'data-loader-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-purple-200 dark:border-purple-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-purple-600 dark:text-purple-400 text-lg' }, '📊')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Data Loader')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Import products or customers from CSV files with intelligent field mapping'
+                           ),
+                           React.createElement('button', {
+                               key: 'data-loader-btn',
+                               onClick: () => setShowDataLoaderModal(true),
+                               className: 'w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
+                           }, 'Data Loader')
+                       ]),
+
                        // Send to Loyalty Card
                        React.createElement('div', { key: 'loyalty-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-orange-200 dark:border-orange-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
                            React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
@@ -3761,6 +3780,18 @@ sfdc.account=`;
                show: showLoadFromCloudModal,
                onClose: closeLoadFromCloudModal,
                onProductsLoaded: handleProductsLoaded
+           }),
+
+           // Data Loader Modal
+           showDataLoaderModal && React.createElement(window.Modals.DataLoaderModal, {
+               key: 'data-loader-modal',
+               show: showDataLoaderModal,
+               onClose: () => setShowDataLoaderModal(false),
+               onImportComplete: () => {
+                   setShowDataLoaderModal(false);
+                   // Refresh the page to show updated data
+                   window.location.reload();
+               }
            })
        ]);
     };

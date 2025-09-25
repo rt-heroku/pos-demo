@@ -3464,7 +3464,441 @@ app.get('/api/system-settings/database/info', async (req, res) => {
 //   }
 // });
 
+// ============================================================================
+// DATA LOADER API ENDPOINTS
+// ============================================================================
 
+// File upload and CSV parsing
+app.post('/api/data-loader/upload', upload.single('csvFile'), async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { type } = req.body; // 'products' or 'customers'
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    if (!type || !['products', 'customers'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid type. Must be "products" or "customers"' });
+    }
+    
+    // Check file size (25MB limit)
+    const maxSize = 25 * 1024 * 1024; // 25MB
+    if (file.size > maxSize) {
+      return res.status(400).json({ 
+        error: `File size exceeds 25MB limit. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB` 
+      });
+    }
+    
+    // Parse CSV
+    const csvData = await parseCSV(file.buffer);
+    
+    if (csvData.length === 0) {
+      return res.status(400).json({ error: 'No valid data found in CSV file' });
+    }
+    
+    // Create job record
+    const jobResult = await client.query(`
+      INSERT INTO data_loader_jobs (type, file_name, total_rows, status)
+      VALUES ($1, $2, $3, 'pending')
+      RETURNING job_id
+    `, [type, file.originalname, csvData.length]);
+    
+    const jobId = jobResult.rows[0].job_id;
+    
+    // Store CSV rows
+    for (let i = 0; i < csvData.length; i++) {
+      await client.query(`
+        INSERT INTO data_loader_rows (job_id, row_number, raw_data)
+        VALUES ($1, $2, $3)
+      `, [jobId, i + 1, JSON.stringify(csvData[i])]);
+    }
+    
+    res.json({ jobId, totalRows: csvData.length });
+    
+  } catch (error) {
+    console.error('Error uploading CSV:', error);
+    res.status(500).json({ error: 'Failed to upload CSV' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get CSV and database fields for mapping
+app.get('/api/data-loader/fields/:jobId', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { jobId } = req.params;
+    
+    // Get job info
+    const jobResult = await client.query(`
+      SELECT type, total_rows FROM data_loader_jobs WHERE job_id = $1
+    `, [jobId]);
+    
+    if (!jobResult.rows.length) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    const job = jobResult.rows[0];
+    
+    // Get sample data to determine CSV fields
+    const sampleResult = await client.query(`
+      SELECT raw_data FROM data_loader_rows 
+      WHERE job_id = $1 AND row_number = 1
+    `, [jobId]);
+    
+    if (!sampleResult.rows.length) {
+      return res.status(404).json({ error: 'No data found for job' });
+    }
+    
+    const csvFields = Object.keys(JSON.parse(sampleResult.rows[0].raw_data));
+    
+    // Get database fields based on type
+    const dbFields = job.type === 'products' 
+      ? ['name', 'price', 'category', 'stock', 'sku', 'product_type', 'brand', 'collection', 'material', 'color', 'description', 'dimensions', 'weight', 'warranty_info', 'care_instructions', 'main_image_url', 'is_active', 'featured']
+      : ['loyalty_number', 'first_name', 'last_name', 'name', 'email', 'phone', 'points', 'total_spent', 'visit_count', 'last_visit', 'member_type', 'member_status', 'enrollment_date', 'notes'];
+    
+    res.json({ csvFields, dbFields, type: job.type });
+    
+  } catch (error) {
+    console.error('Error getting fields:', error);
+    res.status(500).json({ error: 'Failed to get fields' });
+  } finally {
+    client.release();
+  }
+});
+
+// Save field mapping
+app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { jobId } = req.params;
+    const { fieldMapping } = req.body;
+    
+    if (!fieldMapping || typeof fieldMapping !== 'object') {
+      return res.status(400).json({ error: 'Invalid field mapping' });
+    }
+    
+    // Update job with field mapping
+    await client.query(`
+      UPDATE data_loader_jobs 
+      SET field_mapping = $1, status = 'mapping', updated_at = CURRENT_TIMESTAMP
+      WHERE job_id = $2
+    `, [JSON.stringify(fieldMapping), jobId]);
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Error saving mapping:', error);
+    res.status(500).json({ error: 'Failed to save mapping' });
+  } finally {
+    client.release();
+  }
+});
+
+// Preview mapped data
+app.get('/api/data-loader/preview/:jobId', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { jobId } = req.params;
+    const { limit = 10 } = req.query;
+    
+    // Get job info
+    const jobResult = await client.query(`
+      SELECT type, field_mapping FROM data_loader_jobs WHERE job_id = $1
+    `, [jobId]);
+    
+    if (!jobResult.rows.length) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    const job = jobResult.rows[0];
+    const mapping = job.field_mapping || {};
+    
+    // Get sample rows
+    const rowsResult = await client.query(`
+      SELECT row_number, raw_data FROM data_loader_rows 
+      WHERE job_id = $1 
+      ORDER BY row_number 
+      LIMIT $2
+    `, [jobId, parseInt(limit)]);
+    
+    const previewData = rowsResult.rows.map(row => {
+      const rawData = JSON.parse(row.raw_data);
+      const mappedData = {};
+      
+      // Apply field mapping
+      Object.entries(mapping).forEach(([csvField, dbField]) => {
+        if (rawData[csvField] !== undefined) {
+          mappedData[dbField] = rawData[csvField];
+        }
+      });
+      
+      return {
+        rowNumber: row.row_number,
+        rawData,
+        mappedData
+      };
+    });
+    
+    res.json({ previewData, totalRows: job.total_rows });
+    
+  } catch (error) {
+    console.error('Error getting preview:', error);
+    res.status(500).json({ error: 'Failed to get preview' });
+  } finally {
+    client.release();
+  }
+});
+
+// Process data import
+app.post('/api/data-loader/process/:jobId', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { jobId } = req.params;
+    
+    // Update job status
+    await client.query(`
+      UPDATE data_loader_jobs SET status = 'processing', updated_at = CURRENT_TIMESTAMP
+      WHERE job_id = $1
+    `, [jobId]);
+    
+    // Get job info
+    const jobResult = await client.query(`
+      SELECT type, field_mapping FROM data_loader_jobs WHERE job_id = $1
+    `, [jobId]);
+    
+    if (!jobResult.rows.length) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    const job = jobResult.rows[0];
+    const mapping = job.field_mapping || {};
+    
+    // Process each row
+    const rowsResult = await client.query(`
+      SELECT * FROM data_loader_rows WHERE job_id = $1 AND status = 'pending'
+    `, [jobId]);
+    
+    let processedCount = 0;
+    let errorCount = 0;
+    
+    for (const row of rowsResult.rows) {
+      try {
+        const rawData = JSON.parse(row.raw_data);
+        const mappedData = {};
+        
+        // Apply field mapping
+        Object.entries(mapping).forEach(([csvField, dbField]) => {
+          if (rawData[csvField] !== undefined) {
+            mappedData[dbField] = rawData[csvField];
+          }
+        });
+        
+        // Insert into appropriate table
+        if (job.type === 'products') {
+          await insertProduct(client, mappedData);
+        } else {
+          await insertCustomer(client, mappedData);
+        }
+        
+        // Update row status
+        await client.query(`
+          UPDATE data_loader_rows SET status = 'processed', mapped_data = $1
+          WHERE id = $2
+        `, [JSON.stringify(mappedData), row.id]);
+        
+        processedCount++;
+        
+      } catch (error) {
+        // Mark row as error
+        await client.query(`
+          UPDATE data_loader_rows SET status = 'error', error_message = $1
+          WHERE id = $2
+        `, [error.message, row.id]);
+        
+        // Log error
+        await client.query(`
+          INSERT INTO data_loader_errors (job_id, row_id, error_type, error_message)
+          VALUES ($1, $2, 'import', $3)
+        `, [jobId, row.id, error.message]);
+        
+        errorCount++;
+      }
+    }
+    
+    // Update job status
+    await client.query(`
+      UPDATE data_loader_jobs 
+      SET status = 'completed', processed_rows = $1, error_count = $2, completed_at = CURRENT_TIMESTAMP
+      WHERE job_id = $3
+    `, [processedCount, errorCount, jobId]);
+    
+    res.json({ 
+      success: true, 
+      processedRows: processedCount, 
+      errorCount: errorCount 
+    });
+    
+  } catch (error) {
+    console.error('Error processing data:', error);
+    
+    // Update job status to failed
+    await client.query(`
+      UPDATE data_loader_jobs SET status = 'failed', updated_at = CURRENT_TIMESTAMP
+      WHERE job_id = $1
+    `, [req.params.jobId]);
+    
+    res.status(500).json({ error: 'Failed to process data' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get job status
+app.get('/api/data-loader/status/:jobId', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { jobId } = req.params;
+    
+    const jobResult = await client.query(`
+      SELECT status, total_rows, processed_rows, error_count, created_at, completed_at
+      FROM data_loader_jobs WHERE job_id = $1
+    `, [jobId]);
+    
+    if (!jobResult.rows.length) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    res.json(jobResult.rows[0]);
+    
+  } catch (error) {
+    console.error('Error getting job status:', error);
+    res.status(500).json({ error: 'Failed to get job status' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get import errors
+app.get('/api/data-loader/errors/:jobId', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { jobId } = req.params;
+    
+    const errorsResult = await client.query(`
+      SELECT e.*, r.row_number
+      FROM data_loader_errors e
+      JOIN data_loader_rows r ON e.row_id = r.id
+      WHERE e.job_id = $1
+      ORDER BY r.row_number
+    `, [jobId]);
+    
+    res.json(errorsResult.rows);
+    
+  } catch (error) {
+    console.error('Error getting errors:', error);
+    res.status(500).json({ error: 'Failed to get errors' });
+  } finally {
+    client.release();
+  }
+});
+
+// Helper function to insert product
+async function insertProduct(client, data) {
+  const {
+    name, price, category, stock, sku, product_type, brand, collection,
+    material, color, description, dimensions, weight, warranty_info,
+    care_instructions, main_image_url, is_active, featured
+  } = data;
+  
+  const result = await client.query(`
+    INSERT INTO products (
+      name, price, category, stock, sku, product_type, brand, collection,
+      material, color, description, dimensions, weight, warranty_info,
+      care_instructions, main_image_url, is_active, featured
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING id
+  `, [
+    name, price, category, stock || 0, sku, product_type, brand, collection,
+    material, color, description, dimensions, weight, warranty_info,
+    care_instructions, main_image_url, is_active !== false, featured || false
+  ]);
+  
+  return result.rows[0].id;
+}
+
+// Helper function to insert customer
+async function insertCustomer(client, data) {
+  const {
+    loyalty_number, first_name, last_name, name, email, phone, points,
+    total_spent, visit_count, last_visit, member_type, member_status,
+    enrollment_date, notes
+  } = data;
+  
+  const result = await client.query(`
+    INSERT INTO customers (
+      loyalty_number, first_name, last_name, name, email, phone, points,
+      total_spent, visit_count, last_visit, member_type, member_status,
+      enrollment_date, notes
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    RETURNING id
+  `, [
+    loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,
+    email, phone, points || 0, total_spent || 0, visit_count || 0,
+    last_visit, member_type, member_status, enrollment_date, notes
+  ]);
+  
+  return result.rows[0].id;
+}
+
+// Helper function to parse CSV
+async function parseCSV(buffer) {
+  const csv = require('csv-parser');
+  const { Readable } = require('stream');
+  
+  return new Promise((resolve, reject) => {
+    const results = [];
+    const stream = Readable.from(buffer.toString());
+    
+    stream
+      .pipe(csv())
+      .on('data', (data) => {
+        // Clean and validate each row
+        const cleanedData = {};
+        for (const [key, value] of Object.entries(data)) {
+          if (key && key.trim() !== '') {
+            const cleanKey = key.trim();
+            const cleanValue = value ? value.toString().trim() : '';
+            if (cleanValue !== '') {
+              cleanedData[cleanKey] = cleanValue;
+            }
+          }
+        }
+        if (Object.keys(cleanedData).length > 0) {
+          results.push(cleanedData);
+        }
+      })
+      .on('end', () => {
+        if (results.length === 0) {
+          reject(new Error('No valid data found in CSV file'));
+        } else {
+          resolve(results);
+        }
+      })
+      .on('error', (error) => {
+        reject(new Error(`CSV parsing error: ${error.message}`));
+      });
+  });
+}
 
 // Serve React app
 app.get('*', (req, res) => {
