@@ -3570,7 +3570,7 @@ app.get('/api/data-loader/fields/:jobId', async (req, res) => {
       return res.status(404).json({ error: 'No data found for job' });
     }
     
-    const csvFields = Object.keys(JSON.parse(sampleResult.rows[0].raw_data));
+    const csvFields = Object.keys(sampleResult.rows[0].raw_data);
     
     // Get database fields based on type
     const dbFields = job.type === 'products' 
