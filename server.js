@@ -3750,7 +3750,12 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
         });
         
         // Apply constant values
+        console.log('=== CONSTANT VALUES DEBUG ===');
+        console.log('Constants object:', constants);
+        console.log('Constants entries:', Object.entries(constants));
+        
         Object.entries(constants).forEach(([dbField, constantData]) => {
+          console.log(`Processing constant for field: ${dbField}`, constantData);
           if (constantData && constantData.value !== undefined) {
             // Convert value based on type
             let value = constantData.value;
@@ -3759,9 +3764,13 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
             } else if (constantData.type === 'boolean') {
               value = ['true', '1', 'yes'].includes(value.toString().toLowerCase());
             }
+            console.log(`Setting ${dbField} = ${value} (type: ${constantData.type})`);
             mappedData[dbField] = value;
           }
         });
+        
+        console.log('Final mappedData after constants:', mappedData);
+        console.log('=== END CONSTANT VALUES DEBUG ===');
         // Debug: Display contents of mappedData
         // console.log('=== After Data Mapping Debug ===');
         // console.log('Mapped Data:', mappedData);
