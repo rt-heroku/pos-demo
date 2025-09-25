@@ -4,7 +4,8 @@
 window.Components = window.Components || {};
 
 window.Components.FileUploadStep = function({
-    onUpload
+    onUpload,
+    autoUpload = false
 }) {
     const { Upload, FileText, AlertCircle } = window.Icons;
 
@@ -50,6 +51,11 @@ window.Components.FileUploadStep = function({
         }
 
         setSelectedFile(file);
+        
+        // Auto-upload if enabled
+        if (autoUpload) {
+            handleUpload();
+        }
     };
 
     const handleFileInput = (e) => {

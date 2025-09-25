@@ -35,6 +35,11 @@ window.Components.FieldMappingStep = function({
                 const autoMapping = autoMapFields(data.csvFields, data.dbFields);
                 setAutoMapped(autoMapping);
                 setFieldMapping(autoMapping);
+                
+                // Save auto-mapping to backend
+                if (Object.keys(autoMapping).length > 0) {
+                    saveMapping(autoMapping);
+                }
             } else {
                 const error = await response.json();
                 alert(`Failed to load fields: ${error.error}`);

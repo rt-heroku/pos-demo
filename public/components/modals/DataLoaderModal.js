@@ -87,6 +87,13 @@ window.Modals.DataLoaderModal = function({
         }
     };
 
+    // Handle upload from step 1
+    const handleUpload = async () => {
+        // This will be handled by the FileUploadStep component
+        // The FileUploadStep will call onUpload when the file is selected
+        // and the Next button is pressed
+    };
+
     // Step 4: Process Data
     const handleProcess = async () => {
         if (!jobId) return;
@@ -188,7 +195,8 @@ window.Modals.DataLoaderModal = function({
                 // Step 1: File Upload
                 step === 1 && React.createElement(window.Components.FileUploadStep, {
                     key: 'file-upload',
-                    onUpload: handleFileUpload
+                    onUpload: handleFileUpload,
+                    autoUpload: true
                 }),
 
                 // Step 2: Field Mapping
@@ -234,9 +242,9 @@ window.Modals.DataLoaderModal = function({
                 }, 'Back'),
                 step < 4 && React.createElement('button', {
                     key: 'next-btn',
-                    onClick: step === 3 ? handlePreview : () => setStep(step + 1),
+                    onClick: step === 1 ? handleUpload : step === 3 ? handlePreview : () => setStep(step + 1),
                     className: 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                }, step === 3 ? 'Preview' : 'Next')
+                }, step === 1 ? 'Upload & Next' : step === 3 ? 'Preview' : 'Next')
             ])
         ])
     ]);
