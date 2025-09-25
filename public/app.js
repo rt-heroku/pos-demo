@@ -85,6 +85,7 @@ const POSApp = () => {
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [amountReceived, setAmountReceived] = useState('');
     const [discountAmount, setDiscountAmount] = useState('');
+    const [taxRate, setTaxRate] = useState('');
     const [discountType, setDiscountType] = useState('fixed'); // 'fixed' or 'percentage'
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastTransaction, setLastTransaction] = useState(null);
@@ -599,7 +600,8 @@ const POSApp = () => {
         ? subtotal * (parseFloat(discountAmount) || 0) / 100
         : parseFloat(discountAmount) || 0;
     const discountedSubtotal = Math.max(0, subtotal - discount);
-    const tax = discountedSubtotal * (selectedLocation?.tax_rate || 0.08);
+    const effectiveTaxRate = taxRate ? parseFloat(taxRate) / 100 : (selectedLocation?.tax_rate || 0.08);
+    const tax = discountedSubtotal * effectiveTaxRate;
     const total = discountedSubtotal + tax;
     const change = parseFloat(amountReceived) - total;
     const categories = ['All', ...new Set(products.map(p => p.category))];
@@ -1428,6 +1430,7 @@ const POSApp = () => {
                 onRemoveCustomer: handleRemoveCustomer,
                 subtotal: discountedSubtotal,
                 tax, total,
+                taxRate, setTaxRate,
                 discount, discountAmount, setDiscountAmount,
                 discountType, setDiscountType,
                 paymentMethod, setPaymentMethod,

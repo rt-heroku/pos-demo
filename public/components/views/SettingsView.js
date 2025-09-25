@@ -1581,7 +1581,7 @@ sfdc.account=`;
                     currentUser?.role === 'admin' && React.createElement(TabButton, { 
                         key: 'products-tab',
                         tab: 'products', 
-                        label: 'Product Management', 
+                        label: 'Data Management', 
                         icon: ProductsIcon,
                         active: activeTab === 'products' 
                     })
@@ -2741,7 +2741,7 @@ sfdc.account=`;
                        ]),
                        React.createElement('div', { key: 'title-section' }, [
                            React.createElement('h2', { key: 'title', className: 'text-2xl font-bold text-gray-900 dark:text-white' }, 
-                               'Product Management'
+                               'Data Management'
                            ),
                            React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
                                'Manage your product catalog with AI-powered generation and cloud sync'

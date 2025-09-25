@@ -47,6 +47,8 @@ window.Views.POSView = ({
     subtotal,
     tax,
     total,
+    taxRate,
+    setTaxRate,
     discount,
     discountAmount,
     setDiscountAmount,
@@ -320,8 +322,8 @@ window.Views.POSView = ({
                     React.createElement('h2', { key: 'products-title', className: 'text-xl font-bold dark:text-white' }, 'Products'),
                     React.createElement('p', { key: 'products-count', className: 'text-gray-600 dark:text-gray-300 text-sm' }, `${products.length} products available`)
                 ]),
-                React.createElement('div', { key: 'controls', className: 'flex flex-col sm:flex-row gap-4' }, [
-                    React.createElement('div', { key: 'search', className: 'relative flex-1' }, [
+                React.createElement('div', { key: 'controls', className: 'flex flex-col gap-4' }, [
+                    React.createElement('div', { key: 'search', className: 'relative' }, [
                         React.createElement(Search, { 
                             key: 'search-icon',
                             className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
@@ -336,14 +338,23 @@ window.Views.POSView = ({
                             className: 'w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
                         })
                     ]),
-                    React.createElement('select', {
-                        key: 'category-select',
-                        value: selectedCategory,
-                        onChange: (e) => setSelectedCategory(e.target.value),
-                        className: 'px-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
-                    }, categories.map(cat => 
-                        React.createElement('option', { key: cat, value: cat }, cat)
-                    ))
+                    React.createElement('div', { key: 'category-filters', className: 'flex flex-wrap gap-2' }, [
+                        React.createElement('span', { 
+                            key: 'filter-label', 
+                            className: 'text-sm font-medium text-gray-700 dark:text-gray-300 self-center mr-2' 
+                        }, 'Categories:'),
+                        ...categories.map(category => 
+                            React.createElement('button', {
+                                key: `category-${category}`,
+                                onClick: () => setSelectedCategory(selectedCategory === category ? 'All' : category),
+                                className: `px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                    selectedCategory === category 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                }`
+                            }, category)
+                        )
+                    ])
                 ])
             ]),
             React.createElement('div', { 
@@ -517,9 +528,23 @@ window.Views.POSView = ({
                             React.createElement('span', { key: 'discount-label' }, 'Discount:'),
                             React.createElement('span', { key: 'discount-value' }, `-${discount.toFixed(2)}`)
                         ]),
-                        React.createElement('div', { key: 'tax-row', className: 'flex justify-between dark:text-white' }, [
-                            React.createElement('span', { key: 'tax-label' }, 'Tax:'),
-                            React.createElement('span', { key: 'tax-value' }, `${tax.toFixed(2)}`)
+                        React.createElement('div', { key: 'tax-row', className: 'flex justify-between items-center dark:text-white' }, [
+                            React.createElement('div', { key: 'tax-label-container', className: 'flex items-center gap-2' }, [
+                                React.createElement('span', { key: 'tax-label' }, 'Tax:'),
+                                React.createElement('input', {
+                                    key: 'tax-rate-input',
+                                    type: 'number',
+                                    min: '0',
+                                    max: '1',
+                                    step: '0.01',
+                                    value: taxRate,
+                                    onChange: (e) => setTaxRate(e.target.value),
+                                    placeholder: '0.08',
+                                    className: 'w-16 px-2 py-1 text-sm border dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+                                }),
+                                React.createElement('span', { key: 'tax-percent', className: 'text-sm text-gray-500 dark:text-gray-400' }, '%')
+                            ]),
+                            React.createElement('span', { key: 'tax-value' }, `$${tax.toFixed(2)}`)
                         ]),
                         React.createElement('div', { key: 'total-row', className: 'flex justify-between font-bold text-lg border-t dark:border-gray-600 pt-2 dark:text-white' }, [
                             React.createElement('span', { key: 'total-label' }, 'Total:'),
