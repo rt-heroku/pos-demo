@@ -3599,6 +3599,12 @@ app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
     const { jobId } = req.params;
     const { fieldMapping, constantValues } = req.body;
     
+    console.log('=== MAPPING ENDPOINT DEBUG ===');
+    console.log('Job ID:', jobId);
+    console.log('Field Mapping received:', fieldMapping);
+    console.log('Constant Values received:', constantValues);
+    console.log('=== END MAPPING ENDPOINT DEBUG ===');
+    
     if (!fieldMapping || typeof fieldMapping !== 'object') {
       return res.status(400).json({ error: 'Invalid field mapping' });
     }

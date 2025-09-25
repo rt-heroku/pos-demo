@@ -173,6 +173,9 @@ window.Components.FieldMappingStep = function({
             return;
         }
         
+        console.log('Saving mapping:', mapping);
+        console.log('Saving constants:', constants);
+        
         try {
             const response = await fetch(`/api/data-loader/mapping/${jobId}`, {
                 method: 'POST',
