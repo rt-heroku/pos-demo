@@ -812,11 +812,11 @@ window.Modals.ProductModal = function ProductModal({
 
                 // AI Tab - Only for admins
                 activeTab === 'ai' && React.createElement('div', { key: 'ai-tab', className: 'space-y-6' }, [
-                    React.createElement('div', { key: 'ai-header', className: 'bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6' }, [
+                    React.createElement('div', { key: 'ai-header', className: 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6' }, [
                         React.createElement('div', { key: 'ai-header-content', className: 'text-center' }, [
                             React.createElement('div', { key: 'ai-icon', className: 'text-4xl mb-4' }, '🤖'),
-                            React.createElement('h3', { key: 'ai-title', className: 'text-xl font-semibold text-purple-900 dark:text-purple-100 mb-2' }, 'AI Product Enhancement'),
-                            React.createElement('p', { key: 'ai-description', className: 'text-purple-700 dark:text-purple-300 mb-6' }, 
+                            React.createElement('h3', { key: 'ai-title', className: 'text-xl font-semibold text-gray-900 dark:text-white mb-2' }, 'AI Product Enhancement'),
+                            React.createElement('p', { key: 'ai-description', className: 'text-gray-600 dark:text-gray-300 mb-6' }, 
                                 'This action will generate missing fields, add relevant descriptions, features and details to this product and will replace some of the current contents.'
                             ),
                             React.createElement('button', {
@@ -827,7 +827,7 @@ window.Modals.ProductModal = function ProductModal({
                                 className: `flex items-center gap-3 mx-auto px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                                     aiLoading || !product?.id
                                         ? 'bg-gray-400 cursor-not-allowed text-gray-200'
-                                        : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white hover:shadow-lg transform hover:scale-105'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg transform hover:scale-105'
                                 }`
                             }, [
                                 React.createElement('span', { key: 'ai-button-icon' }, '✨'),
