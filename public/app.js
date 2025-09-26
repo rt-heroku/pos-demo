@@ -350,9 +350,14 @@ const POSApp = () => {
         try {
             setLoading(true);
             try {
+                console.log('Loading detailed products...');
                 const data = await window.API.products.getDetailed();
+                console.log('Detailed products loaded:', data.length, 'products');
+                console.log('First product features:', data[0]?.features);
+                console.log('First product images:', data[0]?.images);
                 setDetailedProducts(data);
             } catch (detailedError) {
+                console.error('Failed to load detailed products, falling back to basic:', detailedError);
                 const basicProducts = await window.API.products.getAll();
                 const enhancedProducts = basicProducts.map(product => ({
                     ...product,
@@ -765,9 +770,18 @@ const POSApp = () => {
         setShowProductModal(true);
     };
 
-    const handleEditProduct = (product) => {
-        setCurrentProduct(product);
-        setShowProductModal(true);
+    const handleEditProduct = async (product) => {
+        try {
+            // Fetch detailed product data with features and images
+            const detailedProduct = await window.API.products.getById(product.id);
+            setCurrentProduct(detailedProduct);
+            setShowProductModal(true);
+        } catch (error) {
+            console.error('Failed to load detailed product:', error);
+            // Fallback to basic product data
+            setCurrentProduct(product);
+            setShowProductModal(true);
+        }
     };
 
     const handleDeleteProduct = async (productId) => {
