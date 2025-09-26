@@ -44,6 +44,8 @@ window.Modals.ProductModal = function ProductModal({
     const [productTypes, setProductTypes] = React.useState([]);
     const [loadingProductTypes, setLoadingProductTypes] = React.useState(false);
     const [findingImage, setFindingImage] = React.useState(false);
+    const [aiResults, setAiResults] = React.useState(null);
+    const [aiLoading, setAiLoading] = React.useState(false);
 
     // Initialize form data when product changes
     React.useEffect(() => {
@@ -170,6 +172,43 @@ window.Modals.ProductModal = function ProductModal({
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleAIImprove = async () => {
+        if (!product?.id) {
+            alert('Product ID is required for AI improvement');
+            return;
+        }
+
+        setAiLoading(true);
+        setAiResults(null);
+
+        try {
+            const response = await fetch(`/api/products/improve/${product.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const results = await response.json();
+                setAiResults(results);
+                
+                // Refresh the product data to show the improvements
+                if (onSave) {
+                    onSave();
+                }
+            } else {
+                const error = await response.json();
+                alert(`AI improvement failed: ${error.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error improving product:', error);
+            alert(`AI improvement failed: ${error.message}`);
+        } finally {
+            setAiLoading(false);
+        }
     };
 
     const addFeature = () => {
@@ -310,6 +349,13 @@ window.Modals.ProductModal = function ProductModal({
                         tab: 'features',
                         label: 'Features',
                         active: activeTab === 'features'
+                    }),
+                    // AI Tab - Only for admins
+                    window.currentUser && window.currentUser.role === 'admin' && React.createElement(TabButton, {
+                        key: 'ai',
+                        tab: 'ai',
+                        label: 'AI',
+                        active: activeTab === 'ai'
                     })
                 ])
             ]),
@@ -758,6 +804,49 @@ window.Modals.ProductModal = function ProductModal({
                                         onClick: () => removeFeature(index),
                                         className: 'p-1 text-red-600 hover:bg-red-50 rounded transition-colors'
                                     }, React.createElement(Trash2, { size: 16 }))
+                                ])
+                            )
+                        )
+                    ])
+                ]),
+
+                // AI Tab - Only for admins
+                activeTab === 'ai' && React.createElement('div', { key: 'ai-tab', className: 'space-y-6' }, [
+                    React.createElement('div', { key: 'ai-header', className: 'bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6' }, [
+                        React.createElement('div', { key: 'ai-header-content', className: 'text-center' }, [
+                            React.createElement('div', { key: 'ai-icon', className: 'text-4xl mb-4' }, '🤖'),
+                            React.createElement('h3', { key: 'ai-title', className: 'text-xl font-semibold text-purple-900 dark:text-purple-100 mb-2' }, 'AI Product Enhancement'),
+                            React.createElement('p', { key: 'ai-description', className: 'text-purple-700 dark:text-purple-300 mb-6' }, 
+                                'This action will generate missing fields, add relevant descriptions, features and details to this product and will replace some of the current contents.'
+                            ),
+                            React.createElement('button', {
+                                key: 'ai-improve-button',
+                                type: 'button',
+                                onClick: handleAIImprove,
+                                disabled: aiLoading || !product?.id,
+                                className: `flex items-center gap-3 mx-auto px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                                    aiLoading || !product?.id
+                                        ? 'bg-gray-400 cursor-not-allowed text-gray-200'
+                                        : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white hover:shadow-lg transform hover:scale-105'
+                                }`
+                            }, [
+                                React.createElement('span', { key: 'ai-button-icon' }, '✨'),
+                                aiLoading ? 'Improving...' : 'Improve Product Info'
+                            ])
+                        ])
+                    ]),
+                    
+                    // AI Results Section (will be populated after API call)
+                    aiResults && React.createElement('div', { key: 'ai-results', className: 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4' }, [
+                        React.createElement('h4', { key: 'ai-results-title', className: 'font-medium text-green-900 dark:text-green-100 mb-3' }, 'Improvement Results'),
+                        React.createElement('div', { key: 'ai-results-content', className: 'space-y-2' }, 
+                            aiResults.map((result, index) => 
+                                React.createElement('div', { 
+                                    key: `result-${index}`, 
+                                    className: 'flex items-center gap-2 text-sm text-green-800 dark:text-green-200' 
+                                }, [
+                                    React.createElement('span', { key: `result-icon-${index}` }, '✅'),
+                                    React.createElement('span', { key: `result-text-${index}` }, result.message)
                                 ])
                             )
                         )

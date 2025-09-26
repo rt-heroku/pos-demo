@@ -4277,6 +4277,56 @@ app.post('/api/loyalty/products/send', async (req, res) => {
   }
 });
 
+// AI Product Improvement endpoint
+app.post('/api/products/improve/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    if (!productId) {
+      return res.status(400).json({ error: 'Product ID is required' });
+    }
+    
+    // Get the MuleSoft endpoint from system settings
+    const settingsResult = await pool.query(`
+      SELECT value FROM system_settings WHERE key = 'mulesoft_loyalty_sync_endpoint'
+    `);
+    
+    if (!settingsResult.rows.length) {
+      return res.status(500).json({ error: 'MuleSoft endpoint not configured' });
+    }
+    
+    const muleSoftBaseUrl = settingsResult.rows[0].value;
+    const improveUrl = `${muleSoftBaseUrl}/products/improve?product=${productId}`;
+    
+    console.log('Calling MuleSoft AI improvement endpoint:', improveUrl);
+    
+    // Call MuleSoft API for product improvement
+    const muleSoftResponse = await fetch(improveUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.MULESOFT_ACCESS_TOKEN || 'your-token-here'}`
+      }
+    });
+    
+    if (!muleSoftResponse.ok) {
+      throw new Error(`MuleSoft API error: ${muleSoftResponse.status} ${muleSoftResponse.statusText}`);
+    }
+    
+    const result = await muleSoftResponse.json();
+    
+    // Return the response from MuleSoft API
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error improving product with AI:', error);
+    res.status(500).json({ 
+      error: 'Failed to improve product with AI',
+      details: error.message 
+    });
+  }
+});
+
 // Serve React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
