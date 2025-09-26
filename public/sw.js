@@ -1,120 +1,158 @@
-// Service Worker for POS System
-const CACHE_NAME = 'pos-cache-v1';
-const urlsToCache = [
+// Service Worker for POS System - Simplified Version
+// This service worker provides basic caching without offline capabilities
+// and ensures proper cache invalidation for updates
+
+const CACHE_VERSION = 'v20250926-1115'; // Update this when deploying
+const CACHE_NAME = `pos-cache-${CACHE_VERSION}`;
+
+// Static assets to cache (only essential files)
+const STATIC_ASSETS = [
     '/',
-    '/app.js',
-    '/api.js',
     '/icons.js',
-    '/enhanced-pos.js',
-    '/components/views/POSView.js',
-    '/components/views/LoyaltyView.js',
-    '/components/views/InventoryView.js',
-    '/components/views/SalesView.js',
-    '/components/views/SettingsView.js',
-    '/components/modals/CustomerFormModal.js',
-    '/components/modals/ProductModal.js',
-    '/components/modals/LoyaltyModal.js',
-    '/components/modals/ReceiptModal.js'
+    '/api.js',
+    '/crypto-utils.js',
+    '/mobile-utils.js'
 ];
 
-// Install event - cache resources
+// Install event - cache only essential static assets
 self.addEventListener('install', event => {
-    console.log('Service Worker installing...');
+    console.log('Service Worker installing...', CACHE_VERSION);
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('Caching app shell');
-                return cache.addAll(urlsToCache);
+                console.log('Caching static assets');
+                return cache.addAll(STATIC_ASSETS);
             })
             .catch(error => {
                 console.error('Cache failed:', error);
             })
     );
+    // Force activation of new service worker
     self.skipWaiting();
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-    console.log('Service Worker activating...');
+    console.log('Service Worker activating...', CACHE_VERSION);
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
+                    // Delete all old caches that don't match current version
+                    if (cacheName.startsWith('pos-cache-') && cacheName !== CACHE_NAME) {
                         console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
+        }).then(() => {
+            // Take control of all clients immediately
+            return self.clients.claim();
         })
     );
-    self.clients.claim();
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - network-first strategy with fallback to cache
 self.addEventListener('fetch', event => {
+    const request = event.request;
+    const url = new URL(request.url);
+
     // Skip non-GET requests
-    if (event.request.method !== 'GET') {
+    if (request.method !== 'GET') {
         return;
     }
 
     // Skip chrome-extension requests
-    if (event.request.url.startsWith('chrome-extension://')) {
+    if (url.protocol === 'chrome-extension:') {
         return;
     }
 
-    // Skip API requests (let them go to network)
-    if (event.request.url.includes('/api/')) {
+    // Skip API requests - always go to network
+    if (url.pathname.startsWith('/api/')) {
         return;
     }
 
+    // For all other requests, use network-first strategy
     event.respondWith(
-        caches.match(event.request)
+        fetch(request)
             .then(response => {
-                // Return cached version if available
-                if (response) {
-                    return response;
+                // If network request succeeds, update cache and return response
+                if (response.status === 200) {
+                    const responseClone = response.clone();
+                    
+                    // Only cache same-origin requests
+                    if (url.origin === location.origin) {
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(request, responseClone);
+                        });
+                    }
                 }
-
-                // Clone the request
-                const fetchRequest = event.request.clone();
-
-                return fetch(fetchRequest).then(response => {
-                    // Check if valid response
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                return response;
+            })
+            .catch(() => {
+                // If network fails, try to serve from cache
+                return caches.match(request).then(response => {
+                    if (response) {
+                        console.log('Serving from cache:', request.url);
                         return response;
                     }
-
-                    // Clone the response
-                    const responseToCache = response.clone();
-
-                    caches.open(CACHE_NAME)
-                        .then(cache => {
-                            // Only cache same-origin requests
-                            if (event.request.url.startsWith(self.location.origin)) {
-                                cache.put(event.request, responseToCache);
+                    
+                    // If no cache available, return a basic offline page for navigation requests
+                    if (request.destination === 'document') {
+                        return caches.match('/').then(response => {
+                            if (response) {
+                                return response;
                             }
+                            // Last resort - return a basic HTML response
+                            return new Response(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <title>POS System - Offline</title>
+                                    <meta charset="utf-8">
+                                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                                </head>
+                                <body>
+                                    <h1>POS System</h1>
+                                    <p>You are currently offline. Please check your internet connection and try again.</p>
+                                    <button onclick="window.location.reload()">Retry</button>
+                                </body>
+                                </html>
+                            `, {
+                                headers: { 'Content-Type': 'text/html' }
+                            });
                         });
-
-                    return response;
-                }).catch(() => {
-                    // Return offline page for navigation requests
-                    if (event.request.destination === 'document') {
-                        return caches.match('/');
                     }
+                    
+                    // For other requests, return a 404
+                    return new Response('Not found', { status: 404 });
                 });
             })
     );
 });
 
-// Background sync for offline actions
-self.addEventListener('sync', event => {
-    if (event.tag === 'background-sync') {
-        event.waitUntil(doBackgroundSync());
+// Message handling for cache updates
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    if (event.data && event.data.type === 'CLEAR_CACHE') {
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName.startsWith('pos-cache-')) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => {
+            event.ports[0].postMessage({ success: true });
+        });
     }
 });
 
-// Push notifications
+// Push notifications (simplified)
 self.addEventListener('push', event => {
     const options = {
         body: event.data ? event.data.text() : 'New notification from POS System',
@@ -124,19 +162,7 @@ self.addEventListener('push', event => {
         data: {
             dateOfArrival: Date.now(),
             primaryKey: 1
-        },
-        actions: [
-            {
-                action: 'explore',
-                title: 'View Details',
-                icon: '/icon-192x192.png'
-            },
-            {
-                action: 'close',
-                title: 'Close',
-                icon: '/icon-192x192.png'
-            }
-        ]
+        }
     };
 
     event.waitUntil(
@@ -148,97 +174,7 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
     event.notification.close();
 
-    if (event.action === 'explore') {
-        event.waitUntil(
-            clients.openWindow('/')
-        );
-    }
-});
-
-// Background sync function
-async function doBackgroundSync() {
-    try {
-        // Get offline queue from IndexedDB
-        const offlineQueue = await getOfflineQueue();
-        
-        for (const action of offlineQueue) {
-            try {
-                await fetch(action.url, action.options);
-                // Remove from queue on success
-                await removeFromOfflineQueue(action.id);
-            } catch (error) {
-                console.error('Background sync failed for action:', action.id, error);
-            }
-        }
-    } catch (error) {
-        console.error('Background sync failed:', error);
-    }
-}
-
-// IndexedDB for offline queue
-const dbName = 'POSOfflineDB';
-const dbVersion = 1;
-const storeName = 'offlineQueue';
-
-function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(dbName, dbVersion);
-        
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-        
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(storeName)) {
-                db.createObjectStore(storeName, { keyPath: 'id' });
-            }
-        };
-    });
-}
-
-async function getOfflineQueue() {
-    const db = await openDB();
-    const transaction = db.transaction([storeName], 'readonly');
-    const store = transaction.objectStore(storeName);
-    const request = store.getAll();
-    
-    return new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function addToOfflineQueue(action) {
-    const db = await openDB();
-    const transaction = db.transaction([storeName], 'readwrite');
-    const store = transaction.objectStore(storeName);
-    const request = store.add(action);
-    
-    return new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function removeFromOfflineQueue(id) {
-    const db = await openDB();
-    const transaction = db.transaction([storeName], 'readwrite');
-    const store = transaction.objectStore(storeName);
-    const request = store.delete(id);
-    
-    return new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-// Message handling for communication with main thread
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
-    
-    if (event.data && event.data.type === 'ADD_TO_OFFLINE_QUEUE') {
-        addToOfflineQueue(event.data.action);
-    }
+    event.waitUntil(
+        clients.openWindow('/')
+    );
 });

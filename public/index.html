@@ -406,12 +406,55 @@
             document.body.classList.add('dark');
         }
         
-        // Register Service Worker for offline support (only in production)
-        if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+        // Register Service Worker with proper update handling
+        if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('SW registered: ', registration);
+                        
+                        // Handle service worker updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New service worker is available
+                                    console.log('New service worker available');
+                                    
+                                    // Show update notification to user
+                                    if (confirm('A new version of the app is available. Reload to update?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                        
+                        // Handle controller change (when new SW takes control)
+                        navigator.serviceWorker.addEventListener('controllerchange', () => {
+                            console.log('Service worker controller changed');
+                            window.location.reload();
+                        });
+                        
+                        // Add cache clearing utility to window object
+                        window.clearAppCache = async () => {
+                            if ('caches' in window) {
+                                const cacheNames = await caches.keys();
+                                await Promise.all(
+                                    cacheNames.map(cacheName => {
+                                        if (cacheName.startsWith('pos-cache-')) {
+                                            console.log('Clearing cache:', cacheName);
+                                            return caches.delete(cacheName);
+                                        }
+                                    })
+                                );
+                                console.log('All app caches cleared');
+                                alert('Cache cleared! The page will reload.');
+                                window.location.reload();
+                            } else {
+                                alert('Cache API not supported in this browser');
+                            }
+                        };
                     })
                     .catch(registrationError => {
                         console.log('SW registration failed: ', registrationError);
@@ -421,42 +464,42 @@
     </script>
     
     <!-- Load the application files in order -->
-    <script src="/icons.js?v=20250125-1945"></script>
-    <script src="/api.js?v=20250125-1945"></script>
-    <script src="/crypto-utils.js?v=20250125-1945"></script>
-    <script src="/mobile-utils.js?v=20250125-1945"></script>
+    <script src="/icons.js?v=v20250926-1115"></script>
+    <script src="/api.js?v=v20250926-1115"></script>
+    <script src="/crypto-utils.js?v=v20250926-1115"></script>
+    <script src="/mobile-utils.js?v=v20250926-1115"></script>
     
     <!-- Load common components first -->
-    <script type="text/babel" src="/components/common/TabButton.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/common/CategoryBadge.js?v=20250125-1945"></script>
+    <script type="text/babel" src="/components/common/TabButton.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/common/CategoryBadge.js?v=v20250926-1115"></script>
     
     
     <!-- Load modals -->
-    <script type="text/babel" src="/components/views/auth.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/ProductModal.js?v=20250125-2015"></script>
-    <script type="text/babel" src="/components/modals/LoadFromCloudModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/DataLoaderModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/common/FileUploadStep.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/common/FieldMappingStep.js?v=20250125-2000"></script>
-    <script type="text/babel" src="/components/common/DataPreviewStep.js?v=20250125-2000"></script>
-    <script type="text/babel" src="/components/common/ProcessDataStep.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=20250125-1945"></script>
+    <script type="text/babel" src="/components/views/auth.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/ProductModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/LoadFromCloudModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/DataLoaderModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/common/FileUploadStep.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/common/FieldMappingStep.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/common/DataPreviewStep.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/common/ProcessDataStep.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=v20250926-1115"></script>
     
     <!-- Load view components -->
-    <script type="text/babel" src="/components/views/POSView.js?v=20250125-2000"></script>
-    <script type="text/babel" src="/components/views/LoyaltyView.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/views/SalesView.js?v=20250125-1945"></script>
-    <script type="text/babel" src="/components/views/SettingsView.js?v=20250125-2115"></script>
-    <script type="text/babel" src="/components/views/InventoryView.js?v=20250125-1945"></script>
+    <script type="text/babel" src="/components/views/POSView.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/views/LoyaltyView.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/views/SalesView.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/views/SettingsView.js?v=v20250926-1115"></script>
+    <script type="text/babel" src="/components/views/InventoryView.js?v=v20250926-1115"></script>
 
-    <script type="text/babel" src="/enhanced-pos.js?v=20250125-1945"></script> 
+    <script type="text/babel" src="/enhanced-pos.js?v=v20250926-1115"></script> 
 
     <!-- Load the main application -->
-    <script type="text/babel" src="/app.js?v=20250125-2000"></script>
+    <script type="text/babel" src="/app.js?v=v20250926-1115"></script>
 </body>
 </html>
