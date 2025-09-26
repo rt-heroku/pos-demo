@@ -195,9 +195,43 @@ window.Modals.ProductModal = function ProductModal({
                 const results = await response.json();
                 setAiResults(results);
                 
-                // Refresh the product data to show the improvements
-                if (onSave) {
-                    onSave();
+                // Reload the product data to show the improvements
+                // The MuleSoft API has already updated the database
+                // We just need to refresh the form data
+                if (product) {
+                    // Fetch the updated product data from the server
+                    try {
+                        const productResponse = await fetch(`/api/products/${product.id}`);
+                        if (productResponse.ok) {
+                            const updatedProduct = await productResponse.json();
+                            // Update the form data with the new product information
+                            setFormData({
+                                name: updatedProduct.name || '',
+                                sku: updatedProduct.sku || '',
+                                price: updatedProduct.price || '',
+                                category: updatedProduct.category || '',
+                                stock: updatedProduct.stock || '',
+                                productType: updatedProduct.product_type || '',
+                                brand: updatedProduct.brand || '',
+                                collection: updatedProduct.collection || '',
+                                material: updatedProduct.material || '',
+                                color: updatedProduct.color || '',
+                                description: updatedProduct.description || '',
+                                dimensions: updatedProduct.dimensions || '',
+                                weight: updatedProduct.weight || '',
+                                warrantyInfo: updatedProduct.warranty_info || '',
+                                careInstructions: updatedProduct.care_instructions || '',
+                                mainImageUrl: updatedProduct.main_image_url || '',
+                                image: updatedProduct.image || '📦',
+                                isActive: updatedProduct.is_active || true,
+                                featured: updatedProduct.featured || false,
+                                images: updatedProduct.images || [],
+                                features: updatedProduct.features || []
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error fetching updated product:', error);
+                    }
                 }
             } else {
                 const error = await response.json();
