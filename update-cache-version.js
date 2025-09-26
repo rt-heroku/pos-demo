@@ -45,7 +45,7 @@ function updateCacheVersion() {
         let content = fs.readFileSync(indexPath, 'utf8');
         
         // Replace all version parameters in script tags
-        const versionRegex = /(\?v=)v[0-9]{8}-[0-9]{4}/g;
+        const versionRegex = /(\?v=)[0-9]{8}-[0-9]{4}/g;
         const updatedContent = content.replace(versionRegex, `$1${newVersion}`);
         
         // Check if any replacements were made
