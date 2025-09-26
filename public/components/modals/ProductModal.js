@@ -50,6 +50,9 @@ window.Modals.ProductModal = function ProductModal({
     // Initialize form data when product changes
     React.useEffect(() => {
         if (product) {
+            console.log('ProductModal: Initializing form data with product:', product);
+            console.log('ProductModal: Product features:', product.features);
+            console.log('ProductModal: Product images:', product.images);
             setFormData({
                 name: product.name || '',
                 sku: product.sku || '',
@@ -74,6 +77,8 @@ window.Modals.ProductModal = function ProductModal({
                 images: product.images || [],
                 features: product.features || []
             });
+            console.log('ProductModal: Form data set with features:', product.features || []);
+            console.log('ProductModal: Form data set with images:', product.images || []);
         } else {
             // Reset form for new product
             setFormData({
@@ -653,6 +658,11 @@ window.Modals.ProductModal = function ProductModal({
 
                 // Images Tab
                 activeTab === 'images' && React.createElement('div', { className: 'space-y-6' }, [
+                    // Debug info
+                    React.createElement('div', { key: 'debug-images', className: 'bg-yellow-50 p-2 rounded text-xs' }, [
+                        `Debug: formData.images length = ${formData.images ? formData.images.length : 'undefined'}`,
+                        formData.images && formData.images.length > 0 && `, first image: ${JSON.stringify(formData.images[0])}`
+                    ]),
                     // Main Image URL
                     React.createElement('div', { key: 'main-image' }, [
                         React.createElement('label', { key: 'main-image-label', className: 'block text-sm font-medium mb-2' }, 'Main Image URL'),
@@ -789,6 +799,11 @@ window.Modals.ProductModal = function ProductModal({
 
                 // Features Tab
                     activeTab === 'features' && React.createElement('div', { key: 'features-tab', className: 'space-y-6' }, [
+                        // Debug info
+                        React.createElement('div', { key: 'debug-features', className: 'bg-yellow-50 p-2 rounded text-xs' }, [
+                            `Debug: formData.features length = ${formData.features ? formData.features.length : 'undefined'}`,
+                            formData.features && formData.features.length > 0 && `, first feature: ${JSON.stringify(formData.features[0])}`
+                        ]),
                     React.createElement('div', { key: 'add-feature', className: 'bg-gray-50 p-4 rounded-lg' }, [
                         React.createElement('label', { key: 'add-feature-label', className: 'block text-sm font-medium mb-3' }, 'Add Feature'),
                         React.createElement('div', { key: 'add-feature-form', className: 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-3' }, [
