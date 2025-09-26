@@ -68,20 +68,25 @@ const upload = multer({
         }
     }
 });
-
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 // Static file serving with cache control
 app.use(express.static(path.join(__dirname, 'public'), {
     setHeaders: (res, path) => {
         // Disable caching for JavaScript files to prevent cache issues during development
-        if (path.endsWith('.js') || path.endsWith('.jsx') || path.endsWith('.ts') || path.endsWith('.tsx')) {
+//        if (path.endsWith('.js') || path.endsWith('.jsx') || path.endsWith('.ts') || path.endsWith('.tsx')) {
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
             res.setHeader('Pragma', 'no-cache');
             res.setHeader('Expires', '0');
-        }
+//        }
         // Allow caching for other static assets (images, CSS, etc.)
-        else if (path.endsWith('.css') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.gif') || path.endsWith('.svg') || path.endsWith('.ico')) {
-            res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour cache
-        }
+//        else if (path.endsWith('.css') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.gif') || path.endsWith('.svg') || path.endsWith('.ico')) {
+//            res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour cache
+//        }
     }
 }));
 
