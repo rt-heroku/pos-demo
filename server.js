@@ -4288,14 +4288,14 @@ app.post('/api/products/improve/:productId', async (req, res) => {
     
     // Get the MuleSoft endpoint from system settings
     const settingsResult = await pool.query(`
-      SELECT value FROM system_settings WHERE key = 'mulesoft_loyalty_sync_endpoint'
+      SELECT setting_value FROM system_settings WHERE setting_key = 'mulesoft_loyalty_sync_endpoint'
     `);
     
     if (!settingsResult.rows.length) {
       return res.status(500).json({ error: 'MuleSoft endpoint not configured' });
     }
     
-    const muleSoftBaseUrl = settingsResult.rows[0].value;
+    const muleSoftBaseUrl = settingsResult.rows[0].setting_value;
     const improveUrl = `${muleSoftBaseUrl}/products/improve?product=${productId}`;
     
     console.log('Calling MuleSoft AI improvement endpoint:', improveUrl);
