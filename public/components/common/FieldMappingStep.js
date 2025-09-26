@@ -125,6 +125,11 @@ window.Components.FieldMappingStep = function({
     const [fieldMapping, setFieldMapping] = React.useState({}); // {csvField: [dbField1, dbField2]}
     const [constantValues, setConstantValues] = React.useState({}); // {dbField: {value, type}}
     const [autoMapped, setAutoMapped] = React.useState({});
+    const [featuresConfig, setFeaturesConfig] = React.useState({
+        csvField: '',
+        delimiter: ';',
+        enabled: false
+    });
     const [loading, setLoading] = React.useState(true);
     const [draggedField, setDraggedField] = React.useState(null);
     const [showConstantModal, setShowConstantModal] = React.useState(false);
@@ -182,7 +187,8 @@ window.Components.FieldMappingStep = function({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     fieldMapping: mapping,
-                    constantValues: constants
+                    constantValues: constants,
+                    featuresConfig: featuresConfig
                 })
             });
             
@@ -534,6 +540,110 @@ window.Components.FieldMappingStep = function({
                         }, `Value: ${constantValues[dbField].value}`)
                     ]);
                 }))
+            ])
+        ]),
+
+        // Features Configuration Section
+        React.createElement('div', {
+            key: 'features-section',
+            className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'
+        }, [
+            React.createElement('div', {
+                key: 'features-header',
+                className: 'flex items-center gap-2 mb-4'
+            }, [
+                React.createElement('span', {
+                    key: 'features-icon',
+                    className: 'text-lg'
+                }, '🔧'),
+                React.createElement('h3', {
+                    key: 'features-title',
+                    className: 'font-semibold text-blue-900 dark:text-blue-100'
+                }, 'Product Features Configuration'),
+                React.createElement('div', {
+                    key: 'features-toggle',
+                    className: 'ml-auto'
+                }, [
+                    React.createElement('label', {
+                        key: 'toggle-label',
+                        className: 'flex items-center gap-2 cursor-pointer'
+                    }, [
+                        React.createElement('input', {
+                            key: 'toggle-input',
+                            type: 'checkbox',
+                            checked: featuresConfig.enabled,
+                            onChange: (e) => setFeaturesConfig(prev => ({ ...prev, enabled: e.target.checked })),
+                            className: 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
+                        }),
+                        React.createElement('span', {
+                            key: 'toggle-text',
+                            className: 'text-sm text-blue-800 dark:text-blue-200'
+                        }, 'Enable Features Processing')
+                    ])
+                ])
+            ]),
+            
+            featuresConfig.enabled && React.createElement('div', {
+                key: 'features-config',
+                className: 'space-y-4'
+            }, [
+                React.createElement('div', {
+                    key: 'csv-field-select',
+                    className: 'space-y-2'
+                }, [
+                    React.createElement('label', {
+                        key: 'csv-field-label',
+                        className: 'block text-sm font-medium text-blue-900 dark:text-blue-100'
+                    }, 'CSV Field for Features'),
+                    React.createElement('select', {
+                        key: 'csv-field-select',
+                        value: featuresConfig.csvField,
+                        onChange: (e) => setFeaturesConfig(prev => ({ ...prev, csvField: e.target.value })),
+                        className: 'w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-lg bg-white dark:bg-blue-800 text-gray-900 dark:text-white'
+                    }, [
+                        React.createElement('option', { key: 'empty', value: '' }, 'Select CSV field...'),
+                        ...csvFields.map(field => 
+                            React.createElement('option', { key: field, value: field }, field)
+                        )
+                    ])
+                ]),
+                
+                React.createElement('div', {
+                    key: 'delimiter-config',
+                    className: 'space-y-2'
+                }, [
+                    React.createElement('label', {
+                        key: 'delimiter-label',
+                        className: 'block text-sm font-medium text-blue-900 dark:text-blue-100'
+                    }, 'Delimiter'),
+                    React.createElement('input', {
+                        key: 'delimiter-input',
+                        type: 'text',
+                        value: featuresConfig.delimiter,
+                        onChange: (e) => setFeaturesConfig(prev => ({ ...prev, delimiter: e.target.value })),
+                        placeholder: ';',
+                        maxLength: 5,
+                        className: 'w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-lg bg-white dark:bg-blue-800 text-gray-900 dark:text-white'
+                    }),
+                    React.createElement('p', {
+                        key: 'delimiter-help',
+                        className: 'text-xs text-blue-700 dark:text-blue-300'
+                    }, 'Character used to separate multiple features in the CSV field')
+                ]),
+                
+                featuresConfig.csvField && React.createElement('div', {
+                    key: 'features-preview',
+                    className: 'bg-white dark:bg-blue-800 rounded p-3 border border-blue-200 dark:border-blue-700'
+                }, [
+                    React.createElement('h4', {
+                        key: 'preview-title',
+                        className: 'text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'
+                    }, 'Preview:'),
+                    React.createElement('p', {
+                        key: 'preview-text',
+                        className: 'text-sm text-blue-800 dark:text-blue-200'
+                    }, `Features from "${featuresConfig.csvField}" will be split by "${featuresConfig.delimiter}" and stored in the product_features table`)
+                ])
             ])
         ]),
 

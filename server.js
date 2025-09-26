@@ -3481,6 +3481,55 @@ app.get('/api/system-settings/database/info', async (req, res) => {
 // });
 
 // ============================================================================
+// DATA LOADER HELPER FUNCTIONS
+// ============================================================================
+
+// Helper function to process product features
+async function processProductFeatures(client, productId, rawData, featuresConfig) {
+  try {
+    const featuresField = rawData[featuresConfig.csvField];
+    if (!featuresField || typeof featuresField !== 'string') {
+      console.log('No features field found or empty');
+      return;
+    }
+    
+    // Split features by delimiter
+    const features = featuresField.split(featuresConfig.delimiter)
+      .map(feature => feature.trim())
+      .filter(feature => feature.length > 0);
+    
+    if (features.length === 0) {
+      console.log('No features found after splitting');
+      return;
+    }
+    
+    // Delete existing features for this product
+    await client.query(`
+      DELETE FROM product_features WHERE product_id = $1
+    `, [productId]);
+    
+    // Insert new features
+    for (const feature of features) {
+      // Validate feature length
+      if (feature.length > 100) {
+        console.warn(`Feature name too long (${feature.length} chars): ${feature.substring(0, 50)}...`);
+        continue;
+      }
+      
+      await client.query(`
+        INSERT INTO product_features (product_id, feature_name, feature_value)
+        VALUES ($1, $2, $3)
+      `, [productId, feature, '']); // Empty feature_value for now
+    }
+    
+    console.log(`Processed ${features.length} features for product ${productId}`);
+  } catch (error) {
+    console.error('Error processing product features:', error);
+    throw error;
+  }
+}
+
+// ============================================================================
 // DATA LOADER API ENDPOINTS
 // ============================================================================
 
@@ -3597,7 +3646,7 @@ app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
   
   try {
     const { jobId } = req.params;
-    const { fieldMapping, constantValues } = req.body;
+    const { fieldMapping, constantValues, featuresConfig } = req.body;
     
     console.log('=== MAPPING ENDPOINT DEBUG ===');
     console.log('Job ID:', jobId);
@@ -3620,9 +3669,9 @@ app.post('/api/data-loader/mapping/:jobId', async (req, res) => {
     
     const result = await client.query(`
       UPDATE data_loader_jobs 
-      SET field_mapping = $1, constant_values = $2, status = 'mapping', updated_at = CURRENT_TIMESTAMP
-      WHERE job_id = $3
-    `, [JSON.stringify(fieldMapping), JSON.stringify(constantValues), jobId]);
+      SET field_mapping = $1, constant_values = $2, features_config = $3, status = 'mapping', updated_at = CURRENT_TIMESTAMP
+      WHERE job_id = $4
+    `, [JSON.stringify(fieldMapping), JSON.stringify(constantValues), JSON.stringify(featuresConfig || {}), jobId]);
     
     console.log('Database update result:', result.rowCount, 'rows affected');
     
@@ -3654,7 +3703,7 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
     
     // Get job info
     const jobResult = await client.query(`
-      SELECT type, field_mapping, constant_values, total_rows FROM data_loader_jobs WHERE job_id = $1
+      SELECT type, field_mapping, constant_values, features_config, total_rows FROM data_loader_jobs WHERE job_id = $1
     `, [jobId]);
     
     if (!jobResult.rows.length) {
@@ -3666,6 +3715,8 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
       (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
     const constants = job.constant_values ? 
       (typeof job.constant_values === 'string' ? JSON.parse(job.constant_values) : job.constant_values) : {};
+    const featuresConfig = job.features_config ? 
+      (typeof job.features_config === 'string' ? JSON.parse(job.features_config) : job.features_config) : {};
     
     // Get sample rows
     const rowsResult = await client.query(`
@@ -3702,10 +3753,20 @@ app.get('/api/data-loader/preview/:jobId', async (req, res) => {
         }
       });
       
+      // Process features if enabled
+      let features = [];
+      if (featuresConfig.enabled && featuresConfig.csvField && rawData[featuresConfig.csvField]) {
+        const featuresField = rawData[featuresConfig.csvField];
+        features = featuresField.split(featuresConfig.delimiter)
+          .map(feature => feature.trim())
+          .filter(feature => feature.length > 0);
+      }
+      
       return {
         rowNumber: row.row_number,
         rawData,
-        mappedData
+        mappedData,
+        features
       };
     });
     
@@ -3734,7 +3795,7 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
     
     // Get job info
     const jobResult = await client.query(`
-      SELECT type, field_mapping, constant_values FROM data_loader_jobs WHERE job_id = $1
+      SELECT type, field_mapping, constant_values, features_config FROM data_loader_jobs WHERE job_id = $1
     `, [jobId]);
     
     if (!jobResult.rows.length) {
@@ -3751,9 +3812,12 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
       (typeof job.field_mapping === 'string' ? JSON.parse(job.field_mapping) : job.field_mapping) : {};
     const constants = job.constant_values ? 
       (typeof job.constant_values === 'string' ? JSON.parse(job.constant_values) : job.constant_values) : {};
+    const featuresConfig = job.features_config ? 
+      (typeof job.features_config === 'string' ? JSON.parse(job.features_config) : job.features_config) : {};
     
     console.log('Parsed mapping:', mapping);
     console.log('Parsed constants:', constants);
+    console.log('Parsed features config:', featuresConfig);
     console.log('=== END PROCESS ENDPOINT DEBUG ===');
     
     // Process each row
@@ -3806,10 +3870,16 @@ app.post('/api/data-loader/process/:jobId', async (req, res) => {
         // console.log('==========================');
         
         // Insert into appropriate table
+        let productId = null;
         if (job.type === 'products') {
-          await insertProduct(client, mappedData);
+          productId = await insertProduct(client, mappedData);
         } else {
           await insertCustomer(client, mappedData);
+        }
+        
+        // Process features if enabled and this is a product
+        if (job.type === 'products' && featuresConfig.enabled && featuresConfig.csvField && productId) {
+          await processProductFeatures(client, productId, rawData, featuresConfig);
         }
         
         // Update row status

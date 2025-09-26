@@ -212,7 +212,12 @@ window.Components.DataPreviewStep = function({
                             ...mappedFields.map(field => React.createElement('th', {
                                 key: `header-${field}`,
                                 className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
-                            }, field))
+                            }, field)),
+                            // Add features column if any row has features
+                            data.some(row => row.features && row.features.length > 0) && React.createElement('th', {
+                                key: 'header-features',
+                                className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                            }, 'Features')
                         ])
                     ]),
                     // Table body
@@ -230,7 +235,21 @@ window.Components.DataPreviewStep = function({
                         ...mappedFields.map(field => React.createElement('td', {
                             key: `cell-${index}-${field}`,
                             className: 'px-4 py-3 text-sm text-gray-900 dark:text-white'
-                        }, formatValue(row.mappedData[field])))
+                        }, formatValue(row.mappedData[field]))),
+                        // Add features cell if any row has features
+                        data.some(row => row.features && row.features.length > 0) && React.createElement('td', {
+                            key: `cell-${index}-features`,
+                            className: 'px-4 py-3 text-sm text-gray-900 dark:text-white'
+                        }, row.features && row.features.length > 0 ? 
+                            React.createElement('div', {
+                                key: `features-${index}`,
+                                className: 'space-y-1'
+                            }, row.features.map((feature, featureIndex) => 
+                                React.createElement('div', {
+                                    key: `feature-${index}-${featureIndex}`,
+                                    className: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs'
+                                }, feature)
+                            )) : '-')
                     ])))
                 ])
             ])
