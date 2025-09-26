@@ -405,7 +405,7 @@ window.Modals.ProductModal = function ProductModal({
                     React.createElement('div', { key: 'basic-info-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, [
                         // Product Name
                         React.createElement('div', { key: 'product-name' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Product Name *'),
+                            React.createElement('label', { key: 'product-name-label', className: 'block text-sm font-medium mb-2' }, 'Product Name *'),
                             React.createElement('input', {
                                 type: 'text',
                                 value: formData.name,
@@ -418,7 +418,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // SKU
                         React.createElement('div', { key: 'product-sku' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'SKU'),
+                            React.createElement('label', { key: 'product-sku-label', className: 'block text-sm font-medium mb-2' }, 'SKU'),
                             React.createElement('input', {
                                 type: 'text',
                                 value: formData.sku,
@@ -430,7 +430,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Price
                         React.createElement('div', { key: 'product-price' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Price *'),
+                            React.createElement('label', { key: 'product-price-label', className: 'block text-sm font-medium mb-2' }, 'Price *'),
                             React.createElement('input', {
                                 type: 'number',
                                 step: '0.01',
@@ -445,7 +445,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Stock
                         React.createElement('div', { key: 'product-stock' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Stock Quantity *'),
+                            React.createElement('label', { key: 'product-stock-label', className: 'block text-sm font-medium mb-2' }, 'Stock Quantity *'),
                             React.createElement('input', {
                                 type: 'number',
                                 min: '0',
@@ -459,7 +459,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Category
                         React.createElement('div', { key: 'product-category' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Category *'),
+                            React.createElement('label', { key: 'product-category-label', className: 'block text-sm font-medium mb-2' }, 'Category *'),
                             React.createElement('input', {
                                 type: 'text',
                                 value: formData.category,
@@ -472,7 +472,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Product Type
                         React.createElement('div', { key: 'product-type' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Product Type'),
+                            React.createElement('label', { key: 'product-type-label', className: 'block text-sm font-medium mb-2' }, 'Product Type'),
                             React.createElement('select', {
                                 value: formData.productType,
                                 onChange: (e) => handleInputChange('productType', e.target.value),
@@ -490,7 +490,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Brand
                         React.createElement('div', { key: 'brand' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Brand'),
+                            React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium mb-2' }, 'Brand'),
                             React.createElement('input', {
                                 type: 'text',
                                 value: formData.brand,
@@ -502,7 +502,7 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Collection
                         React.createElement('div', { key: 'collection' }, [
-                            React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Collection'),
+                            React.createElement('label', { key: 'collection-label', className: 'block text-sm font-medium mb-2' }, 'Collection'),
                             React.createElement('input', {
                                 type: 'text',
                                 value: formData.collection,
