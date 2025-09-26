@@ -2,7 +2,7 @@
 // This service worker provides basic caching without offline capabilities
 // and ensures proper cache invalidation for updates
 
-const CACHE_VERSION = 'v20250926-1115'; // Update this when deploying
+const CACHE_VERSION = 'v20250926-1123'; // Update this when deploying
 const CACHE_NAME = `pos-cache-${CACHE_VERSION}`;
 
 // Static assets to cache (only essential files)
@@ -36,16 +36,23 @@ self.addEventListener('activate', event => {
     console.log('Service Worker activating...', CACHE_VERSION);
     event.waitUntil(
         caches.keys().then(cacheNames => {
+            console.log('Found caches:', cacheNames);
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    // Delete all old caches that don't match current version
+                    // Delete ALL old caches that don't match current version
                     if (cacheName.startsWith('pos-cache-') && cacheName !== CACHE_NAME) {
                         console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                    // Also delete any cache that might be interfering
+                    if (cacheName.includes('pos') && cacheName !== CACHE_NAME) {
+                        console.log('Deleting interfering cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
         }).then(() => {
+            console.log('Cache cleanup completed');
             // Take control of all clients immediately
             return self.clients.claim();
         })

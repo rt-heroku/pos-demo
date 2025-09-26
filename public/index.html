@@ -440,9 +440,10 @@
                         window.clearAppCache = async () => {
                             if ('caches' in window) {
                                 const cacheNames = await caches.keys();
+                                console.log('Found caches to clear:', cacheNames);
                                 await Promise.all(
                                     cacheNames.map(cacheName => {
-                                        if (cacheName.startsWith('pos-cache-')) {
+                                        if (cacheName.startsWith('pos-cache-') || cacheName.includes('pos')) {
                                             console.log('Clearing cache:', cacheName);
                                             return caches.delete(cacheName);
                                         }
@@ -455,6 +456,12 @@
                                 alert('Cache API not supported in this browser');
                             }
                         };
+                        
+                        // Force cache clear on page load if needed
+                        if (localStorage.getItem('force-cache-clear') === 'true') {
+                            localStorage.removeItem('force-cache-clear');
+                            window.clearAppCache();
+                        }
                     })
                     .catch(registrationError => {
                         console.log('SW registration failed: ', registrationError);
