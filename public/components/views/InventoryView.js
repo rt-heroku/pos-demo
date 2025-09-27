@@ -122,7 +122,7 @@ window.Views.InventoryView = ({
                 }`
         }, [
             // Product Image
-            React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-100 items-center justify-center' }, [
+            React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-50 dark:bg-gray-800 items-center justify-center' }, [
                 // Show actual image if available centered
                 productImage.type === 'url' ? (
                     React.createElement('img', {
@@ -236,11 +236,11 @@ window.Views.InventoryView = ({
                     React.createElement('div', { key: 'attributes-div', className: 'flex flex-wrap gap-1' }, [
                         product.material && React.createElement('span', {
                             key: 'material',
-                            className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'
+                            className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
                         }, product.material),
                         product.color && React.createElement('span', {
                             key: 'color',
-                            className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'
+                            className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
                         }, product.color),
                     ]),
 
@@ -289,7 +289,7 @@ window.Views.InventoryView = ({
             ]),
             React.createElement('td', { key: 'product', className: 'p-4' }, [
                 React.createElement('div', { key: 'product-div', className: 'flex items-center gap-3' }, [
-                    React.createElement('div', { key: 'image-div', className: 'w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0' }, [
+                    React.createElement('div', { key: 'image-div', className: 'w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0' }, [
                         // Show actual image if available
                         productImage.type === 'url' ? (
                             React.createElement('img', {
@@ -332,11 +332,11 @@ window.Views.InventoryView = ({
                 React.createElement('div', { key: 'attributes-div', className: 'flex flex-wrap gap-1' }, [
                     product.material && React.createElement('span', {
                         key: 'material',
-                        className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'
+                        className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
                     }, product.material),
                     product.color && React.createElement('span', {
                         key: 'color',
-                        className: 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'
+                        className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
                     }, product.color)
                 ])
             ]),
@@ -354,7 +354,7 @@ window.Views.InventoryView = ({
                 React.createElement('div', { key: 'status-div', className: 'flex flex-wrap gap-1' }, [
                     React.createElement('span', {
                         key: 'status-span',
-                        className: `px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        className: `px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-50 dark:bg-gray-800 text-gray-800'
                             }`
                     }, product.is_active ? 'Active' : 'Inactive'),
                     product.featured && React.createElement('span', {
@@ -655,7 +655,7 @@ window.Views.InventoryView = ({
             }, [
                 React.createElement('button', {
                     onClick: () => onFilterChange({}),
-                    className: 'px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors'
+                    className: 'px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:bg-gray-800 rounded-lg transition-colors'
                 }, 'Clear All Filters')
             ])
         ]),

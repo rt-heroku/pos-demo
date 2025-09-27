@@ -516,10 +516,10 @@ const POSApp = () => {
                 setSelectedLocation(updatedLocation);
             }
             
-            alert('Logo updated successfully!');
+            window.NotificationManager.success('Logo Updated', 'Logo updated successfully!');
         } catch (error) {
             console.error('Failed to upload logo:', error);
-            alert('Failed to upload logo');
+            window.NotificationManager.error('Logo Upload Failed', 'Failed to upload logo');
         } finally {
             setLoading(false);
         }
@@ -622,11 +622,11 @@ const POSApp = () => {
     const processPayment = async () => {
         if (cart.length === 0) return;
         if (!selectedLocation) {
-            alert('Please select a location first');
+            window.NotificationManager.warning('Location Required', 'Please select a location first');
             return;
         }
         if (paymentMethod === 'cash' && parseFloat(amountReceived) < total) {
-            alert('Insufficient amount received');
+            window.NotificationManager.warning('Payment Error', 'Insufficient amount received');
             return;
         }
 
@@ -676,7 +676,7 @@ const POSApp = () => {
             setShowReceipt(true);
         } catch (error) {
             console.error('Failed to process payment:', error);
-            alert('Failed to process payment. Please try again.');
+            window.NotificationManager.error('Payment Failed', 'Failed to process payment. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -1210,7 +1210,7 @@ const POSApp = () => {
     // Authentication loading screen
     if (authLoading) {
         return React.createElement('div', { 
-            className: 'min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center' 
+            className: 'min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center' 
         }, [
             React.createElement('div', { key: 'loading', className: 'text-center' }, [
                 React.createElement('div', { 
@@ -1235,7 +1235,7 @@ const POSApp = () => {
     // Loading screen for initial app load
     if (appLoading) {
         return React.createElement('div', { 
-            className: 'min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center' 
+            className: 'min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center' 
         }, [
             React.createElement('div', { key: 'loading', className: 'text-center' }, [
                 React.createElement('div', { 
@@ -1257,7 +1257,7 @@ const POSApp = () => {
     // First-time setup screen
     if (isFirstTimeSetup) {
         return React.createElement('div', { 
-            className: 'min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center' 
+            className: 'min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center' 
         }, [
             React.createElement('div', { 
                 key: 'setup',
@@ -1288,7 +1288,7 @@ const POSApp = () => {
     }
 
     // Main render
-    return React.createElement('div', { className: 'min-h-screen bg-gray-100 dark:bg-gray-900' }, [
+    return React.createElement('div', { className: 'min-h-screen bg-white dark:bg-gray-900' }, [
         // Notification Container
         React.createElement(window.Components.NotificationContainer, { key: 'notification-container' }),
         // Header (hidden on mobile)

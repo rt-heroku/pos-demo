@@ -44,7 +44,7 @@ window.Auth = {
         };
 
         return React.createElement('div', { 
-            className: 'min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center' 
+            className: 'min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center' 
         }, [
             React.createElement('div', { 
                 key: 'login-card',

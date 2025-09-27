@@ -261,7 +261,7 @@ window.Views.POSView = ({
             }`
         }, [
             React.createElement('div', { key: 'image-container', className: 'relative mb-3' }, [
-                React.createElement('div', { key: 'image-wrapper', className: 'w-full h-32 lg:h-40 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
+                React.createElement('div', { key: 'image-wrapper', className: 'w-full h-32 lg:h-40 bg-gray-50 dark:bg-gray-700 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
                     productImage.type === 'url' ? (
                         React.createElement('img', {
                             key: 'product-img',
@@ -307,7 +307,7 @@ window.Views.POSView = ({
                 React.createElement('div', { key: 'details', className: 'flex flex-wrap gap-1 justify-center mt-2' }, [
                     product.material && React.createElement('span', { 
                         key: 'material',
-                        className: 'px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded' 
+                        className: 'px-1 py-0.5 bg-gray-50 dark:bg-gray-700 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded' 
                     }, product.material),
                 ])
             ])
@@ -428,7 +428,7 @@ window.Views.POSView = ({
                                 key: item.id,
                                 className: 'flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600' 
                             }, [
-                                React.createElement('div', { key: 'item-image', className: 'w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0' }, [
+                                React.createElement('div', { key: 'item-image', className: 'w-12 h-12 bg-gray-50 dark:bg-gray-700 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0' }, [
                                     itemImage.type === 'url' ? (
                                         React.createElement('img', {
                                             key: 'img',
