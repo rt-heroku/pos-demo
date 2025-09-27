@@ -187,7 +187,6 @@ const POSApp = () => {
 
     // Apply theme when settings change
     useEffect(() => {
-        console.log('userSettings.theme_mode =',userSettings.theme_mode);
         if (userSettings.theme_mode === 'dark') {
             document.documentElement.classList.add('dark');
             document.body.classList.add('dark');
