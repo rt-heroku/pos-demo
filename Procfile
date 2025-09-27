@@ -1,1 +1,1 @@
-web: node update-cache-version.js; node server.js
+web: node server.js
