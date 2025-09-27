@@ -47,6 +47,8 @@ window.Modals.ProductModal = function ProductModal({
     const [aiResults, setAiResults] = React.useState(null);
     const [aiLoading, setAiLoading] = React.useState(false);
     const [salesforceLoading, setSalesforceLoading] = React.useState(false);
+    const [showSalesforceResultsModal, setShowSalesforceResultsModal] = React.useState(false);
+    const [salesforceResults, setSalesforceResults] = React.useState(null);
 
     // Initialize form data when product changes
     React.useEffect(() => {
@@ -254,6 +256,7 @@ window.Modals.ProductModal = function ProductModal({
         }
 
         setSalesforceLoading(true);
+        setSalesforceResults(null);
 
         try {
             const response = await fetch(`/api/loyalty/products/send?product=${product.id}`, {
@@ -265,7 +268,8 @@ window.Modals.ProductModal = function ProductModal({
 
             if (response.ok) {
                 const result = await response.json();
-                alert(`Product sent to Salesforce successfully!\n\nSummary: ${result.summary}\nStatistics: ${JSON.stringify(result.statistics, null, 2)}`);
+                setSalesforceResults(result);
+                setShowSalesforceResultsModal(true);
             } else {
                 const error = await response.json();
                 alert(`Failed to send product to Salesforce: ${error.error || 'Unknown error'}`);
@@ -973,6 +977,167 @@ window.Modals.ProductModal = function ProductModal({
                         className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white'
                     }),
                     loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')
+                ])
+            ]),
+
+            // Salesforce Results Modal
+            showSalesforceResultsModal && salesforceResults && React.createElement('div', {
+                key: 'salesforce-results-modal',
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+            }, [
+                React.createElement('div', {
+                    key: 'modal-content',
+                    className: 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden'
+                }, [
+                    // Modal Header
+                    React.createElement('div', {
+                        key: 'modal-header',
+                        className: 'flex items-center justify-between p-6 border-b dark:border-gray-700'
+                    }, [
+                        React.createElement('div', {
+                            key: 'header-content',
+                            className: 'flex items-center gap-3'
+                        }, [
+                            React.createElement('div', {
+                                key: 'icon',
+                                className: 'w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center'
+                            }, [
+                                React.createElement('span', { key: 'icon-text', className: 'text-blue-600 dark:text-blue-400 text-lg' }, '☁️')
+                            ]),
+                            React.createElement('h2', {
+                                key: 'title',
+                                className: 'text-xl font-bold text-gray-900 dark:text-white'
+                            }, 'Salesforce Sync Results')
+                        ]),
+                        React.createElement('button', {
+                            key: 'close-btn',
+                            onClick: () => setShowSalesforceResultsModal(false),
+                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                        }, [
+                            React.createElement('span', { key: 'close-icon', className: 'text-2xl' }, '×')
+                        ])
+                    ]),
+
+                    // Modal Body
+                    React.createElement('div', {
+                        key: 'modal-body',
+                        className: 'p-6 space-y-6 max-h-[60vh] overflow-y-auto'
+                    }, [
+                        // Summary
+                        React.createElement('div', {
+                            key: 'summary-section',
+                            className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'summary-title',
+                                className: 'font-semibold text-blue-900 dark:text-blue-100 mb-2'
+                            }, 'Summary'),
+                            React.createElement('p', {
+                                key: 'summary-text',
+                                className: 'text-blue-800 dark:text-blue-200 whitespace-pre-line'
+                            }, salesforceResults.summary || 'No summary available')
+                        ]),
+
+                        // Statistics
+                        React.createElement('div', {
+                            key: 'statistics-section',
+                            className: 'grid grid-cols-2 md:grid-cols-4 gap-4'
+                        }, [
+                            React.createElement('div', {
+                                key: 'total-processed',
+                                className: 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'total-number',
+                                    className: 'text-2xl font-bold text-gray-900 dark:text-white'
+                                }, salesforceResults.statistics?.totalProcessed || 0),
+                                React.createElement('div', {
+                                    key: 'total-label',
+                                    className: 'text-sm text-gray-600 dark:text-gray-400'
+                                }, 'Total Processed')
+                            ]),
+                            React.createElement('div', {
+                                key: 'created',
+                                className: 'bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'created-number',
+                                    className: 'text-2xl font-bold text-green-600 dark:text-green-400'
+                                }, salesforceResults.statistics?.created || 0),
+                                React.createElement('div', {
+                                    key: 'created-label',
+                                    className: 'text-sm text-gray-600 dark:text-gray-400'
+                                }, 'Created')
+                            ]),
+                            React.createElement('div', {
+                                key: 'updated',
+                                className: 'bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'updated-number',
+                                    className: 'text-2xl font-bold text-blue-600 dark:text-blue-400'
+                                }, salesforceResults.statistics?.updated || 0),
+                                React.createElement('div', {
+                                    key: 'updated-label',
+                                    className: 'text-sm text-gray-600 dark:text-gray-400'
+                                }, 'Updated')
+                            ]),
+                            React.createElement('div', {
+                                key: 'failed',
+                                className: 'bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'failed-number',
+                                    className: 'text-2xl font-bold text-red-600 dark:text-red-400'
+                                }, salesforceResults.statistics?.failed || 0),
+                                React.createElement('div', {
+                                    key: 'failed-label',
+                                    className: 'text-sm text-gray-600 dark:text-gray-400'
+                                }, 'Failed')
+                            ])
+                        ]),
+
+                        // Failures (if any)
+                        salesforceResults.failures && salesforceResults.failures.length > 0 && React.createElement('div', {
+                            key: 'failures-section',
+                            className: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'failures-title',
+                                className: 'font-semibold text-red-900 dark:text-red-100 mb-3'
+                            }, 'Failures'),
+                            React.createElement('div', {
+                                key: 'failures-list',
+                                className: 'space-y-2 max-h-40 overflow-y-auto'
+                            }, salesforceResults.failures.map((failure, index) => 
+                                React.createElement('div', {
+                                    key: `failure-${index}`,
+                                    className: 'bg-white dark:bg-gray-800 rounded p-3 border border-red-200 dark:border-red-700'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'failure-product',
+                                        className: 'font-medium text-gray-900 dark:text-white'
+                                    }, failure.product_name || 'Unknown Product'),
+                                    React.createElement('div', {
+                                        key: 'failure-error',
+                                        className: 'text-sm text-red-600 dark:text-red-400 mt-1'
+                                    }, failure.error || 'Unknown error')
+                                ])
+                            ))
+                        ])
+                    ]),
+
+                    // Modal Footer
+                    React.createElement('div', {
+                        key: 'modal-footer',
+                        className: 'flex justify-end p-6 border-t dark:border-gray-700'
+                    }, [
+                        React.createElement('button', {
+                            key: 'close-button',
+                            onClick: () => setShowSalesforceResultsModal(false),
+                            className: 'px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors'
+                        }, 'Close')
+                    ])
                 ])
             ])
         ])
