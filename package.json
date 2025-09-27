@@ -22,7 +22,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "npm install",
-    "heroku-postbuild": "npm run build",
+    "heroku-postbuild": "npm run build && node update-cache-version.js",
     "update-cache": "node update-cache-version.js",
     "clear-cache": "npm run update-cache && echo 'Cache version updated! Please refresh your browser.'",
     "lint": "eslint public/**/*.js --ext .js",
