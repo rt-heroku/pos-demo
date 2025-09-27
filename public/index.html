@@ -282,85 +282,8 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* Dark theme styles */
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f3f4f6;
-            --bg-tertiary: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --text-tertiary: #9ca3af;
-            --border-color: #e5e7eb;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-        }
 
-        .dark {
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --bg-tertiary: #374151;
-            --text-primary: #f9fafb;
-            --text-secondary: #d1d5db;
-            --text-tertiary: #9ca3af;
-            --border-color: #374151;
-            --accent-color: #60a5fa;
-            --accent-hover: #3b82f6;
-        }
 
-        /* Apply theme variables */
-        body {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .bg-white {
-            background-color: var(--bg-primary);
-        }
-
-        .dark .bg-white {
-            background-color: var(--bg-primary);
-        }
-
-        .text-gray-900 {
-            color: var(--text-primary);
-        }
-
-        .dark .text-gray-900 {
-            color: var(--text-primary);
-        }
-
-        .text-gray-600 {
-            color: var(--text-secondary);
-        }
-
-        .dark .text-gray-600 {
-            color: var(--text-secondary);
-        }
-
-        .text-gray-500 {
-            color: var(--text-tertiary);
-        }
-
-        .dark .text-gray-500 {
-            color: var(--text-tertiary);
-        }
-
-        .border-gray-200 {
-            border-color: var(--border-color);
-        }
-
-        .dark .border-gray-200 {
-            border-color: var(--border-color);
-        }
-
-        .border-gray-700 {
-            border-color: var(--border-color);
-        }
-
-        .dark .border-gray-700 {
-            border-color: var(--border-color);
-        }
     </style>
 </head>
 <body>
@@ -376,27 +299,34 @@
     <script>
         // Theme Detection and Application
         function initializeTheme() {
-            // Check for saved theme preference
+            // Check for saved theme preference from the app's settings
             const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const userSettings = localStorage.getItem('userSettings');
+            let themeMode = 'light';
             
-            // Apply theme
-            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
+            // Try to get theme from userSettings first
+            if (userSettings) {
+                try {
+                    const settings = JSON.parse(userSettings);
+                    themeMode = settings.theme_mode || 'light';
+                } catch (e) {
+                    console.log('Could not parse userSettings, using default theme');
+                }
             }
             
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                if (!localStorage.getItem('theme')) {
-                    if (e.matches) {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                }
-            });
+            // Fallback to saved theme
+            if (!userSettings && savedTheme) {
+                themeMode = savedTheme;
+            }
+            
+            // Apply theme
+            if (themeMode === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
         }
         
         // Initialize theme immediately
@@ -427,12 +357,6 @@
         console.log('ReactDOM loaded:', typeof ReactDOM !== 'undefined');
         console.log('Babel loaded:', typeof Babel !== 'undefined');
         
-        // Initialize theme on page load
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-            document.body.classList.add('dark');
-        }
         
         // Register Service Worker with proper update handling
         if ('serviceWorker' in navigator) {
@@ -499,43 +423,43 @@
     </script>
     
     <!-- Load the application files in order -->
-    <script src="/icons.js?v=20250927-1417"></script>
-    <script src="/api.js?v=20250927-1417"></script>
-    <script src="/crypto-utils.js?v=20250927-1417"></script>
-    <script src="/mobile-utils.js?v=20250927-1417"></script>
+    <script src="/icons.js?v=20250927-1444"></script>
+    <script src="/api.js?v=20250927-1444"></script>
+    <script src="/crypto-utils.js?v=20250927-1444"></script>
+    <script src="/mobile-utils.js?v=20250927-1444"></script>
     
     <!-- Load common components first -->
-    <script type="text/babel" src="/components/common/TabButton.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/common/CategoryBadge.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/common/Notification.js?v=20250927-1417"></script>
+    <script type="text/babel" src="/components/common/TabButton.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/CategoryBadge.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/Notification.js?v=20250927-1444"></script>
     
     
     <!-- Load modals -->
-    <script type="text/babel" src="/components/views/auth.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/ProductModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/LoadFromCloudModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/DataLoaderModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/common/FileUploadStep.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/common/FieldMappingStep.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/common/DataPreviewStep.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/common/ProcessDataStep.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=20250927-1417"></script>
+    <script type="text/babel" src="/components/views/auth.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/ProductModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/LoadFromCloudModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/DataLoaderModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/FileUploadStep.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/FieldMappingStep.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/DataPreviewStep.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/ProcessDataStep.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=20250927-1444"></script>
     
     <!-- Load view components -->
-    <script type="text/babel" src="/components/views/POSView.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/views/LoyaltyView.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/views/SalesView.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/views/SettingsView.js?v=20250927-1417"></script>
-    <script type="text/babel" src="/components/views/InventoryView.js?v=20250927-1417"></script>
+    <script type="text/babel" src="/components/views/POSView.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/views/LoyaltyView.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/views/SalesView.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/views/SettingsView.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/views/InventoryView.js?v=20250927-1444"></script>
 
-    <script type="text/babel" src="/enhanced-pos.js?v=20250927-1417"></script> 
+    <script type="text/babel" src="/enhanced-pos.js?v=20250927-1444"></script> 
 
     <!-- Load the main application -->
-    <script type="text/babel" src="/app.js?v=20250927-1417"></script>
+    <script type="text/babel" src="/app.js?v=20250927-1444"></script>
 </body>
 </html>
