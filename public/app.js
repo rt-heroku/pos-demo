@@ -256,7 +256,7 @@ const POSApp = () => {
             console.error('Failed to initialize app:', error);
             // Don't show alert for auth errors, just log them
             if (!error.message.includes('Authentication required')) {
-                alert('Failed to initialize application. Please refresh the page.');
+                window.NotificationManager.error('Application Error', 'Failed to initialize application. Please refresh the page.');
             }
         } finally {
             setAppLoading(false);
@@ -422,7 +422,7 @@ const POSApp = () => {
             
         } catch (error) {
             console.error('Failed to change location:', error);
-            alert('Failed to switch location. Please try again.');
+            window.NotificationManager.error('Location Error', 'Failed to switch location. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -451,10 +451,10 @@ const POSApp = () => {
             // Auto-select the new location
             await handleLocationChange(newLocation);
             
-            alert('Location created successfully!');
+            window.NotificationManager.success('Location Created', 'Location created successfully!');
         } catch (error) {
             console.error('Failed to create location:', error);
-            alert(error.message || 'Failed to create location');
+            window.NotificationManager.error('Location Creation Failed', error.message || 'Failed to create location');
         } finally {
             setLoading(false);
         }
@@ -485,10 +485,10 @@ const POSApp = () => {
                 setSelectedLocation(updatedLocation);
             }
             
-            alert('Location updated successfully!');
+            window.NotificationManager.success('Location Updated', 'Location updated successfully!');
         } catch (error) {
             console.error('Failed to update location:', error);
-            alert(error.message || 'Failed to update location');
+            window.NotificationManager.error('Location Update Failed', error.message || 'Failed to update location');
         } finally {
             setLoading(false);
         }
@@ -1289,6 +1289,8 @@ const POSApp = () => {
 
     // Main render
     return React.createElement('div', { className: 'min-h-screen bg-gray-100 dark:bg-gray-900' }, [
+        // Notification Container
+        React.createElement(window.Components.NotificationContainer, { key: 'notification-container' }),
         // Header (hidden on mobile)
         React.createElement('header', { 
             key: 'header', 

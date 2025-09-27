@@ -131,7 +131,7 @@ window.Modals.ProductModal = function ProductModal({
 
     const findImage = async (type = 'main') => {
         if (!formData.name && !formData.sku) {
-            alert('Please enter a product name or SKU to find an image');
+            window.NotificationManager.warning('Image Search', 'Please enter a product name or SKU to find an image');
             return;
         }
 
@@ -157,17 +157,17 @@ window.Modals.ProductModal = function ProductModal({
                     } else {
                         setNewImage(prev => ({ ...prev, url: result.imageUrl }));
                     }
-                    alert('Image found and added successfully!');
+                    window.NotificationManager.success('Image Found', 'Image found and added successfully!');
                 } else {
-                    alert('No image found for this product');
+                    window.NotificationManager.info('Image Search', 'No image found for this product');
                 }
             } else {
                 const error = await response.json();
-                alert(`Failed to find image: ${error.error || 'Unknown error'}`);
+                window.NotificationManager.error('Image Search Failed', `Failed to find image: ${error.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error finding image:', error);
-            alert(`Failed to find image: ${error.message}`);
+            window.NotificationManager.error('Image Search Failed', `Failed to find image: ${error.message}`);
         } finally {
             setFindingImage(false);
         }
@@ -179,7 +179,7 @@ window.Modals.ProductModal = function ProductModal({
 
     const handleAIImprove = async () => {
         if (!product?.id) {
-            alert('Product ID is required for AI improvement');
+            window.NotificationManager.warning('AI Improvement', 'Product ID is required for AI improvement');
             return;
         }
 
@@ -244,11 +244,11 @@ window.Modals.ProductModal = function ProductModal({
                 }, 2000); // Wait 2 seconds to show the results
             } else {
                 const error = await response.json();
-                alert(`AI improvement failed: ${error.error || 'Unknown error'}`);
+                window.NotificationManager.error('AI Improvement Failed', `AI improvement failed: ${error.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error improving product:', error);
-            alert(`AI improvement failed: ${error.message}`);
+            window.NotificationManager.error('AI Improvement Failed', `AI improvement failed: ${error.message}`);
         } finally {
             setAiLoading(false);
         }
@@ -256,7 +256,7 @@ window.Modals.ProductModal = function ProductModal({
 
     const handleSendToSalesforce = async () => {
         if (!product?.id) {
-            alert('Product ID is required to send to Salesforce');
+            window.NotificationManager.warning('Salesforce Sync', 'Product ID is required to send to Salesforce');
             return;
         }
 
@@ -282,11 +282,11 @@ window.Modals.ProductModal = function ProductModal({
                 }, 3000); // Wait 3 seconds to allow user to see the results
             } else {
                 const error = await response.json();
-                alert(`Failed to send product to Salesforce: ${error.error || 'Unknown error'}`);
+                window.NotificationManager.error('Salesforce Sync Failed', `Failed to send product to Salesforce: ${error.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error sending product to Salesforce:', error);
-            alert(`Failed to send product to Salesforce: ${error.message}`);
+            window.NotificationManager.error('Salesforce Sync Failed', `Failed to send product to Salesforce: ${error.message}`);
         } finally {
             setSalesforceLoading(false);
         }
@@ -343,19 +343,19 @@ window.Modals.ProductModal = function ProductModal({
 
         // Validation
         if (!formData.name.trim()) {
-            alert('Product name is required');
+            window.NotificationManager.warning('Validation Error', 'Product name is required');
             return;
         }
         if (!formData.price || parseFloat(formData.price) < 0) {
-            alert('Valid price is required');
+            window.NotificationManager.warning('Validation Error', 'Valid price is required');
             return;
         }
         if (!formData.category.trim()) {
-            alert('Category is required');
+            window.NotificationManager.warning('Validation Error', 'Category is required');
             return;
         }
         if (!formData.stock || parseInt(formData.stock) < 0) {
-            alert('Valid stock quantity is required');
+            window.NotificationManager.warning('Validation Error', 'Valid stock quantity is required');
             return;
         }
 
