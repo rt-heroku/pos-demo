@@ -9,7 +9,7 @@
         return React.createElement('div', {key: 'sales-view', className: 'space-y-4 lg:space-y-6' }, [
             // Stats Cards
             React.createElement('div', { key: 'stats', className: 'grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6' }, [
-                React.createElement('div', { key: 'today-sales', className: 'bg-white p-4 lg:p-6 rounded-xl shadow-sm border' }, [
+                React.createElement('div', { key: 'today-sales', className: 'bg-white dark:bg-gray-800 p-4 lg:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
                     React.createElement('div', { key: 'today-sales-content', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'content' }, [
                             React.createElement('p', { key: 'today-sales-label', className: 'text-gray-600 text-sm' }, "Today's Sales"),
@@ -18,7 +18,7 @@
                         React.createElement(DollarSign, { key: 'icon', className: 'text-green-600', size: 32 })
                     ])
                 ]),
-                React.createElement('div', { key: 'total-sales', className: 'bg-white p-6 rounded-xl shadow-sm border' }, [
+                React.createElement('div', { key: 'total-sales', className: 'bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
                     React.createElement('div', { key: 'total-sales-content', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'content' }, [
                             React.createElement('p', { key: 'total-sales-label', className: 'text-gray-600 text-sm' }, 'Total Sales'),
@@ -27,7 +27,7 @@
                         React.createElement(BarChart3, { key: 'icon', className: 'text-blue-600', size: 32 })
                     ])
                 ]),
-                React.createElement('div', { key: 'transactions', className: 'bg-white p-6 rounded-xl shadow-sm border' }, [
+                React.createElement('div', { key: 'transactions', className: 'bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
                     React.createElement('div', { key: 'transactions-content', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'content' }, [
                             React.createElement('p', { key: 'transactions-label', className: 'text-gray-600 text-sm' }, 'Transactions'),
@@ -36,7 +36,7 @@
                         React.createElement(Receipt, { key: 'icon', className: 'text-purple-600', size: 32 })
                     ])
                 ]),
-                React.createElement('div', { key: 'customers', className: 'bg-white p-6 rounded-xl shadow-sm border' }, [
+                React.createElement('div', { key: 'customers', className: 'bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
                     React.createElement('div', { key: 'customers-content', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'content' }, [
                             React.createElement('p', { key: 'customers-label', className: 'text-gray-600 text-sm' }, 'Total Customers'),
@@ -48,7 +48,7 @@
             ]),
 
             // Recent Transactions
-            React.createElement('div', { key: 'transactions-table', className: 'bg-white rounded-xl shadow-sm border' }, [
+            React.createElement('div', { key: 'transactions-table', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
                 React.createElement('div', { key: 'header', className: 'p-6 border-b' }, [
                     React.createElement('h2', { key: 'header-title', className: 'text-xl font-bold' }, 'Recent Transactions')
                 ]),

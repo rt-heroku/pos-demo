@@ -128,7 +128,7 @@ window.Views.LoyaltyView= ({
         const daysSinceMember = Math.floor((new Date() - memberSince) / (1000 * 60 * 60 * 24));
         
         return React.createElement('div', { 
-            className: `bg-white border rounded-lg p-4 hover:shadow-md transition-shadow ${
+            className: `bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow ${
                 customer.member_status !== 'Active' ? 'opacity-75' : ''
             }` 
         }, [
@@ -224,7 +224,7 @@ window.Views.LoyaltyView= ({
 
             return React.createElement('div', { className: 'space-y-4 lg:space-y-6' }, [
         // Header with tabs
-        React.createElement('div', { key: 'header', className: 'bg-white rounded-xl shadow-sm border p-6' }, [
+        React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
             React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between mb-6' }, [
                 React.createElement('div', { key: 'title' }, [
                     React.createElement('h2', { key: 'title', className: 'text-2xl font-bold flex items-center gap-3' }, [
@@ -265,7 +265,7 @@ window.Views.LoyaltyView= ({
 
         // Customer Search Tab
         currentTab === 'search' && React.createElement('div', { key: 'search-content', className: 'space-y-6' }, [
-            React.createElement('div', { key: 'search-section', className: 'bg-white rounded-xl shadow-sm border p-6' }, [
+            React.createElement('div', { key: 'search-section', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
                 React.createElement('h3', { key: 'search-section-container', className: 'text-lg font-semibold mb-4 flex items-center gap-2' }, [
                     React.createElement(Search, { key: 'icon', size: 20 }),
                     'Find Customer'
@@ -395,7 +395,7 @@ window.Views.LoyaltyView= ({
         // Customer Management Tab
         currentTab === 'manage' && React.createElement('div', { key: 'manage-content', className: 'space-y-6' }, [
             // Controls
-            React.createElement('div', { key: 'controls', className: 'bg-white rounded-xl shadow-sm border p-6' }, [
+            React.createElement('div', { key: 'controls', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
                 React.createElement('div', { key: 'controls-content', className: 'flex flex-col lg:flex-row lg:items-center gap-4' }, [
                     // Search
                     React.createElement('div', { key: 'search', className: 'relative flex-1' }, [
@@ -452,7 +452,7 @@ window.Views.LoyaltyView= ({
             ]),
 
             // Customer List
-            React.createElement('div', { key: 'customer-list', className: 'bg-white rounded-xl shadow-sm border' }, [
+            React.createElement('div', { key: 'customer-list', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
                 React.createElement('div', { key: 'list-header', className: 'p-6 border-b' }, [
                     React.createElement('div', { key: 'list-header-content', className: 'flex items-center justify-between' }, [
                         React.createElement('h3', { key: 'list-title', className: 'text-lg font-semibold flex items-center gap-2' }, [
@@ -486,7 +486,7 @@ window.Views.LoyaltyView= ({
                             }),
                             React.createElement('h4', { 
                                 key: 'title',
-                                className: 'text-xl font-semibold text-gray-900 mb-2' 
+                                className: 'text-xl font-semibold text-gray-900 dark:text-white mb-2' 
                             }, loyaltySearchTerm.trim() ? 'No customers found' : 'No customers yet'),
                             React.createElement('p', { 
                                 key: 'description',

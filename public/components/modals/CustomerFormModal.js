@@ -142,7 +142,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
     }, [
         React.createElement('div', {
             key: 'modal',
-            className: 'bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'
+            className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'
         }, [
             // Header
             React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [

@@ -20,7 +20,7 @@ window.Modals.CustomerDeleteModal = ({
     }, [
         React.createElement('div', {
             key: 'modal',
-            className: 'bg-white rounded-lg w-full max-w-md'
+            className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-md'
         }, [
             // Header
             React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [
