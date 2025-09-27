@@ -297,40 +297,7 @@
     </div>
     
     <script>
-        // Theme Detection and Application
-        function initializeTheme() {
-            // Check for saved theme preference from the app's settings
-            const savedTheme = localStorage.getItem('theme');
-            const userSettings = localStorage.getItem('userSettings');
-            let themeMode = 'light';
-            
-            // Try to get theme from userSettings first
-            if (userSettings) {
-                try {
-                    const settings = JSON.parse(userSettings);
-                    themeMode = settings.theme_mode || 'light';
-                } catch (e) {
-                    console.log('Could not parse userSettings, using default theme');
-                }
-            }
-            
-            // Fallback to saved theme
-            if (!userSettings && savedTheme) {
-                themeMode = savedTheme;
-            }
-            
-            // Apply theme
-            if (themeMode === 'dark') {
-                document.documentElement.classList.add('dark');
-                document.body.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.body.classList.remove('dark');
-            }
-        }
-        
-        // Initialize theme immediately
-        initializeTheme();
+        // Theme will be initialized by the React app after it loads
         
         // Error handling
         window.addEventListener('error', function(e) {
@@ -423,43 +390,43 @@
     </script>
     
     <!-- Load the application files in order -->
-    <script src="/icons.js?v=20250927-1444"></script>
-    <script src="/api.js?v=20250927-1444"></script>
-    <script src="/crypto-utils.js?v=20250927-1444"></script>
-    <script src="/mobile-utils.js?v=20250927-1444"></script>
+    <script src="/icons.js?v=20250927-1501"></script>
+    <script src="/api.js?v=20250927-1501"></script>
+    <script src="/crypto-utils.js?v=20250927-1501"></script>
+    <script src="/mobile-utils.js?v=20250927-1501"></script>
     
     <!-- Load common components first -->
-    <script type="text/babel" src="/components/common/TabButton.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/common/CategoryBadge.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/common/Notification.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/common/TabButton.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/common/CategoryBadge.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/common/Notification.js?v=20250927-1501"></script>
     
     
     <!-- Load modals -->
-    <script type="text/babel" src="/components/views/auth.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/ProductModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/LoadFromCloudModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/DataLoaderModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/common/FileUploadStep.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/common/FieldMappingStep.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/common/DataPreviewStep.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/common/ProcessDataStep.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/views/auth.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/CustomerFormModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/ProductModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/LoadFromCloudModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/DataLoaderModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/common/FileUploadStep.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/common/FieldMappingStep.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/common/DataPreviewStep.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/common/ProcessDataStep.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/CustomerDeleteModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/CustomerHistoryModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/ReceiptModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/LoyaltyModal.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/modals/SystemSettingModal.js?v=20250927-1501"></script>
     
     <!-- Load view components -->
-    <script type="text/babel" src="/components/views/POSView.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/views/LoyaltyView.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/views/SalesView.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/views/SettingsView.js?v=20250927-1444"></script>
-    <script type="text/babel" src="/components/views/InventoryView.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/components/views/POSView.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/views/LoyaltyView.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/views/SalesView.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/views/SettingsView.js?v=20250927-1501"></script>
+    <script type="text/babel" src="/components/views/InventoryView.js?v=20250927-1501"></script>
 
-    <script type="text/babel" src="/enhanced-pos.js?v=20250927-1444"></script> 
+    <script type="text/babel" src="/enhanced-pos.js?v=20250927-1501"></script> 
 
     <!-- Load the main application -->
-    <script type="text/babel" src="/app.js?v=20250927-1444"></script>
+    <script type="text/babel" src="/app.js?v=20250927-1501"></script>
 </body>
 </html>

@@ -205,6 +205,7 @@ const POSApp = () => {
 
     // Initialize theme from localStorage
     const initializeTheme = () => {
+        // Check for theme in localStorage first (for immediate application)
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.documentElement.classList.add('dark');
@@ -279,6 +280,18 @@ const POSApp = () => {
             const userId = getUserId();
             const data = await window.API.call(`/settings/${userId}`);
             setUserSettings(data);
+            
+            // Apply theme immediately when settings are loaded
+            if (data.theme_mode === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            
             return data;
         } catch (error) {
             console.error('Failed to load user settings:', error);
