@@ -237,11 +237,11 @@ window.Views.InventoryView = ({
                     React.createElement('div', { key: 'attributes-div', className: 'flex flex-wrap gap-1' }, [
                         product.material && React.createElement('span', {
                             key: 'material',
-                            className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
+                            className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs rounded'
                         }, product.material),
                         product.color && React.createElement('span', {
                             key: 'color',
-                            className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
+                            className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs rounded'
                         }, product.color),
                     ]),
 
@@ -333,11 +333,11 @@ window.Views.InventoryView = ({
                 React.createElement('div', { key: 'attributes-div', className: 'flex flex-wrap gap-1' }, [
                     product.material && React.createElement('span', {
                         key: 'material',
-                        className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
+                        className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs rounded'
                     }, product.material),
                     product.color && React.createElement('span', {
                         key: 'color',
-                        className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 text-xs rounded'
+                        className: 'px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs rounded'
                     }, product.color)
                 ])
             ]),
@@ -726,7 +726,7 @@ window.Views.InventoryView = ({
                                         onChange: (e) => onSelectAll(e.target.checked),
                                         className: 'w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500'
                                     }),
-                                    React.createElement('span', { key: 'grid-header-select-span', className: 'text-sm font-medium' }, 'Select All')
+                                    React.createElement('span', { key: 'grid-header-select-span', className: 'text-sm font-medium text-gray-900 dark:text-white' }, 'Select All')
                                 ])
                             ]),
                             React.createElement('div', { key: 'grid-header-count', className: 'text-sm text-gray-600 dark:text-gray-300' },

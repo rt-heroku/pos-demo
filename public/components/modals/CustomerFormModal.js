@@ -153,7 +153,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 React.createElement('button', {
                     key: 'close-button',
                     onClick: onClose,
-                    className: 'text-gray-400 hover:text-gray-600 transition-colors'
+                    className: 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
                 }, React.createElement(X, { key: 'close-icon', size: 24 }))
             ]),
 
@@ -161,16 +161,16 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
             React.createElement('div', { key: 'content', className: 'p-6 space-y-6 overflow-y-auto flex-1' }, [
                 // Basic Information
                 React.createElement('div', { key: 'member-container', className: 'space-y-4' }, [
-                    React.createElement('h3', { key: 'member-type-header', className: 'text-lg font-semibold text-gray-900 border-b pb-2' }, 'Member Type'),
+                    React.createElement('h3', { key: 'member-type-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' }, 'Member Type'),
                     
                     // Member Type
                     React.createElement('div', { key: 'member-type' }, [
-                        React.createElement('label', { key: 'member-type-label', className: 'block text-sm font-medium mb-2' }, 'Member Type'),
+                        React.createElement('label', { key: 'member-type-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Member Type'),
                         React.createElement('select', {
                             key: 'member-type-select',
                             value: formData.member_type,
                             onChange: (e) => handleInputChange('member_type', e.target.value),
-                            className: 'w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
                             disabled: !!customer // Don't allow changing member type for existing customers
                         }, [
                             React.createElement('option', { key: 'individual', value: 'Individual' }, 'Individual'),
@@ -178,14 +178,14 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                         ]),
                         customer && React.createElement('p', {
                             key: 'member-type-note',
-                            className: 'text-gray-500 text-xs mt-1'
+                            className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                         }, 'Member type cannot be changed after creation')
                     ])
                 ]),
 
                 // Member Information
                 React.createElement('div', { key: 'member-info', className: 'space-y-4' }, [
-                    React.createElement('h3', { key: 'member-info-header', className: 'text-lg font-semibold text-gray-900 border-b pb-2' },
+                    React.createElement('h3', { key: 'member-info-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },
                         'Member Information'
                     ),
 
@@ -198,7 +198,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 type: 'text',
                                 value: formData.first_name,
                                 onChange: (e) => handleInputChange('first_name', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.first_name ? 'border-red-500' : 'border-gray-300'
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.first_name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                                     }`,
                                 placeholder: 'Enter first name'
                             }),
@@ -216,7 +216,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 type: 'text',
                                 value: formData.last_name,
                                 onChange: (e) => handleInputChange('last_name', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.last_name ? 'border-red-500' : 'border-gray-300'
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.last_name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                                     }`,
                                 placeholder: 'Enter last name'
                             }),
@@ -234,7 +234,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 type: 'email',
                                 value: formData.email,
                                 onChange: (e) => handleInputChange('email', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500' : 'border-gray-300'
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                                     }`,
                                 placeholder: 'customer@example.com'
                             }),
@@ -255,7 +255,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                     const formatted = formatPhoneNumber(e.target.value);
                                     handleInputChange('phone', formatted);
                                 },
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.phone ? 'border-red-500' : 'border-gray-300'
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                                     }`,
                                 placeholder: '(555) 123-4567'
                             }),
@@ -278,7 +278,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                             }),
                             React.createElement('p', {
                                 key: 'date-of-birth-note',
-                                className: 'text-gray-500 text-xs mt-1'
+                                className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                             }, 'Optional - used for birthday promotions')
                         ]),
 
@@ -291,8 +291,8 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 value: formData.loyalty_number,
                                 onChange: (e) => handleInputChange('loyalty_number', e.target.value.toUpperCase()),
                                 disabled: !!customer, // Disable editing for existing customers
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.loyalty_number ? 'border-red-500' : 'border-gray-300'
-                                    } ${customer ? 'bg-gray-100' : ''}`,
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.loyalty_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                                    } ${customer ? 'bg-gray-100 dark:bg-gray-600' : ''}`,
                                 placeholder: customer ? 'Auto-assigned' : 'LOY001 (optional - auto-generated if empty)'
                             }),
                             errors.loyalty_number && React.createElement('p', {
@@ -301,7 +301,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                             }, errors.loyalty_number),
                             !customer && React.createElement('p', {
                                 key: 'loyalty-note',
-                                className: 'text-gray-500 text-xs mt-1'
+                                className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                             }, 'Leave empty to auto-generate loyalty number')
                         ])
                     ])
@@ -315,11 +315,11 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                             key: 'member-status-select',
                             value: formData.member_status,
                             onChange: (e) => handleInputChange('member_status', e.target.value),
-                            className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${formData.member_status === 'Active' ? 'border-green-300 bg-green-50' :
-                                formData.member_status === 'Inactive' ? 'border-gray-300 bg-gray-50' :
-                                    formData.member_status === 'Under Fraud Investigation' ? 'border-yellow-300 bg-yellow-50' :
-                                        formData.member_status === 'Fraudulent Member' ? 'border-red-300 bg-red-50' :
-                                            'border-purple-300 bg-purple-50'
+                            className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${formData.member_status === 'Active' ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20' :
+                                formData.member_status === 'Inactive' ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' :
+                                    formData.member_status === 'Under Fraud Investigation' ? 'border-yellow-300 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20' :
+                                        formData.member_status === 'Fraudulent Member' ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' :
+                                            'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20'
                                 }`
                         }, [
                             React.createElement('option', { key: 'active', value: 'Active' }, '✅ Active'),
@@ -360,7 +360,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                         }),
                         React.createElement('p', {
                             key: 'enrollment-date-note',
-                            className: 'text-gray-500 text-xs mt-1'
+                            className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                         }, 'Date when customer enrolled in loyalty program')
                     ]),
 
@@ -384,7 +384,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                         ]),
                         React.createElement('p', {
                             key: 'customer-tier-note',
-                            className: 'text-gray-500 text-xs mt-1'
+                            className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                         }, customer ? 'Tier is auto-calculated but can be manually overridden' : 'Initial tier - will be recalculated based on activity'),
 
                         // Show tier benefits
@@ -402,7 +402,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 ]),
                 // Loyalty Information (for editing existing customers)
                 customer && React.createElement('div', { key: 'loyalty-info', className: 'space-y-4' }, [
-                    React.createElement('h3', { key: 'loyalty-info-header', className: 'text-lg font-semibold text-gray-900 border-b pb-2' },
+                    React.createElement('h3', { key: 'loyalty-info-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },
                         'Loyalty Information'
                     ),
 
@@ -426,39 +426,39 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                             }, errors.points),
                             React.createElement('p', {
                                 key: 'points-note',
-                                className: 'text-gray-500 text-xs mt-1'
+                                className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                             }, 'Adjust points balance if needed')
                         ]),
 
                         // Customer Stats (read-only display with enhanced info)
                         React.createElement('div', { key: 'stats', className: 'space-y-3' }, [
                             React.createElement('div', { className: 'text-sm' }, [
-                                React.createElement('span', { className: 'font-medium text-gray-700' }, 'Total Spent: '),
+                                React.createElement('span', { className: 'font-medium text-gray-700 dark:text-gray-300' }, 'Total Spent: '),
                                 React.createElement('span', { className: 'text-green-600 font-bold' },
                                     `${parseFloat(customer.total_spent || 0).toFixed(2)}`
                                 )
                             ]),
                             React.createElement('div', { className: 'text-sm' }, [
-                                React.createElement('span', { className: 'font-medium text-gray-700' }, 'Visit Count: '),
+                                React.createElement('span', { className: 'font-medium text-gray-700 dark:text-gray-300' }, 'Visit Count: '),
                                 React.createElement('span', { className: 'text-blue-600 font-bold' },
                                     customer.visit_count || 0
                                 )
                             ]),
                             customer.last_visit && React.createElement('div', { className: 'text-sm' }, [
-                                React.createElement('span', { className: 'font-medium text-gray-700' }, 'Last Visit: '),
+                                React.createElement('span', { className: 'font-medium text-gray-700 dark:text-gray-300' }, 'Last Visit: '),
                                 React.createElement('span', { className: 'text-purple-600 font-bold' },
                                     new Date(customer.last_visit).toLocaleDateString()
                                 )
                             ]),
                             customer.tier_calculation_number && React.createElement('div', { className: 'text-sm' }, [
-                                React.createElement('span', { className: 'font-medium text-gray-700' }, 'Tier Score: '),
+                                React.createElement('span', { className: 'font-medium text-gray-700 dark:text-gray-300' }, 'Tier Score: '),
                                 React.createElement('span', { className: 'text-indigo-600 font-bold' },
                                     parseFloat(customer.tier_calculation_number).toFixed(2)
                                 )
                             ]),
                             // Member duration
                             customer.enrollment_date && React.createElement('div', { className: 'text-sm' }, [
-                                React.createElement('span', { className: 'font-medium text-gray-700' }, 'Member For: '),
+                                React.createElement('span', { className: 'font-medium text-gray-700 dark:text-gray-300' }, 'Member For: '),
                                 React.createElement('span', { className: 'text-orange-600 font-bold' },
                                     (() => {
                                         const enrollDate = new Date(customer.enrollment_date);
@@ -484,7 +484,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 ]),
                 // Notes
                 React.createElement('div', { key: 'notes', className: 'space-y-4' }, [
-                    React.createElement('h3', { key: 'notes-header', className: 'text-lg font-semibold text-gray-900 border-b pb-2' },
+                    React.createElement('h3', { key: 'notes-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },
                         'Additional Notes'
                     ),
                     React.createElement('textarea', {
@@ -504,7 +504,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                     key: 'cancel-button',
                     onClick: onClose,
                     disabled: loading,
-                    className: 'px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50'
+                    className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50'
                 }, 'Cancel'),
                 React.createElement('button', {
                     key: 'save-button',
