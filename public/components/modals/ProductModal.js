@@ -46,6 +46,7 @@ window.Modals.ProductModal = function ProductModal({
     const [findingImage, setFindingImage] = React.useState(false);
     const [aiResults, setAiResults] = React.useState(null);
     const [aiLoading, setAiLoading] = React.useState(false);
+    const [salesforceLoading, setSalesforceLoading] = React.useState(false);
 
     // Initialize form data when product changes
     React.useEffect(() => {
@@ -194,7 +195,7 @@ window.Modals.ProductModal = function ProductModal({
             if (response.ok) {
                 const results = await response.json();
                 setAiResults(results);
-                
+
                 // Reload the product data to show the improvements
                 // The MuleSoft API has already updated the database
                 // We just need to refresh the form data
@@ -243,6 +244,37 @@ window.Modals.ProductModal = function ProductModal({
             alert(`AI improvement failed: ${error.message}`);
         } finally {
             setAiLoading(false);
+        }
+    };
+
+    const handleSendToSalesforce = async () => {
+        if (!product?.id) {
+            alert('Product ID is required to send to Salesforce');
+            return;
+        }
+
+        setSalesforceLoading(true);
+
+        try {
+            const response = await fetch(`/api/loyalty/products/send?product=${product.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Product sent to Salesforce successfully!\n\nSummary: ${result.summary}\nStatistics: ${JSON.stringify(result.statistics, null, 2)}`);
+            } else {
+                const error = await response.json();
+                alert(`Failed to send product to Salesforce: ${error.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error sending product to Salesforce:', error);
+            alert(`Failed to send product to Salesforce: ${error.message}`);
+        } finally {
+            setSalesforceLoading(false);
         }
     };
 
@@ -385,11 +417,11 @@ window.Modals.ProductModal = function ProductModal({
                         label: 'Features',
                         active: activeTab === 'features'
                     }),
-                    // AI Tab - Only for admins
+                    // Advanced Tab - Only for admins
                     window.currentUser && window.currentUser.role === 'admin' && React.createElement(TabButton, {
                         key: 'ai',
                         tab: 'ai',
-                        label: 'AI',
+                        label: 'Advanced',
                         active: activeTab === 'ai'
                     })
                 ])
@@ -748,7 +780,6 @@ window.Modals.ProductModal = function ProductModal({
                             formData.images.map((image, index) =>
                                 React.createElement('div', {
                                     key: `additional-images-list-${index}`,
-                                    key: index,
                                     className: 'flex items-center gap-4 p-3 border rounded-lg'
                                 }, [
                                     React.createElement('div', { key: 'additional-images-list-preview', className: 'w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden' }, [
@@ -845,13 +876,14 @@ window.Modals.ProductModal = function ProductModal({
                     ])
                 ]),
 
-                // AI Tab - Only for admins
+                // Advanced Tab - Only for admins
                 activeTab === 'ai' && React.createElement('div', { key: 'ai-tab', className: 'space-y-6' }, [
+                    // AI Enhancement Section
                     React.createElement('div', { key: 'ai-header', className: 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6' }, [
                         React.createElement('div', { key: 'ai-header-content', className: 'text-center' }, [
                             React.createElement('div', { key: 'ai-icon', className: 'text-4xl mb-4' }, '🤖'),
                             React.createElement('h3', { key: 'ai-title', className: 'text-xl font-semibold text-gray-900 dark:text-white mb-2' }, 'AI Product Enhancement'),
-                            React.createElement('p', { key: 'ai-description', className: 'text-gray-600 dark:text-gray-300 mb-6' }, 
+                            React.createElement('p', { key: 'ai-description', className: 'text-gray-600 dark:text-gray-300 mb-6' },
                                 'This action will generate missing fields, add relevant descriptions, features and details to this product and will replace some of the current contents.'
                             ),
                             React.createElement('button', {
@@ -870,15 +902,40 @@ window.Modals.ProductModal = function ProductModal({
                             ])
                         ])
                     ]),
-                    
+
+                    // Salesforce Integration Section
+                    React.createElement('div', { key: 'salesforce-header', className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6' }, [
+                        React.createElement('div', { key: 'salesforce-header-content', className: 'text-center' }, [
+                            React.createElement('div', { key: 'salesforce-icon', className: 'text-4xl mb-4' }, '☁️'),
+                            React.createElement('h3', { key: 'salesforce-title', className: 'text-xl font-semibold text-blue-900 dark:text-blue-100 mb-2' }, 'Salesforce Integration'),
+                            React.createElement('p', { key: 'salesforce-description', className: 'text-blue-700 dark:text-blue-300 mb-6' },
+                                'Send this product to Salesforce for synchronization with your loyalty program and external systems.'
+                            ),
+                            React.createElement('button', {
+                                key: 'salesforce-send-button',
+                                type: 'button',
+                                onClick: handleSendToSalesforce,
+                                disabled: salesforceLoading || !product?.id,
+                                className: `flex items-center gap-3 mx-auto px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                                    salesforceLoading || !product?.id
+                                        ? 'bg-gray-400 cursor-not-allowed text-gray-200'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg transform hover:scale-105'
+                                }`
+                            }, [
+                                React.createElement('span', { key: 'salesforce-button-icon' }, '📤'),
+                                salesforceLoading ? 'Sending...' : 'Send Product to Salesforce'
+                            ])
+                        ])
+                    ]),
+
                     // AI Results Section (will be populated after API call)
                     aiResults && React.createElement('div', { key: 'ai-results', className: 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4' }, [
                         React.createElement('h4', { key: 'ai-results-title', className: 'font-medium text-green-900 dark:text-green-100 mb-3' }, 'Improvement Results'),
-                        React.createElement('div', { key: 'ai-results-content', className: 'space-y-2' }, 
-                            aiResults.map((result, index) => 
-                                React.createElement('div', { 
-                                    key: `result-${index}`, 
-                                    className: 'flex items-center gap-2 text-sm text-green-800 dark:text-green-200' 
+                        React.createElement('div', { key: 'ai-results-content', className: 'space-y-2' },
+                            aiResults.map((result, index) =>
+                                React.createElement('div', {
+                                    key: `result-${index}`,
+                                    className: 'flex items-center gap-2 text-sm text-green-800 dark:text-green-200'
                                 }, [
                                     React.createElement('span', { key: `result-icon-${index}` }, '✅'),
                                     React.createElement('span', { key: `result-text-${index}` }, result.message)

@@ -4209,24 +4209,38 @@ async function parseCSV(buffer) {
 // Send products to Loyalty Cloud
 app.post('/api/loyalty/products/send', async (req, res) => {
   try {
-    // Get all products from the database
+    const { product: productId } = req.query;
     const client = await pool.connect();
     
     try {
-      const productsResult = await client.query(`
-        SELECT id, name, sku, price, category, product_type, brand, collection,
-               material, color, description, dimensions, weight, warranty_info,
-               care_instructions, main_image_url, is_active, featured, stock
-        FROM products 
-        WHERE is_active = true
-        ORDER BY created_at DESC
-      `);
+      let productsResult;
+      
+      if (productId) {
+        // Send specific product
+        productsResult = await client.query(`
+          SELECT id, name, sku, price, category, product_type, brand, collection,
+                 material, color, description, dimensions, weight, warranty_info,
+                 care_instructions, main_image_url, is_active, featured, stock
+          FROM products 
+          WHERE id = $1 AND is_active = true
+        `, [productId]);
+      } else {
+        // Send all products
+        productsResult = await client.query(`
+          SELECT id, name, sku, price, category, product_type, brand, collection,
+                 material, color, description, dimensions, weight, warranty_info,
+                 care_instructions, main_image_url, is_active, featured, stock
+          FROM products 
+          WHERE is_active = true
+          ORDER BY created_at DESC
+        `);
+      }
       
       const products = productsResult.rows;
       
       if (products.length === 0) {
         return res.json({
-          summary: "No active products found to sync with Loyalty Cloud.",
+          summary: productId ? "Product not found or inactive." : "No active products found to sync with Loyalty Cloud.",
           statistics: {
             totalProcessed: 0,
             created: 0,
@@ -4256,7 +4270,7 @@ app.post('/api/loyalty/products/send', async (req, res) => {
         },
         body: JSON.stringify({
           products: products,
-          syncType: 'full_sync'
+          syncType: productId ? 'single_product' : 'full_sync'
         })
       });
       
