@@ -237,6 +237,11 @@ window.Modals.ProductModal = function ProductModal({
                         console.error('Error fetching updated product:', error);
                     }
                 }
+
+                // Close the modal after successful AI improvement
+                setTimeout(() => {
+                    onClose();
+                }, 2000); // Wait 2 seconds to show the results
             } else {
                 const error = await response.json();
                 alert(`AI improvement failed: ${error.error || 'Unknown error'}`);
@@ -270,6 +275,11 @@ window.Modals.ProductModal = function ProductModal({
                 const result = await response.json();
                 setSalesforceResults(result);
                 setShowSalesforceResultsModal(true);
+                
+                // Close the modal after showing the results
+                setTimeout(() => {
+                    onClose();
+                }, 3000); // Wait 3 seconds to allow user to see the results
             } else {
                 const error = await response.json();
                 alert(`Failed to send product to Salesforce: ${error.error || 'Unknown error'}`);
