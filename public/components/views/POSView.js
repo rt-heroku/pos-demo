@@ -261,7 +261,7 @@ window.Views.POSView = ({
             }`
         }, [
             React.createElement('div', { key: 'image-container', className: 'relative mb-3' }, [
-                React.createElement('div', { key: 'image-wrapper', className: 'w-full h-32 lg:h-40 bg-gray-50 dark:bg-gray-700 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
+                React.createElement('div', { key: 'image-wrapper', className: 'w-full h-32 lg:h-40 bg-white dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center' }, [
                     productImage.type === 'url' ? (
                         React.createElement('img', {
                             key: 'product-img',

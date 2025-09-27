@@ -539,17 +539,22 @@ const POSApp = () => {
 
     const handleThemeToggle = async (theme) => {
         try {
+            console.log('Theme toggle clicked, switching to:', theme);
+            
             // Apply theme immediately
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
                 document.body.classList.add('dark');
+                console.log('Applied dark theme');
             } else {
                 document.documentElement.classList.remove('dark');
                 document.body.classList.remove('dark');
+                console.log('Applied light theme');
             }
             
             // Save to localStorage
             localStorage.setItem('theme', theme);
+            console.log('Saved theme to localStorage:', theme);
             
             // Update server settings
             const token = localStorage.getItem('auth_token');
@@ -563,6 +568,9 @@ const POSApp = () => {
             if (response.ok) {
                 const updatedSettings = await response.json();
                 setUserSettings(updatedSettings);
+                console.log('Updated userSettings:', updatedSettings);
+            } else {
+                console.error('Failed to update server settings:', response.status);
             }
         } catch (error) {
             console.error('Failed to update theme:', error);

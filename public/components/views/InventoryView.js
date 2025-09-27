@@ -123,7 +123,7 @@ window.Views.InventoryView = ({
         }, [
             // Product Image
 //            React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-50 dark:bg-gray-800 items-center justify-center' }, [
-            React.createElement('div', { key: 'image', className: 'relative h-48 bg-white dark:bg-gray-50 items-center justify-center' }, [
+            React.createElement('div', { key: 'image', className: 'relative h-48 bg-white dark:bg-gray-800 items-center justify-center' }, [
                     // Show actual image if available centered
                 productImage.type === 'url' ? (
                     React.createElement('img', {
