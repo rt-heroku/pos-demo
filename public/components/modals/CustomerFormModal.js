@@ -146,7 +146,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         }, [
             // Header
             React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [
-                React.createElement('h2', { key: 'header-container', className: 'text-xl font-bold flex items-center gap-2' }, [
+                React.createElement('h2', { key: 'header-container', className: 'text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2' }, [
                     React.createElement(User, { key: 'icon', size: 24 }),
                     customer ? 'Edit Customer' : 'Add New Customer'
                 ]),
@@ -192,7 +192,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                     React.createElement('div', { key: 'member-info-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
                         // First Name
                         React.createElement('div', { key: 'first-name' }, [
-                            React.createElement('label', { key: 'first-name-label', className: 'block text-sm font-medium mb-2' }, 'First Name *'),
+                            React.createElement('label', { key: 'first-name-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'First Name *'),
                             React.createElement('input', {
                                 key: 'first-name-input',
                                 type: 'text',
@@ -210,7 +210,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                         // Last Name
                         React.createElement('div', { key: 'last-name' }, [
-                            React.createElement('label', { key: 'last-name-label', className: 'block text-sm font-medium mb-2' }, 'Last Name *'),
+                            React.createElement('label', { key: 'last-name-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Last Name *'),
                             React.createElement('input', {
                                 key: 'last-name-input',
                                 type: 'text',
@@ -228,7 +228,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                         // Email
                         React.createElement('div', { key: 'email' }, [
-                            React.createElement('label', { key: 'email-label', className: 'block text-sm font-medium mb-2' }, 'Email Address'),
+                            React.createElement('label', { key: 'email-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Email Address'),
                             React.createElement('input', {
                                 key: 'email-input',
                                 type: 'email',
@@ -246,7 +246,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                         // Phone
                         React.createElement('div', { key: 'phone' }, [
-                            React.createElement('label', { key: 'phone-label', className: 'block text-sm font-medium mb-2' }, 'Phone Number'),
+                            React.createElement('label', { key: 'phone-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Phone Number'),
                             React.createElement('input', {
                                 key: 'phone-input',
                                 type: 'tel',
@@ -267,7 +267,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                         // Date of Birth
                         React.createElement('div', { key: 'date-of-birth' }, [
-                            React.createElement('label', { key: 'date-of-birth-label', className: 'block text-sm font-medium mb-2' }, 'Date of Birth'),
+                            React.createElement('label', { key: 'date-of-birth-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Date of Birth'),
                             React.createElement('input', {
                                 key: 'date-of-birth-input',
                                 type: 'date',
@@ -284,7 +284,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                         // Loyalty Number (only for new customers or display for existing)
                         React.createElement('div', { key: 'loyalty' }, [
-                            React.createElement('label', { key: 'loyalty-label', className: 'block text-sm font-medium mb-2' }, 'Loyalty Number'),
+                            React.createElement('label', { key: 'loyalty-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Loyalty Number'),
                             React.createElement('input', {
                                 key: 'loyalty-input',
                                 type: 'text',
@@ -310,7 +310,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 React.createElement('div', { key: 'member-info-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
                     // Member Status
                     React.createElement('div', { key: 'member-status' }, [
-                        React.createElement('label', { key: 'member-status-label', className: 'block text-sm font-medium mb-2' }, 'Member Status'),
+                        React.createElement('label', { key: 'member-status-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Member Status'),
                         React.createElement('select', {
                             key: 'member-status-select',
                             value: formData.member_status,
@@ -349,7 +349,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                     // Enrollment Date
                     React.createElement('div', { key: 'enrollment-date' }, [
-                        React.createElement('label', { key: 'enrollment-date-label', className: 'block text-sm font-medium mb-2' }, 'Member Since'),
+                        React.createElement('label', { key: 'enrollment-date-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Member Since'),
                         React.createElement('input', {
                             key: 'enrollment-date-input',
                             type: 'date',
@@ -366,7 +366,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
 
                     // Customer Tier (display with manual override option)
                     React.createElement('div', { key: 'customer-tier' }, [
-                        React.createElement('label', { key: 'customer-tier-label', className: 'block text-sm font-medium mb-2' }, 'Customer Tier'),
+                        React.createElement('label', { key: 'customer-tier-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Customer Tier'),
                         React.createElement('select', {
                             key: 'customer-tier-select',
                             value: formData.customer_tier,
@@ -409,7 +409,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                     React.createElement('div', { key: 'loyalty-info-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
                         // Points (editable for adjustments)
                         React.createElement('div', { key: 'points' }, [
-                            React.createElement('label', { key: 'points-label', className: 'block text-sm font-medium mb-2' }, 'Points Balance'),
+                            React.createElement('label', { key: 'points-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Points Balance'),
                             React.createElement('input', {
                                 key: 'points-input',
                                 type: 'number',
@@ -499,7 +499,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
             ]),
 
             // Footer
-            React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t bg-gray-50 flex gap-3 justify-end' }, [
+            React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex gap-3 justify-end' }, [
                 React.createElement('button', {
                     key: 'cancel-button',
                     onClick: onClose,

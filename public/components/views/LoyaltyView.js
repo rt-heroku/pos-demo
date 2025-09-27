@@ -135,7 +135,7 @@ window.Views.LoyaltyView= ({
             React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
                 React.createElement('div', { key: 'info' }, [
                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' }, [
-                        React.createElement('h3', { className: 'font-semibold text-lg' }, customer.name),
+                        React.createElement('h3', { className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
                         React.createElement('span', { 
                             className: `px-2 py-1 text-xs rounded-full ${
                                 customer.member_type === 'Corporate' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
@@ -296,7 +296,7 @@ window.Views.LoyaltyView= ({
                 React.createElement('div', { key: 'search-forms', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
                     // Loyalty number search
                     searchMode === 'loyalty' && React.createElement('div', { key: 'loyalty-search' }, [
-                        React.createElement('label', { key: 'loyalty-search-label', className: 'block text-sm font-medium mb-2' }, 'Loyalty Number'),
+                        React.createElement('label', { key: 'loyalty-search-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Loyalty Number'),
                         React.createElement('div', { key: 'loyalty-input-group', className: 'flex gap-2' }, [
                             React.createElement('input', {
                                 key: 'loyalty-input',
@@ -420,7 +420,7 @@ window.Views.LoyaltyView= ({
                             key: 'sort-select',
                             value: sortBy,
                             onChange: (e) => setSortBy(e.target.value),
-                            className: 'px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className: 'px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                         }, [
                             React.createElement('option', { key: 'name', value: 'name' }, 'Name'),
                             React.createElement('option', { key: 'loyalty', value: 'loyalty_number' }, 'Loyalty #'),
@@ -432,7 +432,7 @@ window.Views.LoyaltyView= ({
                         React.createElement('button', {
                             key: 'sort-order-btn',
                             onClick: () => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'),
-                            className: 'p-3 border rounded-lg hover:bg-gray-50 transition-colors',
+                            className: 'p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
                             title: `Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`
                         }, sortOrder === 'asc' ? '↑' : '↓')
                     ]),

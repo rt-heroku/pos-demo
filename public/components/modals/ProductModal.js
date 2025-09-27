@@ -394,7 +394,7 @@ window.Modals.ProductModal = function ProductModal({
         }, [
             // Header
             React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [
-                React.createElement('h2', { key: 'header-title', className: 'text-xl font-bold' },
+                React.createElement('h2', { key: 'header-title', className: 'text-xl font-bold text-gray-900 dark:text-white' },
                     product ? 'Edit Product' : 'Add New Product'
                 ),
                 React.createElement('button', {
@@ -405,7 +405,7 @@ window.Modals.ProductModal = function ProductModal({
             ]),
 
             // Tab Navigation
-            React.createElement('div', { key: 'tabs', className: 'px-6 py-3 border-b bg-gray-50' }, [
+            React.createElement('div', { key: 'tabs', className: 'px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700' }, [
                 React.createElement('div', { key: 'tabs-container', className: 'flex gap-2' }, [
                     React.createElement(TabButton, {
                         key: 'basic',
@@ -961,7 +961,7 @@ window.Modals.ProductModal = function ProductModal({
             ]),
 
             // Footer - Using the working button structure
-            React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t bg-gray-50 flex gap-3 justify-end' }, [
+            React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex gap-3 justify-end' }, [
                 React.createElement('button', {
                     key: 'cancel-button',
                     type: 'button',

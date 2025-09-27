@@ -69,7 +69,7 @@
                                 ]),
                                 React.createElement('tbody', { key: 'tbody' }, transactions.slice(0, 10).map(transaction =>
                                     React.createElement('tr', { key: transaction.id, className: 'hover:bg-gray-50 dark:hover:bg-gray-700' }, [
-                                        React.createElement('td', { key: 'date', className: 'p-3 border-b' }, 
+                                        React.createElement('td', { key: 'date', className: 'p-3 border-b text-gray-900 dark:text-white' }, 
                                             new Date(transaction.created_at).toLocaleString()
                                         ),
                                         React.createElement('td', { key: 'customer', className: 'p-3 border-b' }, 
@@ -80,13 +80,13 @@
                                                 ]) :
                                                 React.createElement('span', { key: 'walk-in-span', className: 'text-gray-400' }, 'Walk-in')
                                         ),
-                                        React.createElement('td', { key: 'items', className: 'p-3 border-b' }, 
+                                        React.createElement('td', { key: 'items', className: 'p-3 border-b text-gray-900 dark:text-white' }, 
                                             transaction.items ? transaction.items.map(item => item.name).join(', ') : 'N/A'
                                         ),
-                                        React.createElement('td', { key: 'payment', className: 'p-3 border-b capitalize' }, 
+                                        React.createElement('td', { key: 'payment', className: 'p-3 border-b capitalize text-gray-900 dark:text-white' }, 
                                             transaction.payment_method
                                         ),
-                                        React.createElement('td', { key: 'total', className: 'p-3 border-b font-medium' }, 
+                                        React.createElement('td', { key: 'total', className: 'p-3 border-b font-medium text-gray-900 dark:text-white' }, 
                                             `${parseFloat(transaction.total).toFixed(2)}`
                                         )
                                     ])

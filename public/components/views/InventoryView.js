@@ -485,7 +485,7 @@ window.Views.InventoryView = ({
                         value: localSearchTerm,
                         onChange: (e) => setLocalSearchTerm(e.target.value),
                         placeholder: 'Search products by name, SKU, description...',
-                        className: 'mobile-input w-full pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'mobile-input w-full pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg'
                     })
                 ]),
 
@@ -494,7 +494,7 @@ window.Views.InventoryView = ({
                         key: 'sort-select',
                         value: sortBy,
                         onChange: (e) => setSortBy(e.target.value),
-                        className: 'mobile-input px-3 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'mobile-input px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg'
                     }, [
                         React.createElement('option', { key: 'name', value: 'name' }, 'Name'),
                         React.createElement('option', { key: 'price', value: 'price' }, 'Price'),
@@ -534,11 +534,11 @@ window.Views.InventoryView = ({
             React.createElement('div', { key: 'filters-content', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4' }, [
                 // Brand filter
                 React.createElement('div', { key: 'brand' }, [
-                    React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium mb-2' }, 'Brand'),
+                    React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Brand'),
                     React.createElement('select', {
                         value: searchFilters.brand || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, brand: e.target.value || undefined }),
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     }, [
                         React.createElement('option', { key: 'all', value: '' }, 'All Brands'),
                         ...(filters.brands || []).map(brand =>
@@ -549,11 +549,11 @@ window.Views.InventoryView = ({
 
                 // Collection filter
                 React.createElement('div', { key: 'collection' }, [
-                    React.createElement('label', { key: 'collection-label', className: 'block text-sm font-medium mb-2' }, 'Collection'),
+                    React.createElement('label', { key: 'collection-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Collection'),
                     React.createElement('select', {
                         value: searchFilters.collection || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, collection: e.target.value || undefined }),
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     }, [
                         React.createElement('option', { key: 'all', value: '' }, 'All Collections'),
                         ...(filters.collections || []).map(collection =>
@@ -564,11 +564,11 @@ window.Views.InventoryView = ({
 
                 // Product Type filter
                 React.createElement('div', { key: 'type' }, [
-                    React.createElement('label', { key: 'type-label', className: 'block text-sm font-medium mb-2' }, 'Type'),
+                    React.createElement('label', { key: 'type-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Type'),
                     React.createElement('select', {
                         value: searchFilters.productType || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, productType: e.target.value || undefined }),
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     }, [
                         React.createElement('option', { key: 'all', value: '' }, 'All Types'),
                         ...(filters.productTypes || []).map(type =>
@@ -579,11 +579,11 @@ window.Views.InventoryView = ({
 
                 // Material filter
                 React.createElement('div', { key: 'material' }, [
-                    React.createElement('label', { key: 'material-label', className: 'block text-sm font-medium mb-2' }, 'Material'),
+                    React.createElement('label', { key: 'material-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Material'),
                     React.createElement('select', {
                         value: searchFilters.material || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, material: e.target.value || undefined }),
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     }, [
                         React.createElement('option', { key: 'all', value: '' }, 'All Materials'),
                         ...(filters.materials || []).map(material =>
@@ -594,7 +594,7 @@ window.Views.InventoryView = ({
 
                 // Status filter
                 React.createElement('div', { key: 'status' }, [
-                    React.createElement('label', { key: 'status-label', className: 'block text-sm font-medium mb-2' }, 'Status'),
+                    React.createElement('label', { key: 'status-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Status'),
                     React.createElement('select', {
                         value: (() => {
                             if (searchFilters.inStock === 'true') return 'in-stock';
@@ -612,7 +612,7 @@ window.Views.InventoryView = ({
 
                             onFilterChange(newFilters);
                         },
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     }, [
                         React.createElement('option', { key: 'all', value: '' }, 'All Products'),
                         React.createElement('option', { key: 'in-stock', value: 'in-stock' }, 'In Stock Only'),
@@ -632,7 +632,7 @@ window.Views.InventoryView = ({
                         value: searchFilters.minPrice || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, minPrice: e.target.value || undefined }),
                         placeholder: '0.00',
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     })
                 ]),
                 React.createElement('div', { key: 'max-price' }, [
@@ -644,7 +644,7 @@ window.Views.InventoryView = ({
                         value: searchFilters.maxPrice || '',
                         onChange: (e) => onFilterChange({ ...searchFilters, maxPrice: e.target.value || undefined }),
                         placeholder: '999.99',
-                        className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                     })
                 ])
             ]),
