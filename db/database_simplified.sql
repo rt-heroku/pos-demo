@@ -115,6 +115,8 @@ CREATE TABLE products (
 CREATE TABLE customers (
     id SERIAL PRIMARY KEY,
     loyalty_number VARCHAR(20) UNIQUE NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(20),

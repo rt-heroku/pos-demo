@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS product_images (
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.product_images ADD CONSTRAINT product_images_unique UNIQUE (product_id,image_url);
 
 -- Create product features table for multiple features
 CREATE TABLE IF NOT EXISTS product_features (
@@ -187,6 +188,7 @@ CREATE TABLE IF NOT EXISTS product_features (
     feature_value VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.product_features ADD CONSTRAINT product_features_unique UNIQUE (product_id,feature_name);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
@@ -485,7 +487,31 @@ ADD COLUMN IF NOT EXISTS city VARCHAR(100),
 ADD COLUMN IF NOT EXISTS state VARCHAR(50),
 ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20),
 ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN DEFAULT false;
+-- Add first_name and last_name fields to customers table
+-- This migration adds the new fields and populates them from existing name data
 
+-- Add the new columns
+ALTER TABLE customers 
+ADD COLUMN IF NOT EXISTS first_name VARCHAR(100),
+ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+
+-- Update existing records to split the name field
+UPDATE customers 
+SET 
+    first_name = CASE 
+        WHEN name IS NOT NULL AND name != '' THEN 
+            TRIM(SPLIT_PART(name, ' ', 1))
+        ELSE NULL 
+    END,
+    last_name = CASE 
+        WHEN name IS NOT NULL AND name != '' AND POSITION(' ' IN name) > 0 THEN 
+            TRIM(SUBSTRING(name FROM POSITION(' ' IN name) + 1))
+        ELSE NULL 
+    END
+WHERE first_name IS NULL OR last_name IS NULL;
+
+-- Make first_name and last_name NOT NULL for new records going forward
+-- Note: We'll handle this in the application layer to avoid breaking existing data
 -- Create customer activity log table
 CREATE TABLE IF NOT EXISTS customer_activity_log (
     id SERIAL PRIMARY KEY,
