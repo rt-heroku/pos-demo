@@ -45,7 +45,7 @@ window.Views.SettingsView = ({
         // Simple icon component for products
         const ProductsIcon = ({ size = 18 }) => React.createElement('span', { style: { fontSize: size } }, '📦');
         
-        const [activeTab, setActiveTab] = React.useState('locations');
+        const [activeTab, setActiveTab] = React.useState('system');
         const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
         const [editingLocation, setEditingLocation] = React.useState(null);
         const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
@@ -1595,7 +1595,7 @@ sfdc.account=`;
                         icon: MapPin,
                         active: activeTab === 'locations' 
                     }),
-                    currentUser?.role === 'admin' && React.createElement(TabButton, { 
+                    React.createElement(TabButton, { 
                         key: 'system-tab',
                         tab: 'system', 
                         label: 'System Settings', 
@@ -1738,7 +1738,7 @@ sfdc.account=`;
             ]),
 
             // System Settings Tab
-            activeTab === 'system' && currentUser?.role === 'admin' && React.createElement('div', { key: 'system-content', className: 'space-y-6' }, [
+            activeTab === 'system' && React.createElement('div', { key: 'system-content', className: 'space-y-6' }, [
                 // MuleSoft Loyalty Sync Configuration
                 React.createElement('div', { key: 'mulesoft-config', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                     React.createElement('div', { key: 'section-header', className: 'flex items-center gap-2 mb-6' }, [
