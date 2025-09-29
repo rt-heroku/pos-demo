@@ -4155,22 +4155,31 @@ async function insertCustomer(client, data) {
     
     // For new customers, we need at least first_name, last_name, and loyalty_number
     const {
-      name, email, phone, points,
-      total_spent, visit_count, last_visit, member_type, member_status,
-      enrollment_date, notes
+      name, email, phone, points, total_spent, visit_count, last_visit, 
+      created_at, updated_at, notes, preferred_contact, date_of_birth,
+      address_line1, address_line2, city, state, zip_code,
+      marketing_consent, member_status, enrollment_date, member_type, 
+      sf_id, customer_tier, tier_calculation_number, created_by_user, user_id
     } = data;
     
     const result = await client.query(`
       INSERT INTO customers (
         loyalty_number, first_name, last_name, name, email, phone, points,
-        total_spent, visit_count, last_visit, member_type, member_status,
-        enrollment_date, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        total_spent, visit_count, last_visit, created_at, updated_at, notes, 
+        preferred_contact, date_of_birth, address_line1, address_line2, 
+        city, state, zip_code, marketing_consent, member_status, 
+        enrollment_date, member_type, sf_id, customer_tier, 
+        tier_calculation_number, created_by_user, user_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
       RETURNING id
     `, [
       loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,
       email, phone, points || 0, total_spent || 0, visit_count || 0,
-      last_visit, member_type, member_status, enrollment_date, notes
+      last_visit, created_at || new Date(), updated_at || new Date(), notes,
+      preferred_contact || 'email', date_of_birth, address_line1, address_line2,
+      city, state, zip_code, marketing_consent || false, member_status || 'Active',
+      enrollment_date || new Date(), member_type || 'Individual', sf_id,
+      customer_tier || 'Bronze', tier_calculation_number || 0, created_by_user, user_id
     ]);
     
     return result.rows[0].id;
