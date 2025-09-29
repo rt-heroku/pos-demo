@@ -19,6 +19,7 @@ window.Modals.DataLoaderModal = function({
     const [previewData, setPreviewData] = React.useState([]);
     const [processing, setProcessing] = React.useState(false);
     const [importResult, setImportResult] = React.useState(null);
+    const fileUploadRef = React.useRef(null);
 
     // Reset state when modal opens
     React.useEffect(() => {
@@ -90,9 +91,10 @@ window.Modals.DataLoaderModal = function({
 
     // Handle upload from step 1
     const handleUpload = async () => {
-        // This will be handled by the FileUploadStep component
-        // The FileUploadStep will call onUpload when the file is selected
-        // and the Next button is pressed
+        // Trigger upload from FileUploadStep component
+        if (fileUploadRef.current && fileUploadRef.current.uploadFile) {
+            await fileUploadRef.current.uploadFile();
+        }
     };
 
     // Step 4: Process Data
@@ -197,7 +199,8 @@ window.Modals.DataLoaderModal = function({
                 step === 1 && React.createElement(window.Components.FileUploadStep, {
                     key: 'file-upload',
                     onUpload: handleFileUpload,
-                    autoUpload: true
+                    autoUpload: false,
+                    ref: fileUploadRef
                 }),
 
                 // Step 2: Field Mapping

@@ -3,10 +3,10 @@
 
 window.Components = window.Components || {};
 
-window.Components.FileUploadStep = function({
+window.Components.FileUploadStep = React.forwardRef(function({
     onUpload,
     autoUpload = false
-}) {
+}, ref) {
     const { Upload, FileText, AlertCircle } = window.Icons;
 
     const [dragActive, setDragActive] = React.useState(false);
@@ -16,6 +16,11 @@ window.Components.FileUploadStep = function({
     const [uploading, setUploading] = React.useState(false);
 
     const fileInputRef = React.useRef(null);
+
+    // Expose uploadFile method to parent component
+    React.useImperativeHandle(ref, () => ({
+        uploadFile: handleUpload
+    }));
 
     const handleDrag = (e) => {
         e.preventDefault();
@@ -163,7 +168,7 @@ window.Components.FileUploadStep = function({
                         name: 'dataType',
                         value: 'customers',
                         checked: selectedType === 'customers',
-                        onChange: (e) => setSelectedFile(e.target.value),
+                        onChange: (e) => setSelectedType(e.target.value),
                         className: 'mr-3'
                     }),
                     React.createElement('div', {
@@ -371,4 +376,4 @@ window.Components.FileUploadStep = function({
             ])
         ])
     ]);
-};
+});

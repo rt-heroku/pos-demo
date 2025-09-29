@@ -449,7 +449,7 @@ window.Views.InventoryView = ({
                     React.createElement('button', {
                         key: 'filters-btn',
                         onClick: () => setShowFilters(!showFilters),
-                        className: `flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'hover:bg-gray-50'
+                        className: `flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${showFilters ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-50 dark:hover:bg-gray-600'
                             }`
                     }, [
                         React.createElement(Filter, { key: 'icon', size: 20 }),
@@ -514,14 +514,14 @@ window.Views.InventoryView = ({
                     React.createElement('button', {
                         key: 'grid-view-btn',
                         onClick: () => onViewModeChange('grid'),
-                        className: `touch-button p-2 transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'
+                        className: `touch-button p-2 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-600'
                             }`,
                         title: 'Grid View'
                     }, React.createElement(Grid3X3, { size: 20 })),
                     React.createElement('button', {
                         key: 'list-view-btn',
                         onClick: () => onViewModeChange('list'),
-                        className: `touch-button p-2 transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'
+                        className: `touch-button p-2 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-600'
                             }`,
                         title: 'List View'
                     }, React.createElement(List, { size: 20 }))
