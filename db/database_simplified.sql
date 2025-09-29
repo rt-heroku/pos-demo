@@ -202,7 +202,7 @@ CREATE TABLE product_images (
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+ALTER TABLE public.product_images ADD CONSTRAINT product_images_unique UNIQUE (product_id, image_url);
 -- Product features table
 CREATE TABLE product_features (
     id SERIAL PRIMARY KEY,
@@ -211,6 +211,7 @@ CREATE TABLE product_features (
     feature_value VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.product_features ADD CONSTRAINT product_features_unique UNIQUE (product_id,feature_name);
 
 -- Locations table
 CREATE TABLE locations (

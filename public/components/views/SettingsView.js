@@ -1151,7 +1151,7 @@ sfdc.account=`;
                             logo: base64
                         }));
                     } else {
-                        setFormData(prev => ({
+                        setNewLocationForm(prev => ({
                             ...prev,
                             logo: base64
                         }));
@@ -1174,7 +1174,7 @@ sfdc.account=`;
                     logo: null
                 }));
             } else {
-                setFormData(prev => ({
+                setNewLocationForm(prev => ({
                     ...prev,
                     logo: null
                 }));
