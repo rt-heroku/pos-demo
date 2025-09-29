@@ -1132,8 +1132,8 @@ sfdc.account=`;
                 return;
             }
 
-            // Check image dimensions
-            const img = new Image();
+            // Check image dimensions using document.createElement
+            const img = document.createElement('img');
             img.onload = () => {
                 if (img.width > 2048 || img.height > 2048) {
                     alert(`Image dimensions should not exceed 2048x2048 pixels. Current size: ${img.width}x${img.height}`);
@@ -1164,6 +1164,21 @@ sfdc.account=`;
                 return;
             };
             img.src = URL.createObjectURL(file);
+        };
+
+        // Handle logo removal
+        const handleLogoRemove = (isForLocation = false) => {
+            if (isForLocation) {
+                setLocationFormData(prev => ({
+                    ...prev,
+                    logo: null
+                }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    logo: null
+                }));
+            }
         };
 
         // FIX: Optimized input change handler that updates ref first
@@ -1371,13 +1386,27 @@ sfdc.account=`;
                                     className: 'hidden',
                                     id: 'logo-upload'
                                 }),
-                                React.createElement('label', {
-                                    key: 'logo-upload-label',
-                                    htmlFor: 'logo-upload',
-                                    className: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors'
+                                React.createElement('div', {
+                                    key: 'logo-buttons',
+                                    className: 'flex items-center gap-2'
                                 }, [
-                                    React.createElement(Upload, { key: 'icon', size: 16 }),
-                                    'Upload Logo'
+                                    React.createElement('label', {
+                                        key: 'logo-upload-label',
+                                        htmlFor: 'logo-upload',
+                                        className: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors'
+                                    }, [
+                                        React.createElement(Upload, { key: 'icon', size: 16 }),
+                                        'Upload Logo'
+                                    ]),
+                                    (logoPreview || newLocationForm.logo_base64) && React.createElement('button', {
+                                        key: 'remove-logo-button',
+                                        type: 'button',
+                                        onClick: () => handleLogoRemove(true),
+                                        className: 'flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 cursor-pointer transition-colors'
+                                    }, [
+                                        React.createElement('span', { key: 'remove-icon' }, '×'),
+                                        'Remove'
+                                    ])
                                 ])
                             ])
                         ]),
@@ -1703,6 +1732,15 @@ sfdc.account=`;
                             }, [
                                 React.createElement(Upload, { key: 'icon', size: 16 }),
                                 'Update Logo'
+                            ]),
+                            selectedLocation.logo_base64 && React.createElement('button', {
+                                key: 'remove-current-logo-button',
+                                type: 'button',
+                                onClick: () => handleLogoRemove(false),
+                                className: 'flex items-center gap-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 cursor-pointer transition-colors'
+                            }, [
+                                React.createElement('span', { key: 'remove-icon' }, '×'),
+                                'Remove'
                             ])
                         ])
                     ])
