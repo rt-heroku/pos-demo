@@ -116,6 +116,7 @@ const ConstantValueForm = function({ dbField, onSave, onCancel }) {
 
 window.Components.FieldMappingStep = function({
     jobId,
+    dataType,
     onMapping
 }) {
     const { TrendingUp, CheckCircle, AlertCircle, RefreshCw, X } = window.Icons;
@@ -543,8 +544,8 @@ window.Components.FieldMappingStep = function({
             ])
         ]),
 
-        // Features Configuration Section
-        React.createElement('div', {
+        // Features Configuration Section (only for products)
+        dataType === 'products' && React.createElement('div', {
             key: 'features-section',
             className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'
         }, [

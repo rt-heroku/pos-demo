@@ -3633,7 +3633,18 @@ app.get('/api/data-loader/fields/:jobId', async (req, res) => {
     // Get database fields based on type
     const dbFields = job.type === 'products' 
       ? ['name', 'price', 'category', 'stock', 'sku', 'product_type', 'brand', 'collection', 'material', 'color', 'description', 'dimensions', 'weight', 'warranty_info', 'care_instructions', 'main_image_url', 'is_active', 'featured']
-      : ['loyalty_number', 'first_name', 'last_name', 'name', 'email', 'phone', 'points', 'total_spent', 'visit_count', 'last_visit', 'member_type', 'member_status', 'enrollment_date', 'notes'];
+      : [
+          // Core customer fields
+          'loyalty_number', 'name', 'email', 'phone', 'points', 'total_spent', 'visit_count', 'last_visit', 
+          'created_at', 'updated_at', 'notes', 'preferred_contact', 'date_of_birth',
+          // Address fields
+          'address_line1', 'address_line2', 'city', 'state', 'zip_code',
+          // Marketing and preferences
+          'marketing_consent', 'member_status', 'enrollment_date', 'member_type', 'sf_id', 'customer_tier', 
+          'tier_calculation_number', 'created_by_user', 'user_id',
+          // Name fields (for backward compatibility)
+          'first_name', 'last_name'
+        ];
     
     res.json({ csvFields, dbFields, type: job.type });
     
