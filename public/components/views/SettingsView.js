@@ -1145,17 +1145,12 @@ sfdc.account=`;
                 reader.onload = (e) => {
                     const base64 = e.target.result;
                     
-                    if (isForLocation) {
-                        setLocationFormData(prev => ({
-                            ...prev,
-                            logo: base64
-                        }));
-                    } else {
-                        setNewLocationForm(prev => ({
-                            ...prev,
-                            logo: base64
-                        }));
-                    }
+                    // Update both the ref and the state
+                    formDataRef.current.logo_base64 = base64;
+                    setNewLocationForm(prev => ({
+                        ...prev,
+                        logo_base64: base64
+                    }));
                 };
                 reader.readAsDataURL(file);
             };
@@ -1168,17 +1163,12 @@ sfdc.account=`;
 
         // Handle logo removal
         const handleLogoRemove = (isForLocation = false) => {
-            if (isForLocation) {
-                setLocationFormData(prev => ({
-                    ...prev,
-                    logo: null
-                }));
-            } else {
-                setNewLocationForm(prev => ({
-                    ...prev,
-                    logo: null
-                }));
-            }
+            // Update both the ref and the state
+            formDataRef.current.logo_base64 = null;
+            setNewLocationForm(prev => ({
+                ...prev,
+                logo_base64: null
+            }));
         };
 
         // FIX: Optimized input change handler that updates ref first
