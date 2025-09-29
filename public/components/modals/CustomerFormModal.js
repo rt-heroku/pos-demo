@@ -26,7 +26,13 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         member_type: 'Individual',
         enrollment_date: new Date().toISOString().split('T')[0],
         customer_tier: 'Bronze',
-        date_of_birth: ''
+        date_of_birth: '',
+        address_line1: '',
+        address_line2: '',
+        city: '',
+        state: '',
+        country: '',
+        zip_code: ''
     });
 
     const [errors, setErrors] = React.useState({});
@@ -51,7 +57,13 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 member_type: customer.member_type || 'Individual',
                 enrollment_date: customer.enrollment_date ? customer.enrollment_date.split('T')[0] : new Date().toISOString().split('T')[0],
                 customer_tier: customer.customer_tier || 'Bronze',
-                date_of_birth: customer.date_of_birth ? customer.date_of_birth.split('T')[0] : ''
+                date_of_birth: customer.date_of_birth ? customer.date_of_birth.split('T')[0] : '',
+                address_line1: customer.address_line1 || '',
+                address_line2: customer.address_line2 || '',
+                city: customer.city || '',
+                state: customer.state || '',
+                country: customer.country || '',
+                zip_code: customer.zip_code || ''
             });
         } else {
             // Reset form for new customer
@@ -67,7 +79,13 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                 member_type: 'Individual',
                 enrollment_date: new Date().toISOString().split('T')[0],
                 customer_tier: 'Bronze',
-                date_of_birth: ''
+                date_of_birth: '',
+                address_line1: '',
+                address_line2: '',
+                city: '',
+                state: '',
+                country: '',
+                zip_code: ''
             });
         }
         setErrors({});
@@ -482,6 +500,93 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                     ]),
 
                 ]),
+
+                // Address Information
+                React.createElement('div', { key: 'address-info', className: 'space-y-4' }, [
+                    React.createElement('h3', { key: 'address-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },
+                        'Address Information'
+                    ),
+                    React.createElement('div', { key: 'address-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                        // Address Line 1
+                        React.createElement('div', { key: 'address-line1' }, [
+                            React.createElement('label', { key: 'address-line1-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Address Line 1'),
+                            React.createElement('input', {
+                                key: 'address-line1-input',
+                                type: 'text',
+                                value: formData.address_line1,
+                                onChange: (e) => handleInputChange('address_line1', e.target.value),
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                placeholder: 'Street address'
+                            })
+                        ]),
+
+                        // Address Line 2
+                        React.createElement('div', { key: 'address-line2' }, [
+                            React.createElement('label', { key: 'address-line2-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Address Line 2'),
+                            React.createElement('input', {
+                                key: 'address-line2-input',
+                                type: 'text',
+                                value: formData.address_line2,
+                                onChange: (e) => handleInputChange('address_line2', e.target.value),
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                placeholder: 'Apartment, suite, etc.'
+                            })
+                        ]),
+
+                        // City
+                        React.createElement('div', { key: 'city' }, [
+                            React.createElement('label', { key: 'city-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'City'),
+                            React.createElement('input', {
+                                key: 'city-input',
+                                type: 'text',
+                                value: formData.city,
+                                onChange: (e) => handleInputChange('city', e.target.value),
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                placeholder: 'City'
+                            })
+                        ]),
+
+                        // State
+                        React.createElement('div', { key: 'state' }, [
+                            React.createElement('label', { key: 'state-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'State/Province'),
+                            React.createElement('input', {
+                                key: 'state-input',
+                                type: 'text',
+                                value: formData.state,
+                                onChange: (e) => handleInputChange('state', e.target.value),
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                placeholder: 'State or Province'
+                            })
+                        ]),
+
+                        // Country
+                        React.createElement('div', { key: 'country' }, [
+                            React.createElement('label', { key: 'country-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Country'),
+                            React.createElement('input', {
+                                key: 'country-input',
+                                type: 'text',
+                                value: formData.country,
+                                onChange: (e) => handleInputChange('country', e.target.value),
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                placeholder: 'Country'
+                            })
+                        ]),
+
+                        // ZIP Code
+                        React.createElement('div', { key: 'zip-code' }, [
+                            React.createElement('label', { key: 'zip-code-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'ZIP/Postal Code'),
+                            React.createElement('input', {
+                                key: 'zip-code-input',
+                                type: 'text',
+                                value: formData.zip_code,
+                                onChange: (e) => handleInputChange('zip_code', e.target.value),
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                placeholder: 'ZIP or Postal Code'
+                            })
+                        ])
+                    ])
+                ]),
+
                 // Notes
                 React.createElement('div', { key: 'notes', className: 'space-y-4' }, [
                     React.createElement('h3', { key: 'notes-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },

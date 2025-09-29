@@ -3633,7 +3633,7 @@ app.get('/api/data-loader/fields/:jobId', async (req, res) => {
     // Get database fields based on type
     const dbFields = job.type === 'products' 
       ? ['name', 'price', 'category', 'stock', 'sku', 'product_type', 'brand', 'collection', 'material', 'color', 'description', 'dimensions', 'weight', 'warranty_info', 'care_instructions', 'main_image_url', 'is_active', 'featured']
-      : ['loyalty_number', 'first_name', 'last_name', 'name', 'email', 'phone', 'points', 'total_spent', 'visit_count', 'last_visit', 'member_type', 'member_status', 'enrollment_date', 'notes'];
+      : ['loyalty_number', 'first_name', 'last_name', 'name', 'email', 'phone', 'points', 'total_spent', 'visit_count', 'last_visit', 'member_type', 'member_status', 'enrollment_date', 'notes', 'address_line1', 'address_line2', 'city', 'state', 'country', 'zip_code', 'date_of_birth'];
     
     res.json({ csvFields, dbFields, type: job.type });
     
@@ -4146,20 +4146,21 @@ async function insertCustomer(client, data) {
     const {
       name, email, phone, points,
       total_spent, visit_count, last_visit, member_type, member_status,
-      enrollment_date, notes
+      enrollment_date, notes, address_line1, address_line2, city, state, country, zip_code, date_of_birth
     } = data;
     
     const result = await client.query(`
       INSERT INTO customers (
         loyalty_number, first_name, last_name, name, email, phone, points,
         total_spent, visit_count, last_visit, member_type, member_status,
-        enrollment_date, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        enrollment_date, notes, address_line1, address_line2, city, state, country, zip_code, date_of_birth
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING id
     `, [
       loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,
       email, phone, points || 0, total_spent || 0, visit_count || 0,
-      last_visit, member_type, member_status, enrollment_date, notes
+      last_visit, member_type, member_status, enrollment_date, notes,
+      address_line1, address_line2, city, state, country, zip_code, date_of_birth
     ]);
     
     return result.rows[0].id;
