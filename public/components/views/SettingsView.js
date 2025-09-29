@@ -1132,23 +1132,38 @@ sfdc.account=`;
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64 = e.target.result;
-                
-                if (isForLocation) {
-                    // FIX: Update both ref and state
-                    formDataRef.current.logo_base64 = base64;
-                    setNewLocationForm(prev => ({
-                        ...prev,
-                        logo_base64: base64
-                    }));
-                    setLogoPreview(base64);
-                } else {
-                    onLogoUpload(selectedLocation.id, base64);
+            // Check image dimensions
+            const img = new Image();
+            img.onload = () => {
+                if (img.width > 2048 || img.height > 2048) {
+                    alert(`Image dimensions should not exceed 2048x2048 pixels. Current size: ${img.width}x${img.height}`);
+                    return;
                 }
+                
+                // Proceed with upload if dimensions are valid
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64 = e.target.result;
+                    
+                    if (isForLocation) {
+                        setLocationFormData(prev => ({
+                            ...prev,
+                            logo: base64
+                        }));
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            logo: base64
+                        }));
+                    }
+                };
+                reader.readAsDataURL(file);
             };
-            reader.readAsDataURL(file);
+            img.onerror = () => {
+                alert('Invalid image file');
+                return;
+            };
+            img.src = URL.createObjectURL(file);
         };
 
         // FIX: Optimized input change handler that updates ref first
