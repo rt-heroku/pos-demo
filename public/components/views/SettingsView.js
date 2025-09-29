@@ -45,7 +45,7 @@ window.Views.SettingsView = ({
         // Simple icon component for products
         const ProductsIcon = ({ size = 18 }) => React.createElement('span', { style: { fontSize: size } }, '📦');
         
-        const [activeTab, setActiveTab] = React.useState('system');
+        const [activeTab, setActiveTab] = React.useState('locations');
         const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
         const [editingLocation, setEditingLocation] = React.useState(null);
         const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
@@ -1595,7 +1595,7 @@ sfdc.account=`;
                         icon: MapPin,
                         active: activeTab === 'locations' 
                     }),
-                    React.createElement(TabButton, { 
+                    currentUser?.role === 'admin' && React.createElement(TabButton, { 
                         key: 'system-tab',
                         tab: 'system', 
                         label: 'System Settings', 
@@ -1738,7 +1738,7 @@ sfdc.account=`;
             ]),
 
             // System Settings Tab
-            activeTab === 'system' && React.createElement('div', { key: 'system-content', className: 'space-y-6' }, [
+            activeTab === 'system' && currentUser?.role === 'admin' && React.createElement('div', { key: 'system-content', className: 'space-y-6' }, [
                 // MuleSoft Loyalty Sync Configuration
                 React.createElement('div', { key: 'mulesoft-config', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
                     React.createElement('div', { key: 'section-header', className: 'flex items-center gap-2 mb-6' }, [
@@ -1951,6 +1951,29 @@ sfdc.account=`;
                         ])
                     ]),
 
+                    // Load Members from Loyalty Cloud
+                    React.createElement('div', { key: 'load-members-section', className: 'mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg' }, [
+                        React.createElement('h4', { key: 'load-members-title', className: 'text-sm font-medium mb-3 dark:text-white' }, 
+                            'Load Members from Loyalty Cloud'
+                        ),
+                        React.createElement('p', { key: 'load-members-description', className: 'text-xs text-gray-600 dark:text-gray-400 mb-4' }, 
+                            'Load and sync loyalty program members from the MuleSoft loyalty cloud system'
+                        ),
+                        React.createElement('button', {
+                            key: 'load-members-btn',
+                            onClick: loadMembers,
+                            disabled: !mulesoftConfig.endpoint || loadingMembers,
+                            className: 'flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                        }, [
+                            loadingMembers && React.createElement('div', { 
+                                key: 'loading-spinner',
+                                className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                            }),
+                            React.createElement('span', { key: 'btn-text' }, 
+                                loadingMembers ? 'Loading Members...' : 'Load Members from Cloud'
+                            )
+                        ])
+                    ]),
 
                     // Load Test Data Section
                     React.createElement('div', { key: 'load-test-data-section', className: 'mt-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg' }, [
@@ -2739,35 +2762,26 @@ sfdc.account=`;
                title: 'Create New Location'
            }),
 
-           // Data Management Tab Content
+           // Product Management Tab Content
            activeTab === 'products' && currentUser?.role === 'admin' && React.createElement('div', { key: 'products-content', className: 'space-y-6' }, [
-               // Header Section
-               React.createElement('div', { key: 'header-section', className: 'flex items-center gap-4' }, [
-                   React.createElement('div', { key: 'icon-container', className: 'w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shadow-lg' }, [
-                       React.createElement('span', { key: 'icon', className: 'text-2xl' }, '📊')
-                   ]),
-                   React.createElement('div', { key: 'title-section' }, [
-                       React.createElement('h2', { key: 'title', className: 'text-2xl font-bold text-gray-900 dark:text-white' }, 
-                           'Data Management'
-                       ),
-                       React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
-                           'Manage your data with intelligent import, export, and synchronization tools'
-                       )
-                   ])
-               ]),
-
-               // Products Section
-               React.createElement('div', { key: 'products-section', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
-                   React.createElement('div', { key: 'products-header', className: 'flex items-center gap-3 mb-6' }, [
-                       React.createElement('div', { key: 'products-icon', className: 'w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center' }, [
-                           React.createElement('span', { key: 'products-icon-text', className: 'text-blue-600 dark:text-blue-400 text-lg' }, '📦')
+               // Modern Product Management Section
+               React.createElement('div', { key: 'product-management-section', className: 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg border dark:border-gray-700 p-8' }, [
+                   React.createElement('div', { key: 'section-header', className: 'flex items-center gap-3 mb-8' }, [
+                       React.createElement('div', { key: 'icon-container', className: 'w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center shadow-lg' }, [
+                           React.createElement('span', { key: 'icon', className: 'text-2xl' }, '📦')
                        ]),
-                       React.createElement('div', { key: 'products-title-section' }, [
-                           React.createElement('h3', { key: 'products-title', className: 'text-xl font-semibold text-gray-900 dark:text-white' }, 'Products'),
-                           React.createElement('p', { key: 'products-subtitle', className: 'text-sm text-gray-600 dark:text-gray-400' }, 'Manage your product catalog')
+                       React.createElement('div', { key: 'title-section' }, [
+                           React.createElement('h2', { key: 'title', className: 'text-2xl font-bold text-gray-900 dark:text-white' }, 
+                               'Data Management'
+                           ),
+                           React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 mt-1' }, 
+                               'Manage your product catalog with AI-powered generation and cloud sync'
+                           )
                        ])
                    ]),
-                   React.createElement('div', { key: 'products-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' }, [
+
+                   // Action Cards Grid
+                   React.createElement('div', { key: 'actions-grid', className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' }, [
                        // Delete All Products Card
                        React.createElement('div', { key: 'delete-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
                            React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
@@ -2824,6 +2838,24 @@ sfdc.account=`;
                            }, 'Generate Products')
                        ]),
 
+                       // Data Loader Card
+                       React.createElement('div', { key: 'data-loader-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-purple-200 dark:border-purple-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-purple-600 dark:text-purple-400 text-lg' }, '📊')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Data Loader')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Import products or customers from CSV files with intelligent field mapping'
+                           ),
+                           React.createElement('button', {
+                               key: 'data-loader-btn',
+                               onClick: () => setShowDataLoaderModal(true),
+                               className: 'w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
+                           }, 'Data Loader')
+                       ]),
+
                        // Send to Loyalty Card
                        React.createElement('div', { key: 'loyalty-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-orange-200 dark:border-orange-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
                            React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
@@ -2846,57 +2878,7 @@ sfdc.account=`;
                                }`
                            }, syncingLoyalty ? 'Syncing...' : 'Send to Loyalty')
                        ])
-                   ])
-               ]),
-
-               // Data Loader Section (Top Level)
-               React.createElement('div', { key: 'data-loader-section', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
-                   React.createElement('div', { key: 'data-loader-header', className: 'flex items-center gap-3 mb-6' }, [
-                       React.createElement('div', { key: 'data-loader-icon', className: 'w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center' }, [
-                           React.createElement('span', { key: 'data-loader-icon-text', className: 'text-purple-600 dark:text-purple-400 text-lg' }, '📊')
-                       ]),
-                       React.createElement('div', { key: 'data-loader-title-section' }, [
-                           React.createElement('h3', { key: 'data-loader-title', className: 'text-xl font-semibold text-gray-900 dark:text-white' }, 'Data Loader'),
-                           React.createElement('p', { key: 'data-loader-subtitle', className: 'text-sm text-gray-600 dark:text-gray-400' }, 'Import products or customers from CSV files with intelligent field mapping')
-                       ])
                    ]),
-                   React.createElement('button', {
-                       key: 'data-loader-btn',
-                       onClick: () => setShowDataLoaderModal(true),
-                       className: 'w-full md:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
-                   }, 'Data Loader')
-               ]),
-
-               // Loyalty Members Section
-               React.createElement('div', { key: 'loyalty-members-section', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6' }, [
-                   React.createElement('div', { key: 'loyalty-members-header', className: 'flex items-center gap-3 mb-6' }, [
-                       React.createElement('div', { key: 'loyalty-members-icon', className: 'w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center' }, [
-                           React.createElement('span', { key: 'loyalty-members-icon-text', className: 'text-green-600 dark:text-green-400 text-lg' }, '👥')
-                       ]),
-                       React.createElement('div', { key: 'loyalty-members-title-section' }, [
-                           React.createElement('h3', { key: 'loyalty-members-title', className: 'text-xl font-semibold text-gray-900 dark:text-white' }, 'Loyalty Members'),
-                           React.createElement('p', { key: 'loyalty-members-subtitle', className: 'text-sm text-gray-600 dark:text-gray-400' }, 'Load and sync loyalty program members from the MuleSoft loyalty cloud system')
-                       ])
-                   ]),
-                   React.createElement('button', {
-                       key: 'load-members-btn',
-                       onClick: loadMembers,
-                       disabled: !mulesoftConfig.endpoint || loadingMembers,
-                       className: `w-full md:w-auto px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm ${
-                           loadingMembers || !mulesoftConfig.endpoint
-                               ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
-                               : 'bg-green-600 hover:bg-green-700 text-white hover:shadow-md'
-                       }`
-                   }, [
-                       loadingMembers && React.createElement('div', { 
-                           key: 'loading-spinner',
-                           className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2' 
-                       }),
-                       React.createElement('span', { key: 'btn-text' }, 
-                           loadingMembers ? 'Loading Members...' : 'Load Members from Cloud'
-                       )
-                   ])
-               ]),
 
                    // Create Products Button (when products are loaded)
                    productsFromCloud.length > 0 && React.createElement('div', { key: 'create-section', className: 'mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800' }, [
@@ -4008,4 +3990,5 @@ sfdc.account=`;
                    ])
                ])
            ])
+       ]);
     };

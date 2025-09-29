@@ -26,13 +26,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         member_type: 'Individual',
         enrollment_date: new Date().toISOString().split('T')[0],
         customer_tier: 'Bronze',
-        date_of_birth: '',
-        address_line1: '',
-        address_line2: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        country: ''
+        date_of_birth: ''
     });
 
     const [errors, setErrors] = React.useState({});
@@ -488,82 +482,6 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                     ]),
 
                 ]),
-
-                // Address Information
-                React.createElement('div', { key: 'address-info', className: 'space-y-4' }, [
-                    React.createElement('h3', { key: 'address-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },
-                        'Address Information'
-                    ),
-                    React.createElement('div', { key: 'address-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
-                        // Address Line 1
-                        React.createElement('div', { key: 'address-line1' }, [
-                            React.createElement('label', { key: 'address-line1-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Address Line 1'),
-                            React.createElement('input', {
-                                key: 'address-line1-input',
-                                type: 'text',
-                                value: formData.address_line1,
-                                onChange: (e) => handleInputChange('address_line1', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.address_line1 ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`
-                            })
-                        ]),
-                        // Address Line 2
-                        React.createElement('div', { key: 'address-line2' }, [
-                            React.createElement('label', { key: 'address-line2-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Address Line 2'),
-                            React.createElement('input', {
-                                key: 'address-line2-input',
-                                type: 'text',
-                                value: formData.address_line2,
-                                onChange: (e) => handleInputChange('address_line2', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.address_line2 ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`
-                            })
-                        ]),
-                        // City
-                        React.createElement('div', { key: 'city' }, [
-                            React.createElement('label', { key: 'city-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'City'),
-                            React.createElement('input', {
-                                key: 'city-input',
-                                type: 'text',
-                                value: formData.city,
-                                onChange: (e) => handleInputChange('city', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.city ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`
-                            })
-                        ]),
-                        // State
-                        React.createElement('div', { key: 'state' }, [
-                            React.createElement('label', { key: 'state-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'State/Province'),
-                            React.createElement('input', {
-                                key: 'state-input',
-                                type: 'text',
-                                value: formData.state,
-                                onChange: (e) => handleInputChange('state', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.state ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`
-                            })
-                        ]),
-                        // ZIP Code
-                        React.createElement('div', { key: 'zip-code' }, [
-                            React.createElement('label', { key: 'zip-code-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'ZIP/Postal Code'),
-                            React.createElement('input', {
-                                key: 'zip-code-input',
-                                type: 'text',
-                                value: formData.zip_code,
-                                onChange: (e) => handleInputChange('zip_code', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.zip_code ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`
-                            })
-                        ]),
-                        // Country
-                        React.createElement('div', { key: 'country' }, [
-                            React.createElement('label', { key: 'country-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Country'),
-                            React.createElement('input', {
-                                key: 'country-input',
-                                type: 'text',
-                                value: formData.country,
-                                onChange: (e) => handleInputChange('country', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.country ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`
-                            })
-                        ])
-                    ])
-                ]),
-
                 // Notes
                 React.createElement('div', { key: 'notes', className: 'space-y-4' }, [
                     React.createElement('h3', { key: 'notes-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' },

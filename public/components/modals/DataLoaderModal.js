@@ -207,7 +207,6 @@ window.Modals.DataLoaderModal = function({
                 step === 2 && React.createElement(window.Components.FieldMappingStep, {
                     key: 'field-mapping',
                     jobId: jobId,
-                    dataType: fileData?.type,
                     onMapping: handleFieldMapping
                 }),
 
