@@ -202,6 +202,7 @@ CREATE TABLE product_images (
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.product_images ADD CONSTRAINT product_images_unique UNIQUE (product_id, image_url);
 
 -- Product features table
 CREATE TABLE product_features (
@@ -211,6 +212,7 @@ CREATE TABLE product_features (
     feature_value VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.product_features ADD CONSTRAINT product_features_unique UNIQUE (product_id,feature_name);
 
 -- Locations table
 CREATE TABLE locations (
@@ -586,27 +588,49 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to generate SKU
-CREATE OR REPLACE FUNCTION generate_sku(product_brand TEXT, product_type TEXT) RETURNS TEXT AS $$
+-- CREATE OR REPLACE FUNCTION generate_sku(product_brand TEXT, product_type TEXT) RETURNS TEXT AS $$
+-- DECLARE
+--     brand_code TEXT;
+--     type_code TEXT;
+--     counter INTEGER;
+--     new_sku TEXT;
+-- BEGIN
+--     brand_code := UPPER(SUBSTRING(COALESCE(product_brand, 'GEN'), 1, 3));
+--     type_code := UPPER(SUBSTRING(COALESCE(product_type, 'PRD'), 1, 3));
+    
+--     SELECT COALESCE(MAX(CAST(SUBSTRING(sku FROM 7) AS INTEGER)), 0) + 1
+--     INTO counter
+--     FROM products 
+--     WHERE sku LIKE brand_code || type_code || '%'
+--     AND LENGTH(sku) = 9;
+    
+--     new_sku := brand_code || '-' || type_code || '-' || LPAD(counter::TEXT, 3, '0');
+    
+--     RETURN new_sku;
+-- END;
+-- $$ LANGUAGE plpgsql;
+
+-- One global sequence
+DROP SEQUENCE IF EXISTS sku_global_seq;
+CREATE SEQUENCE IF NOT EXISTS sku_global_seq;
+
+CREATE OR REPLACE FUNCTION generate_sku(product_brand TEXT, product_type TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
     brand_code TEXT;
-    type_code TEXT;
-    counter INTEGER;
-    new_sku TEXT;
+    type_code  TEXT;
+    seq_val    bigint;
 BEGIN
-    brand_code := UPPER(SUBSTRING(COALESCE(product_brand, 'GEN'), 1, 3));
-    type_code := UPPER(SUBSTRING(COALESCE(product_type, 'PRD'), 1, 3));
-    
-    SELECT COALESCE(MAX(CAST(SUBSTRING(sku FROM 7) AS INTEGER)), 0) + 1
-    INTO counter
-    FROM products 
-    WHERE sku LIKE brand_code || type_code || '%'
-    AND LENGTH(sku) = 9;
-    
-    new_sku := brand_code || '-' || type_code || '-' || LPAD(counter::TEXT, 3, '0');
-    
-    RETURN new_sku;
+    brand_code := upper(substr(coalesce(product_brand, 'GEN'), 1, 3));
+    type_code  := upper(substr(coalesce(product_type, 'PRD'), 1, 3));
+
+    seq_val := nextval('sku_global_seq'); -- concurrency-safe
+
+    RETURN format('%s-%s-%s', brand_code, type_code, lpad(seq_val::text, 5, '0'));
 END;
-$$ LANGUAGE plpgsql;
+$$;
+
 
 -- Function to generate work order number
 CREATE OR REPLACE FUNCTION generate_work_order_number(loc_id INTEGER) RETURNS TEXT AS $$

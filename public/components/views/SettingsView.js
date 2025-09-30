@@ -58,6 +58,7 @@ window.Views.SettingsView = ({
         const [showSettingModal, setShowSettingModal] = React.useState(false);
         const [editingSetting, setEditingSetting] = React.useState(null);
         const [databaseInfo, setDatabaseInfo] = React.useState(null);
+        const [envInfo, setEnvInfo] = React.useState(null);
         const [copiedToClipboard, setCopiedToClipboard] = React.useState('');
         
         // MuleSoft Loyalty Sync State
@@ -147,6 +148,7 @@ window.Views.SettingsView = ({
             if (activeTab === 'system') {
                 loadSystemSettings();
                 loadDatabaseInfo();
+                loadEnvInfo();
                 loadMulesoftConfig();
             } else if (activeTab === 'products') {
                 loadMulesoftConfig();
@@ -357,6 +359,16 @@ window.Views.SettingsView = ({
             } catch (error) {
                 console.error('Failed to load database info:', error);
                 setDatabaseInfo(null);
+            }
+        };
+
+        const loadEnvInfo = async () => {
+            try {
+                const data = await window.API.call('/system-settings/env/info');
+                setEnvInfo(data);
+            } catch (error) {
+                console.error('Failed to load environment info:', error);
+                setEnvInfo(null);
             }
         };
 
@@ -1000,7 +1012,7 @@ window.Views.SettingsView = ({
             }
         };
 
-        const parseDatabaseCredentialsYAML = (databaseUrl) => {
+        const parseDatabaseCredentialsYAML = (databaseUrl, envData) => {
             try {
                 const url = new URL(databaseUrl);
                 const host = url.hostname;
@@ -1008,6 +1020,8 @@ window.Views.SettingsView = ({
                 const user = url.username;
                 const password = url.password;
                 const database = url.pathname.substring(1); // Remove leading slash
+                
+                const inferenceKey = envData?.inference_key || "";
                 
                 return `#Environment
 env: "prod"
@@ -1021,7 +1035,7 @@ db:
 
 #Mule AI Chain Configuration
 mac:
-  heroku.inference_key: ""
+  heroku.inference_key: "${inferenceKey}"
   openai_key: ""
 
 #Salesforce configurations
@@ -1031,6 +1045,8 @@ sfdc:
   password: 
   account: `;
             } catch (error) {
+                const inferenceKey = envData?.inference_key || "";
+                
                 return `#Environment
 env: "prod"
 #DB Configuration
@@ -1043,7 +1059,7 @@ db:
 
 #Mule AI Chain Configuration
 mac:
-  heroku.inference_key: ""
+  heroku.inference_key: "${inferenceKey}"
   openai_key: ""
 
 #Salesforce configurations
@@ -1055,7 +1071,7 @@ sfdc:
             }
         };
 
-        const parseDatabaseCredentialsJava = (databaseUrl) => {
+        const parseDatabaseCredentialsJava = (databaseUrl, envData) => {
             try {
                 const url = new URL(databaseUrl);
                 const host = url.hostname;
@@ -1063,6 +1079,8 @@ sfdc:
                 const user = url.username;
                 const password = url.password;
                 const database = url.pathname.substring(1); // Remove leading slash
+                
+                const inferenceKey = envData?.inference_key || "";
                 
                 return `#Environment
 env=prod
@@ -1074,7 +1092,7 @@ db.password=${password}
 db.database=${database}
 
 #Mule AI Chain Configuration
-mac.heroku.inference_key=
+mac.heroku.inference_key=${inferenceKey}
 mac.openai_key=
 
 #Salesforce configurations
@@ -1083,6 +1101,8 @@ sfdc.token=
 sfdc.password=
 sfdc.account=`;
             } catch (error) {
+                const inferenceKey = envData?.inference_key || "";
+                
                 return `#Environment
 env=prod
 #DB Configuration
@@ -1093,7 +1113,7 @@ db.password=
 db.database=
 
 #Mule AI Chain Configuration
-mac.heroku.inference_key=
+mac.heroku.inference_key=${inferenceKey}
 mac.openai_key=
 
 #Salesforce configurations
@@ -1119,8 +1139,13 @@ sfdc.account=`;
 
         // Handle logo upload
         const handleLogoUpload = (event, isForLocation = false) => {
+            console.log('handleLogoUpload called', event, isForLocation);
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+            console.log('File selected:', file.name, file.type, file.size);
 
             if (!file.type.startsWith('image/')) {
                 alert('Please select a valid image file');
@@ -1144,6 +1169,7 @@ sfdc.account=`;
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const base64 = e.target.result;
+                    console.log('Logo uploaded successfully, base64 length:', base64.length);
                     
                     // Update both the ref and the state
                     formDataRef.current.logo_base64 = base64;
@@ -1151,6 +1177,8 @@ sfdc.account=`;
                         ...prev,
                         logo_base64: base64
                     }));
+                    setLogoPreview(base64);
+                    console.log('Logo state updated');
                 };
                 reader.readAsDataURL(file);
             };
@@ -1169,6 +1197,7 @@ sfdc.account=`;
                 ...prev,
                 logo_base64: null
             }));
+            setLogoPreview(null);
         };
 
         // FIX: Optimized input change handler that updates ref first
@@ -2338,10 +2367,10 @@ sfdc.account=`;
                            React.createElement('div', { key: 'credentials-yaml-container', className: 'flex gap-2' }, [
                                React.createElement('pre', { key: 'credentials-yaml-pre', 
                                    className: 'flex-1 text-xs font-mono bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto' 
-                               }, databaseInfo ? parseDatabaseCredentialsYAML(databaseInfo.database_url) : 'Loading credentials...'),
+                               }, databaseInfo && envInfo ? parseDatabaseCredentialsYAML(databaseInfo.database_url, envInfo) : 'Loading credentials...'),
                                React.createElement('button', {
                                    key: 'credentials-yaml-copy-btn',
-                                   onClick: () => copyToClipboard(databaseInfo ? parseDatabaseCredentialsYAML(databaseInfo.database_url) : '', 'credentials-yaml'),
+                                   onClick: () => copyToClipboard(databaseInfo && envInfo ? parseDatabaseCredentialsYAML(databaseInfo.database_url, envInfo) : '', 'credentials-yaml'),
                                    className: 'px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2'
                                }, [
                                    copiedToClipboard === 'credentials-yaml' 
@@ -2360,10 +2389,10 @@ sfdc.account=`;
                            React.createElement('div', { key: 'credentials-java-container', className: 'flex gap-2' }, [
                                React.createElement('pre', { key: 'credentials-java-pre', 
                                    className: 'flex-1 text-xs font-mono bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto' 
-                               }, databaseInfo ? parseDatabaseCredentialsJava(databaseInfo.database_url) : 'Loading credentials...'),
+                               }, databaseInfo && envInfo ? parseDatabaseCredentialsJava(databaseInfo.database_url, envInfo) : 'Loading credentials...'),
                                React.createElement('button', {
                                    key: 'credentials-java-copy-btn',
-                                   onClick: () => copyToClipboard(databaseInfo ? parseDatabaseCredentialsJava(databaseInfo.database_url) : '', 'credentials-java'),
+                                   onClick: () => copyToClipboard(databaseInfo && envInfo ? parseDatabaseCredentialsJava(databaseInfo.database_url, envInfo) : '', 'credentials-java'),
                                    className: 'px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2'
                                }, [
                                    copiedToClipboard === 'credentials-java' 

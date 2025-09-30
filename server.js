@@ -3389,6 +3389,21 @@ app.get('/api/system-settings/database/info', async (req, res) => {
     }
 });
 
+// Environment variables info endpoint
+app.get('/api/system-settings/env/info', async (req, res) => {
+    try {
+        const inferenceKey = process.env.INFERENCE_KEY;
+        
+        res.json({
+            inference_key: inferenceKey || '',
+            has_inference_key: !!inferenceKey
+        });
+    } catch (err) {
+        console.error('Error getting environment info:', err);
+        res.status(500).json({ error: 'Failed to get environment info' });
+    }
+});
+
 
 // Transactions
 // app.get('/api/transactions', async (req, res) => {
