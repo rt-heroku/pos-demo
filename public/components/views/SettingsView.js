@@ -1227,6 +1227,9 @@ sfdc.account=`;
                 return;
             }
 
+            console.log('Creating location with data:', formDataRef.current);
+            console.log('Logo base64 present:', !!formDataRef.current.logo_base64);
+            console.log('Logo base64 length:', formDataRef.current.logo_base64?.length);
             onCreateLocation(formDataRef.current);
             setShowNewLocationModal(false);
             

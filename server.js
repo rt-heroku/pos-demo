@@ -2730,6 +2730,8 @@ app.post('/api/locations', async (req, res) => {
             logo_base64
         } = req.body;
         
+        console.log('Creating location with logo_base64:', !!logo_base64, logo_base64?.length);
+        
         // Validate required fields
         if (!store_code || !store_name || !brand || !address_line1 || !city || !state || !zip_code) {
             return res.status(400).json({ error: 'Missing required fields' });
