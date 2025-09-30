@@ -49,6 +49,7 @@ window.Views.SettingsView = ({
         const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
         const [showEditLocationModal, setShowEditLocationModal] = React.useState(false);
         const [editingLocation, setEditingLocation] = React.useState(null);
+        const [hasPopulatedForm, setHasPopulatedForm] = React.useState(false);
         const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
         const [logoPreview, setLogoPreview] = React.useState(null);
         
@@ -1380,9 +1381,9 @@ sfdc.account=`;
         const LocationFormModal = ({ show, onClose, title, isEdit = false, location = null }) => {
             if (!show) return null;
 
-            // Populate form data when editing
+            // Populate form data when editing - use state to prevent infinite loop
             React.useEffect(() => {
-                if (isEdit && location) {
+                if (isEdit && location && !hasPopulatedForm) {
                     formDataRef.current = {
                         store_code: location.store_code || '',
                         store_name: location.store_name || '',
@@ -1402,8 +1403,9 @@ sfdc.account=`;
                     if (location.logo_base64) {
                         setLogoPreview(location.logo_base64);
                     }
+                    setHasPopulatedForm(true);
                 }
-            }, [isEdit, location]);
+            }, [isEdit, location?.id, hasPopulatedForm]); // Include hasPopulatedForm in dependencies
 
             return React.createElement('div', {key: 'location-form-modal',
                 className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
@@ -1420,6 +1422,7 @@ sfdc.account=`;
                                 if (isEdit) {
                                     setShowEditLocationModal(false);
                                     setEditingLocation(null);
+                                    setHasPopulatedForm(false); // Reset state for next edit
                                 } else {
                                     setShowNewLocationModal(false);
                                 }
@@ -2909,6 +2912,7 @@ sfdc.account=`;
                    setShowEditLocationModal(false);
                    setEditingLocation(null);
                    setLogoPreview(null);
+                   setHasPopulatedForm(false); // Reset state for next edit
                },
                title: 'Edit Location',
                isEdit: true,
