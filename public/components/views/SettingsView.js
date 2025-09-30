@@ -47,6 +47,7 @@ window.Views.SettingsView = ({
         
         const [activeTab, setActiveTab] = React.useState('locations');
         const [showNewLocationModal, setShowNewLocationModal] = React.useState(false);
+        const [showEditLocationModal, setShowEditLocationModal] = React.useState(false);
         const [editingLocation, setEditingLocation] = React.useState(null);
         const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
         const [logoPreview, setLogoPreview] = React.useState(null);
@@ -1253,6 +1254,37 @@ sfdc.account=`;
             setLogoPreview(null);
         };
 
+        // Handle update location
+        const handleUpdateLocation = () => {
+            const required = ['store_code', 'store_name', 'brand', 'address_line1', 'city', 'state', 'zip_code'];
+            const missing = required.filter(field => !formDataRef.current[field].trim());
+            
+            if (missing.length > 0) {
+                alert(`Please fill in required fields: ${missing.join(', ')}`);
+                return;
+            }
+
+            if (!/^[A-Z0-9]{3,10}$/.test(formDataRef.current.store_code)) {
+                alert('Store code must be 3-10 uppercase letters and numbers');
+                return;
+            }
+
+            const taxRate = parseFloat(formDataRef.current.tax_rate);
+            if (isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
+                alert('Tax rate must be a decimal between 0 and 1 (e.g., 0.08 for 8%)');
+                return;
+            }
+
+            console.log('Updating location with data:', formDataRef.current);
+            console.log('Logo base64 present:', !!formDataRef.current.logo_base64);
+            console.log('Logo base64 length:', formDataRef.current.logo_base64?.length);
+            
+            onUpdateLocation(editingLocation.id, formDataRef.current);
+            setShowEditLocationModal(false);
+            setEditingLocation(null);
+            setLogoPreview(null);
+        };
+
         const TabButton = ({ tab, label, icon: Icon, active }) => (
             React.createElement('button', {
                 onClick: () => setActiveTab(tab),
@@ -1320,6 +1352,7 @@ sfdc.account=`;
                         onClick: (e) => {
                             e.stopPropagation();
                             setEditingLocation(location);
+                            setShowEditLocationModal(true);
                         },
                         className: 'p-2 text-gray-400 hover:text-blue-600 rounded transition-colors'
                     }, React.createElement(Edit, {key: 'edit-icon', size: 16 }))
@@ -1344,8 +1377,33 @@ sfdc.account=`;
         const LocationFormModal_ = ({ show, onClose, title, isEdit = false }) => {return null;};
 
         // FIX: Optimized Location Form Modal that doesn't lose focus
-        const LocationFormModal = ({ show, onClose, title, isEdit = false }) => {
+        const LocationFormModal = ({ show, onClose, title, isEdit = false, location = null }) => {
             if (!show) return null;
+
+            // Populate form data when editing
+            React.useEffect(() => {
+                if (isEdit && location) {
+                    formDataRef.current = {
+                        store_code: location.store_code || '',
+                        store_name: location.store_name || '',
+                        brand: location.brand || '',
+                        address_line1: location.address_line1 || '',
+                        address_line2: location.address_line2 || '',
+                        city: location.city || '',
+                        state: location.state || '',
+                        zip_code: location.zip_code || '',
+                        phone: location.phone || '',
+                        email: location.email || '',
+                        tax_rate: location.tax_rate?.toString() || '0.08',
+                        manager_name: location.manager_name || '',
+                        logo_base64: location.logo_base64 || null
+                    };
+                    setNewLocationForm(formDataRef.current);
+                    if (location.logo_base64) {
+                        setLogoPreview(location.logo_base64);
+                    }
+                }
+            }, [isEdit, location]);
 
             return React.createElement('div', {key: 'location-form-modal',
                 className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
@@ -1359,7 +1417,12 @@ sfdc.account=`;
                         React.createElement('button', {
                             key: 'close-btn',
                             onClick: () => {
-                                setShowNewLocationModal(false);
+                                if (isEdit) {
+                                    setShowEditLocationModal(false);
+                                    setEditingLocation(null);
+                                } else {
+                                    setShowNewLocationModal(false);
+                                }
                                 setLogoPreview(null);
                                 // Reset form
                                 formDataRef.current = {
@@ -1394,6 +1457,7 @@ sfdc.account=`;
                                 }, [
                                     (logoPreview || newLocationForm.logo_base64) ? 
                                         React.createElement('img', {
+                                            key: 'logo-preview-img',
                                             src: logoPreview || newLocationForm.logo_base64,
                                             alt: 'Logo preview',
                                             className: 'w-full h-full object-contain rounded'
@@ -1604,7 +1668,7 @@ sfdc.account=`;
                         }, 'Cancel'),
                         React.createElement('button', {
                             key: 'save-btn',
-                            onClick: handleCreateLocation,
+                            onClick: isEdit ? handleUpdateLocation : handleCreateLocation,
                             disabled: loading,
                             className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2'
                         }, [
@@ -1612,7 +1676,7 @@ sfdc.account=`;
                                 key: 'spinner',
                                 className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
                             }),
-                            loading ? 'Creating...' : 'Create Location'
+                            loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Location' : 'Create Location')
                         ])
                     ])
                 ])
@@ -2835,6 +2899,20 @@ sfdc.account=`;
                    setNewLocationForm(formDataRef.current);
                },
                title: 'Create New Location'
+           }),
+
+           // Edit Location Modal
+           React.createElement(LocationFormModal, {
+               key: 'edit-location-modal',
+               show: showEditLocationModal,
+               onClose: () => {
+                   setShowEditLocationModal(false);
+                   setEditingLocation(null);
+                   setLogoPreview(null);
+               },
+               title: 'Edit Location',
+               isEdit: true,
+               location: editingLocation
            }),
 
            // Product Management Tab Content
