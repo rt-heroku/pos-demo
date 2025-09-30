@@ -128,7 +128,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                 React.createElement('div', {
                     className: `flex-shrink-0 w-6 h-6 flex items-center justify-center ${colors.icon}`
                 }, [
-                    React.createElement('span', { className: 'text-lg' }, getIcon())
+                    React.createElement('span', { key: 'icon', className: 'text-lg' }, getIcon())
                 ]),
                 React.createElement('div', {
                     className: 'flex-1 min-w-0'
@@ -144,7 +144,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                     onClick: handleClose,
                     className: `flex-shrink-0 ml-2 ${colors.icon} hover:opacity-70 transition-opacity`
                 }, [
-                    React.createElement('span', { className: 'text-lg' }, '×')
+                    React.createElement('span', { key: 'close-icon', className: 'text-lg' }, '×')
                 ])
             ])
         ])

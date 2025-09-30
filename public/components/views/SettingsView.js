@@ -53,6 +53,11 @@ window.Views.SettingsView = ({
         const [isDarkMode, setIsDarkMode] = React.useState(userSettings?.theme_mode === 'dark');
         const [logoPreview, setLogoPreview] = React.useState(null);
         
+        // MuleSoft Flows State
+        const [mulesoftFlows, setMulesoftFlows] = React.useState([]);
+        const [flowsLoading, setFlowsLoading] = React.useState(false);
+        const [flowsUpdating, setFlowsUpdating] = React.useState(false);
+        
         // System Settings State
         const [systemSettings, setSystemSettings] = React.useState([]);
         const [filteredSettings, setFilteredSettings] = React.useState([]);
@@ -152,6 +157,7 @@ window.Views.SettingsView = ({
                 loadDatabaseInfo();
                 loadEnvInfo();
                 loadMulesoftConfig();
+                loadMulesoftFlows(); // Load MuleSoft flows
             } else if (activeTab === 'products') {
                 loadMulesoftConfig();
                 loadGeneratedHistory();
@@ -372,6 +378,48 @@ window.Views.SettingsView = ({
                 console.error('Failed to load environment info:', error);
                 setEnvInfo(null);
             }
+        };
+
+        // Load MuleSoft flows
+        const loadMulesoftFlows = async () => {
+            setFlowsLoading(true);
+            try {
+                const data = await window.API.call('/mulesoft/flows');
+                setMulesoftFlows(data);
+            } catch (error) {
+                console.error('Failed to load MuleSoft flows:', error);
+                setMulesoftFlows([]);
+                window.NotificationManager.error('Failed to load MuleSoft flows', error.message);
+            } finally {
+                setFlowsLoading(false);
+            }
+        };
+
+        // Update MuleSoft flows
+        const updateMulesoftFlows = async () => {
+            setFlowsUpdating(true);
+            try {
+                const data = await window.API.call('/mulesoft/flows', {
+                    method: 'POST',
+                    body: JSON.stringify(mulesoftFlows)
+                });
+                setMulesoftFlows(data);
+                window.NotificationManager.success('MuleSoft flows updated successfully');
+            } catch (error) {
+                console.error('Failed to update MuleSoft flows:', error);
+                window.NotificationManager.error('Failed to update MuleSoft flows', error.message);
+            } finally {
+                setFlowsUpdating(false);
+            }
+        };
+
+        // Toggle flow status
+        const toggleFlowStatus = (flowName) => {
+            setMulesoftFlows(prev => prev.map(flow => 
+                flow.flow === flowName 
+                    ? { ...flow, enabled: !flow.enabled }
+                    : flow
+            ));
         };
 
         const handleSaveSetting = async () => {
@@ -2089,6 +2137,83 @@ sfdc.account=`;
                                         `Journal Types & Subtypes: ${mulesoftConfig.journalTypeId && mulesoftConfig.journalSubtypeId && mulesoftConfig.enrollmentJournalSubtypeId ? 'Selected' : 'Not selected'}`
                                     )
                                 ])
+                            ])
+                        ])
+                    ]),
+
+                    // Automatically Sync data with Loyalty Cloud
+                    React.createElement('div', { key: 'sync-flows-section', className: 'mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg' }, [
+                        React.createElement('h4', { key: 'sync-flows-title', className: 'text-sm font-medium mb-3 dark:text-white' }, 
+                            'Automatically Sync data with Loyalty Cloud'
+                        ),
+                        React.createElement('p', { key: 'sync-flows-description', className: 'text-xs text-gray-600 dark:text-gray-400 mb-4' }, 
+                            'Configure which flows should be automatically enabled for data synchronization'
+                        ),
+                        
+                        // Flows table
+                        flowsLoading ? 
+                            React.createElement('div', { key: 'flows-loading', className: 'flex items-center justify-center py-4' }, [
+                                React.createElement('div', { key: 'spinner', className: 'animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' }),
+                                React.createElement('span', { key: 'loading-text', className: 'ml-2 text-sm text-gray-600 dark:text-gray-400' }, 'Loading flows...')
+                            ]) :
+                            mulesoftFlows.length === 0 ?
+                                React.createElement('div', { key: 'no-flows', className: 'text-center py-4 text-gray-500 dark:text-gray-400' }, 
+                                    'No flows available. Please configure the MuleSoft endpoint first.'
+                                ) :
+                                React.createElement('div', { key: 'flows-table', className: 'space-y-3' }, 
+                                    mulesoftFlows.map((flow, index) => 
+                                        React.createElement('div', { 
+                                            key: `flow-${flow.flow}`,
+                                            className: 'flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-600'
+                                        }, [
+                                            React.createElement('div', { key: 'flow-info', className: 'flex items-center gap-3' }, [
+                                                React.createElement('div', { 
+                                                    key: 'flow-indicator',
+                                                    className: `w-3 h-3 rounded-full ${flow.enabled ? 'bg-green-500' : 'bg-gray-400'}` 
+                                                }),
+                                                React.createElement('span', { 
+                                                    key: 'flow-name',
+                                                    className: 'text-sm font-medium dark:text-white'
+                                                }, flow.flow.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
+                                            ]),
+                                            React.createElement('button', {
+                                                key: 'flow-toggle',
+                                                onClick: () => toggleFlowStatus(flow.flow),
+                                                disabled: !mulesoftConfig.endpoint,
+                                                className: `relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                    flow.enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                                                } ${!mulesoftConfig.endpoint ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`,
+                                                role: 'switch',
+                                                'aria-checked': flow.enabled
+                                            }, [
+                                                React.createElement('span', {
+                                                    key: 'toggle-slider',
+                                                    className: `inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                        flow.enabled ? 'translate-x-6' : 'translate-x-1'
+                                                    }`
+                                                })
+                                            ])
+                                        ])
+                                    )
+                                ),
+                        
+                        // Apply button
+                        React.createElement('div', { key: 'apply-section', className: 'mt-4 flex justify-end' }, [
+                            React.createElement('button', {
+                                key: 'apply-button',
+                                onClick: updateMulesoftFlows,
+                                disabled: flowsUpdating || !mulesoftConfig.endpoint || mulesoftFlows.length === 0,
+                                className: `px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    flowsUpdating || !mulesoftConfig.endpoint || mulesoftFlows.length === 0
+                                        ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                }`
+                            }, [
+                                flowsUpdating && React.createElement('div', { 
+                                    key: 'apply-spinner',
+                                    className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2' 
+                                }),
+                                flowsUpdating ? 'Applying...' : 'Apply Changes'
                             ])
                         ])
                     ]),

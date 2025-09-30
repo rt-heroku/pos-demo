@@ -3406,6 +3406,67 @@ app.get('/api/system-settings/env/info', async (req, res) => {
     }
 });
 
+// Get MuleSoft flows status
+app.get('/api/mulesoft/flows', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT setting_value FROM system_settings WHERE setting_key = $1', ['mulesoft_loyalty_sync_endpoint']);
+        const mulesoftEndpoint = result.rows[0]?.setting_value;
+        
+        if (!mulesoftEndpoint) {
+            return res.json([]);
+        }
+        
+        const response = await fetch(`${mulesoftEndpoint}/flows`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`MuleSoft API error: ${response.status}`);
+        }
+        
+        const flows = await response.json();
+        res.json(flows);
+    } catch (err) {
+        console.error('Error fetching MuleSoft flows:', err);
+        res.status(500).json({ error: 'Failed to fetch flows from MuleSoft' });
+    }
+});
+
+// Update MuleSoft flows status
+app.post('/api/mulesoft/flows', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT setting_value FROM system_settings WHERE setting_key = $1', ['mulesoft_loyalty_sync_endpoint']);
+        const mulesoftEndpoint = result.rows[0]?.setting_value;
+        
+        if (!mulesoftEndpoint) {
+            return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+        }
+        
+        const flows = req.body;
+        
+        const response = await fetch(`${mulesoftEndpoint}/flows`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(flows)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`MuleSoft API error: ${response.status}`);
+        }
+        
+        const updatedFlows = await response.json();
+        res.json(updatedFlows);
+    } catch (err) {
+        console.error('Error updating MuleSoft flows:', err);
+        res.status(500).json({ error: 'Failed to update flows in MuleSoft' });
+    }
+});
+
 
 // Transactions
 // app.get('/api/transactions', async (req, res) => {
