@@ -1203,7 +1203,7 @@ sfdc.account=`;
             }
 
             if (file.size > 2 * 1024 * 1024) {
-                alert('Image size should be less than 2MB');
+                alert(`Image size should be less than 2MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
                 return;
             }
 
@@ -1233,7 +1233,7 @@ sfdc.account=`;
                 reader.readAsDataURL(file);
             };
             img.onerror = () => {
-                alert('Invalid image file');
+                alert(`Invalid image file. Please try a different format (JPG, PNG, GIF). File type: ${file.type}`);
                 return;
             };
             img.src = URL.createObjectURL(file);
@@ -1248,6 +1248,58 @@ sfdc.account=`;
                 logo_base64: null
             }));
             setLogoPreview(null);
+        };
+
+        // Handle current location logo update
+        const handleCurrentLocationLogoUpdate = async (base64) => {
+            try {
+                const response = await fetch(`/api/locations/${selectedLocation.id}/logo`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ logo_base64: base64 })
+                });
+                
+                if (response.ok) {
+                    const updatedLocation = await response.json();
+                    // Update the selected location with new logo
+                    onLocationChange(updatedLocation);
+                    window.NotificationManager.success('Logo updated successfully');
+                } else {
+                    throw new Error('Failed to update logo');
+                }
+            } catch (error) {
+                console.error('Error updating logo:', error);
+                window.NotificationManager.error('Failed to update logo', error.message);
+            }
+        };
+
+        // Handle current location logo removal
+        const handleCurrentLocationLogoRemove = async () => {
+            try {
+                const response = await fetch(`/api/locations/${selectedLocation.id}/logo`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ logo_base64: null })
+                });
+                
+                if (response.ok) {
+                    const updatedLocation = await response.json();
+                    // Update the selected location with removed logo
+                    onLocationChange(updatedLocation);
+                    window.NotificationManager.success('Logo removed successfully');
+                } else {
+                    throw new Error('Failed to remove logo');
+                }
+            } catch (error) {
+                console.error('Error removing logo:', error);
+                window.NotificationManager.error('Failed to remove logo', error.message);
+            }
         };
 
         // FIX: Optimized input change handler that updates ref first
@@ -1432,6 +1484,7 @@ sfdc.account=`;
             // Populate form data when editing - use state to prevent infinite loop
             React.useEffect(() => {
                 if (isEdit && location && !hasPopulatedForm) {
+                    console.log('Populating form for location:', location.store_name, 'ID:', location.id);
                     formDataRef.current = {
                         store_code: location.store_code || '',
                         store_name: location.store_name || '',
@@ -1513,7 +1566,7 @@ sfdc.account=`;
                                             alt: 'Logo preview',
                                             className: 'w-full h-full object-contain rounded'
                                         }) :
-                                        React.createElement(Image, { size: 24, className: 'text-gray-400' })
+                                        React.createElement(Image, { key: 'logo-placeholder', size: 24, className: 'text-gray-400' })
                                 ]),
                                 React.createElement('input', {
                                     key: 'logo-upload-input',
@@ -1858,7 +1911,39 @@ sfdc.account=`;
                                 key: 'current-logo-upload',
                                 type: 'file',
                                 accept: 'image/*',
-                                onChange: (e) => handleLogoUpload(e, false),
+                                onChange: (e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    
+                                    if (!file.type.startsWith('image/')) {
+                                        window.NotificationManager.warning('Invalid file type', 'Please select a valid image file');
+                                        return;
+                                    }
+                                    
+                                    if (file.size > 2 * 1024 * 1024) {
+                                        window.NotificationManager.warning('File too large', `Image size should be less than 2MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                                        return;
+                                    }
+                                    
+                                    const img = document.createElement('img');
+                                    img.onload = () => {
+                                        if (img.width > 2048 || img.height > 2048) {
+                                            window.NotificationManager.warning('Image too large', `Image dimensions should not exceed 2048x2048 pixels. Current size: ${img.width}x${img.height}`);
+                                            return;
+                                        }
+                                        
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => {
+                                            const base64 = e.target.result;
+                                            handleCurrentLocationLogoUpdate(base64);
+                                        };
+                                        reader.readAsDataURL(file);
+                                    };
+                                    img.onerror = () => {
+                                        window.NotificationManager.warning('Invalid image', `Invalid image file. Please try a different format (JPG, PNG, GIF). File type: ${file.type}`);
+                                    };
+                                    img.src = URL.createObjectURL(file);
+                                },
                                 className: 'hidden',
                                 id: 'current-logo-upload'
                             }),
@@ -1873,7 +1958,7 @@ sfdc.account=`;
                             selectedLocation.logo_base64 && React.createElement('button', {
                                 key: 'remove-current-logo-button',
                                 type: 'button',
-                                onClick: () => handleLogoRemove(false),
+                                onClick: handleCurrentLocationLogoRemove,
                                 className: 'flex items-center gap-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 cursor-pointer transition-colors'
                             }, [
                                 React.createElement('span', { key: 'remove-icon' }, '×'),

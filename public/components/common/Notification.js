@@ -134,6 +134,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                     className: 'flex-1 min-w-0'
                 }, [
                     title && React.createElement('h4', {
+                        key: 'title',
                         className: `font-semibold text-sm ${colors.title} mb-1`
                     }, title),
                     React.createElement('p', {
