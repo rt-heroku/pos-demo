@@ -1057,18 +1057,64 @@ const POSApp = () => {
         setShowCustomerFormModal(true);
     };
 
-    const handleSaveCustomer = async (customerData) => {
+    const handleSaveCustomer = async (customerData, avatarData = null) => {
         try {
             setLoading(true);
             
+            console.log('handleSaveCustomer called with:', {
+                customerData,
+                avatarData,
+                hasAvatar: !!avatarData,
+                isEdit: !!currentCustomer
+            });
+            
             if (currentCustomer) {
                 // Update existing customer
+                console.log('Updating existing customer:', currentCustomer.id);
                 await window.API.customers.update(currentCustomer.id, customerData);
-                alert('Customer updated successfully!');
+                
+                // Handle avatar upload if provided
+                if (avatarData) {
+                    console.log('Uploading avatar for existing customer:', currentCustomer.id);
+                    try {
+                        const avatarResponse = await window.API.call(`/customers/${currentCustomer.id}/avatar`, {
+                            method: 'POST',
+                            body: avatarData
+                        });
+                        console.log('Avatar upload response:', avatarResponse);
+                    } catch (avatarError) {
+                        console.error('Avatar upload failed:', avatarError);
+                        window.NotificationManager.warning('Avatar Upload Failed', 'Customer saved but avatar upload failed: ' + avatarError.message);
+                    }
+                } else {
+                    console.log('No avatar data provided for existing customer');
+                }
+                
+                window.NotificationManager.success('Customer Updated', 'Customer information updated successfully');
             } else {
                 // Create new customer
-                await window.API.customers.createEnhanced(customerData);
-                alert('Customer created successfully!');
+                console.log('Creating new customer');
+                const response = await window.API.customers.createEnhanced(customerData);
+                console.log('New customer response:', response);
+                
+                // Handle avatar upload if provided and we have a customer ID
+                if (avatarData && response && response.id) {
+                    console.log('Uploading avatar for new customer:', response.id);
+                    try {
+                        const avatarResponse = await window.API.call(`/customers/${response.id}/avatar`, {
+                            method: 'POST',
+                            body: avatarData
+                        });
+                        console.log('Avatar upload response:', avatarResponse);
+                    } catch (avatarError) {
+                        console.error('Avatar upload failed:', avatarError);
+                        window.NotificationManager.warning('Avatar Upload Failed', 'Customer created but avatar upload failed: ' + avatarError.message);
+                    }
+                } else {
+                    console.log('No avatar data or customer ID for new customer:', { avatarData: !!avatarData, responseId: response?.id });
+                }
+                
+                window.NotificationManager.success('Customer Created', 'New customer added successfully');
             }
             
             // Refresh customer list
@@ -1079,18 +1125,8 @@ const POSApp = () => {
             setCurrentCustomer(null);
             
         } catch (error) {
-            console.error('Failed to save customer:', error);
-            
-            // Show specific error message if available
-            if (error.message.includes('already exists')) {
-                alert('A customer with this loyalty number already exists.');
-            } else if (error.message.includes('Invalid email')) {
-                alert('Please enter a valid email address.');
-            } else if (error.message.includes('required')) {
-                alert('Please fill in all required fields.');
-            } else {
-                alert('Failed to save customer. Please check your information and try again.');
-            }
+            console.error('Error saving customer:', error);
+            window.NotificationManager.error('Save Failed', error.message || 'Failed to save customer');
         } finally {
             setLoading(false);
         }
