@@ -238,7 +238,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
             delete saveData.loyalty_number;
         }
 
-        onSave(saveData);
+        onSave(saveData, avatarData);
     };
 
     const formatPhoneNumber = (value) => {

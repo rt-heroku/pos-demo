@@ -4505,24 +4505,36 @@ app.post('/api/customers/:id/avatar', async (req, res) => {
     const { id } = req.params;
     const { image_data, filename, file_size, width, height } = req.body;
     
+    console.log(`Avatar upload request for customer ${id}`);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Image data present:', !!image_data);
+    console.log('Image data length:', image_data ? image_data.length : 0);
+    
     if (!image_data) {
+      console.log('No image data provided');
       return res.status(400).json({ error: 'Image data is required' });
     }
     
     // Check if customer exists
     const customerResult = await pool.query('SELECT id FROM customers WHERE id = $1', [id]);
     if (customerResult.rows.length === 0) {
+      console.log(`Customer ${id} not found`);
       return res.status(404).json({ error: 'Customer not found' });
     }
     
+    console.log(`Customer ${id} found, proceeding with avatar upload`);
+    
     // Delete existing avatar if any
-    await pool.query('DELETE FROM customer_images WHERE customer_id = $1', [id]);
+    const deleteResult = await pool.query('DELETE FROM customer_images WHERE customer_id = $1', [id]);
+    console.log(`Deleted ${deleteResult.rowCount} existing avatars for customer ${id}`);
     
     // Insert new avatar
     const result = await pool.query(
       'INSERT INTO customer_images (customer_id, filename, image_data, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       [id, filename || 'avatar.jpg', image_data, file_size || 0, width || 0, height || 0]
     );
+    
+    console.log(`Avatar uploaded successfully for customer ${id}, avatar_id: ${result.rows[0].id}`);
     
     res.json({
       success: true,
