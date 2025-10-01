@@ -1252,7 +1252,8 @@ app.put('/api/customers/:id', async (req, res) => {
     const { id } = req.params;
     const { 
       name, email, phone, points, notes, member_status, 
-      member_type, enrollment_date, customer_tier 
+      member_type, enrollment_date, customer_tier, date_of_birth,
+      address_line1, address_line2, city, state, country, zip_code
     } = req.body;
     
     // Validate required fields
@@ -1311,8 +1312,10 @@ app.put('/api/customers/:id', async (req, res) => {
       UPDATE customers 
       SET name = $1, email = $2, phone = $3, points = $4, notes = $5, 
           member_status = $6, member_type = $7, enrollment_date = $8, 
-          customer_tier = $9, tier_calculation_number = $10, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = $11 RETURNING *
+          customer_tier = $9, tier_calculation_number = $10, date_of_birth = $11,
+          address_line1 = $12, address_line2 = $13, city = $14, state = $15, 
+          country = $16, zip_code = $17, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $18 RETURNING *
     `, [
       name.trim(), 
       email || null, 
@@ -1324,6 +1327,13 @@ app.put('/api/customers/:id', async (req, res) => {
       enrollment_date ? new Date(enrollment_date) : current.enrollment_date,
       customer_tier || current.customer_tier,
       newTierCalcNumber,
+      date_of_birth || null,
+      address_line1 || null,
+      address_line2 || null,
+      city || null,
+      state || null,
+      country || null,
+      zip_code || null,
       id
     ]);
 
@@ -1447,7 +1457,8 @@ app.post('/api/customers/enhanced', async (req, res) => {
   try {
     const { 
       name, first_name, last_name, email, phone, loyalty_number, points, notes, 
-      member_status, member_type, enrollment_date, customer_tier, date_of_birth 
+      member_status, member_type, enrollment_date, customer_tier, date_of_birth,
+      address_line1, address_line2, city, state, country, zip_code
     } = req.body;
     
     // Validate required fields - prefer first_name/last_name over name
@@ -1549,9 +1560,10 @@ app.post('/api/customers/enhanced', async (req, res) => {
     const result = await pool.query(`
       INSERT INTO customers (
         loyalty_number, name, first_name, last_name, email, phone, points, notes, 
-        member_status, member_type, enrollment_date, customer_tier, tier_calculation_number, date_of_birth
+        member_status, member_type, enrollment_date, customer_tier, tier_calculation_number, date_of_birth,
+        address_line1, address_line2, city, state, country, zip_code
       ) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) 
       RETURNING *
     `, [
       finalLoyaltyNumber, 
@@ -1567,7 +1579,13 @@ app.post('/api/customers/enhanced', async (req, res) => {
       finalEnrollmentDate,
       customer_tier || 'Bronze',
       tierCalcNumber,
-      date_of_birth || null
+      date_of_birth || null,
+      address_line1 || null,
+      address_line2 || null,
+      city || null,
+      state || null,
+      country || null,
+      zip_code || null
     ]);
     
     // Log customer creation activity (optional, won't fail if function doesn't exist)
