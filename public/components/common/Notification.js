@@ -138,6 +138,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                         className: `font-semibold text-sm ${colors.title} mb-1`
                     }, title),
                     React.createElement('p', {
+                        key: 'message',
                         className: `text-sm ${colors.message}`
                     }, message)
                 ]),

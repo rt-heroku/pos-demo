@@ -1198,20 +1198,25 @@ sfdc.account=`;
             console.log('File selected:', file.name, file.type, file.size);
 
             if (!file.type.startsWith('image/')) {
-                alert('Please select a valid image file');
+                console.error('Invalid file type:', file.type);
+                window.NotificationManager.warning('Invalid file type', 'Please select a valid image file (JPG, PNG, GIF)');
                 return;
             }
 
             if (file.size > 2 * 1024 * 1024) {
-                alert(`Image size should be less than 2MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                console.error('File size too large:', sizeMB, 'MB');
+                window.NotificationManager.warning('File too large', `Image size should be less than 2MB. Current size: ${sizeMB}MB`);
                 return;
             }
 
             // Check image dimensions using document.createElement
             const img = document.createElement('img');
             img.onload = () => {
+                console.log('Image dimensions:', img.width, 'x', img.height);
                 if (img.width > 2048 || img.height > 2048) {
-                    alert(`Image dimensions should not exceed 2048x2048 pixels. Current size: ${img.width}x${img.height}`);
+                    console.error('Image dimensions too large:', img.width, 'x', img.height);
+                    window.NotificationManager.warning('Image too large', `Image dimensions should not exceed 2048x2048 pixels. Current size: ${img.width}x${img.height}`);
                     return;
                 }
                 
@@ -1229,11 +1234,17 @@ sfdc.account=`;
                     }));
                     setLogoPreview(base64);
                     console.log('Logo state updated');
+                    window.NotificationManager.success('Logo uploaded', 'Logo uploaded successfully');
+                };
+                reader.onerror = (error) => {
+                    console.error('FileReader error:', error);
+                    window.NotificationManager.error('Upload failed', 'Failed to read the image file');
                 };
                 reader.readAsDataURL(file);
             };
-            img.onerror = () => {
-                alert(`Invalid image file. Please try a different format (JPG, PNG, GIF). File type: ${file.type}`);
+            img.onerror = (error) => {
+                console.error('Image loading error:', error);
+                window.NotificationManager.error('Invalid image', `Invalid image file. Please try a different format (JPG, PNG, GIF). File type: ${file.type}`);
                 return;
             };
             img.src = URL.createObjectURL(file);
@@ -1748,7 +1759,13 @@ sfdc.account=`;
                         React.createElement('button', {
                             key: 'cancel-btn',
                             onClick: () => {
-                                setShowNewLocationModal(false);
+                                if (isEdit) {
+                                    setShowEditLocationModal(false);
+                                    setEditingLocation(null);
+                                    setHasPopulatedForm(false);
+                                } else {
+                                    setShowNewLocationModal(false);
+                                }
                                 setLogoPreview(null);
                                 formDataRef.current = {
                                     store_code: '',

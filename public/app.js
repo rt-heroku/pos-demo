@@ -1316,7 +1316,7 @@ const POSApp = () => {
                             key: 'location-logo',
                             src: selectedLocation.logo_base64,
                             alt: 'Store logo',
-                            className: 'w-10 h-10 object-contain'
+                            className: 'w-20 h-10 object-contain'
                         }),
                         React.createElement('div', { key: 'titles' }, [
                             React.createElement('h1', { 
