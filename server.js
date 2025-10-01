@@ -4497,6 +4497,99 @@ app.post('/api/products/generate-inventory', async (req, res) => {
   }
 });
 
+// Customer Avatar Management Endpoints
+
+// Upload customer avatar
+app.post('/api/customers/:id/avatar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { image_data, filename, file_size, width, height } = req.body;
+    
+    if (!image_data) {
+      return res.status(400).json({ error: 'Image data is required' });
+    }
+    
+    // Check if customer exists
+    const customerResult = await pool.query('SELECT id FROM customers WHERE id = $1', [id]);
+    if (customerResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    
+    // Delete existing avatar if any
+    await pool.query('DELETE FROM customer_images WHERE customer_id = $1', [id]);
+    
+    // Insert new avatar
+    const result = await pool.query(
+      'INSERT INTO customer_images (customer_id, filename, image_data, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [id, filename || 'avatar.jpg', image_data, file_size || 0, width || 0, height || 0]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      avatar_id: result.rows[0].id
+    });
+    
+  } catch (error) {
+    console.error('Error uploading customer avatar:', error);
+    res.status(500).json({ error: 'Failed to upload avatar' });
+  }
+});
+
+// Get customer avatar
+app.get('/api/customers/:id/avatar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      'SELECT image_data, filename, file_size, width, height FROM customer_images WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No avatar found' });
+    }
+    
+    const avatar = result.rows[0];
+    res.json({
+      success: true,
+      avatar: {
+        image_data: avatar.image_data,
+        filename: avatar.filename,
+        file_size: avatar.file_size,
+        width: avatar.width,
+        height: avatar.height
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting customer avatar:', error);
+    res.status(500).json({ error: 'Failed to get avatar' });
+  }
+});
+
+// Delete customer avatar
+app.delete('/api/customers/:id/avatar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM customer_images WHERE customer_id = $1 RETURNING id', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No avatar found to delete' });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Avatar deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error deleting customer avatar:', error);
+    res.status(500).json({ error: 'Failed to delete avatar' });
+  }
+});
+
 // Serve React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

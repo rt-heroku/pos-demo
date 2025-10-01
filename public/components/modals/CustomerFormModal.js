@@ -35,9 +35,102 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         zip_code: ''
     });
 
+    const [avatarData, setAvatarData] = React.useState(null);
+    const [avatarPreview, setAvatarPreview] = React.useState(null);
+    const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
+
     const [errors, setErrors] = React.useState({});
 
-    // Initialize form data when customer changes
+
+    // Handle avatar upload
+    const handleAvatarUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            window.NotificationManager.warning('Invalid file type', 'Please select a valid image file (JPG, PNG, GIF)');
+            return;
+        }
+
+        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+        if (file.size > 10 * 1024 * 1024) {
+            window.NotificationManager.warning('File too large', `Image size should be less than 10MB. Current size: ${sizeMB}MB`);
+            return;
+        }
+
+        setUploadingAvatar(true);
+        try {
+            // Show processing notification
+            window.NotificationManager.info('Processing Avatar', 'Resizing image to fit requirements...');
+            
+            // Process image with automatic resizing
+            const result = await window.ImageUtils.processImage(file, {
+                maxWidth: 512,
+                maxHeight: 512,
+                quality: 0.85,
+                maxSizeMB: 10
+            });
+            
+            console.log('Avatar processing result:', {
+                original: `${result.originalWidth}x${result.originalHeight}`,
+                resized: `${result.newWidth}x${result.newHeight}`,
+                wasResized: result.wasResized
+            });
+            
+            setAvatarData({
+                image_data: result.base64,
+                filename: file.name,
+                file_size: result.fileSize,
+                width: result.newWidth,
+                height: result.newHeight
+            });
+            setAvatarPreview(result.base64);
+            
+            // Show success message with resize info
+            if (result.wasResized) {
+                window.NotificationManager.success('Avatar Processed', 
+                    `Image resized from ${result.originalWidth}x${result.originalHeight} to ${result.newWidth}x${result.newHeight} and ready for upload!`);
+            } else {
+                window.NotificationManager.success('Avatar Ready', 'Avatar ready for upload!');
+            }
+            
+        } catch (error) {
+            console.error('Avatar processing error:', error);
+            window.NotificationManager.error('Processing Failed', 'Failed to process the avatar. Please try a different file.');
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
+    // Handle avatar removal
+    const handleAvatarRemove = () => {
+        setAvatarData(null);
+        setAvatarPreview(null);
+        window.NotificationManager.info('Avatar Removed', 'Avatar removed from form.');
+    };
+
+    // Load existing avatar when editing
+    React.useEffect(() => {
+        if (customer && customer.id) {
+            const loadAvatar = async () => {
+                try {
+                    const response = await fetch(`/api/customers/${customer.id}/avatar`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAvatarPreview(data.avatar.image_data);
+                    }
+                } catch (error) {
+                    console.log('No existing avatar found');
+                }
+            };
+            loadAvatar();
+        }
+    }, [customer?.id]);
+        // Initialize form data when customer changes
     React.useEffect(() => {
         if (customer) {
             // Split existing name into first and last name if available
@@ -198,6 +291,65 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                             key: 'member-type-note',
                             className: 'text-gray-500 dark:text-gray-400 text-xs mt-1'
                         }, 'Member type cannot be changed after creation')
+                    ])
+                ]),
+
+                // Profile Picture Section
+                React.createElement('div', { key: 'avatar-section', className: 'space-y-4' }, [
+                    React.createElement('h3', { key: 'avatar-header', className: 'text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2' }, 'Profile Picture'),
+                    
+                    React.createElement('div', { key: 'avatar-container', className: 'flex items-center gap-4' }, [
+                        // Avatar preview
+                        React.createElement('div', { 
+                            key: 'avatar-preview',
+                            className: 'w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700' 
+                        }, [
+                            avatarPreview ? 
+                                React.createElement('img', {
+                                    key: 'avatar-preview-img',
+                                    src: avatarPreview,
+                                    alt: 'Avatar preview',
+                                    className: 'w-full h-full object-cover rounded'
+                                }) :
+                                React.createElement(User, { key: 'avatar-placeholder', size: 32, className: 'text-gray-400' })
+                        ]),
+                        
+                        // Avatar controls
+                        React.createElement('div', { key: 'avatar-controls', className: 'flex flex-col gap-2' }, [
+                            React.createElement('input', {
+                                key: 'avatar-upload-input',
+                                type: 'file',
+                                accept: 'image/*',
+                                onChange: handleAvatarUpload,
+                                className: 'hidden',
+                                id: 'avatar-upload',
+                                disabled: uploadingAvatar
+                            }),
+                            React.createElement('label', {
+                                key: 'avatar-upload-label',
+                                htmlFor: 'avatar-upload',
+                                className: `flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
+                                    uploadingAvatar 
+                                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                }`
+                            }, [
+                                uploadingAvatar && React.createElement('div', { 
+                                    key: 'upload-spinner',
+                                    className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-white' 
+                                }),
+                                React.createElement('span', { key: 'upload-text' }, uploadingAvatar ? 'Processing...' : 'Upload Avatar')
+                            ]),
+                            avatarPreview && React.createElement('button', {
+                                key: 'avatar-remove-btn',
+                                type: 'button',
+                                onClick: handleAvatarRemove,
+                                className: 'flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 cursor-pointer transition-colors'
+                            }, [
+                                React.createElement('span', { key: 'remove-icon' }, '×'),
+                                'Remove'
+                            ])
+                        ])
                     ])
                 ]),
 

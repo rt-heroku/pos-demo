@@ -25,8 +25,57 @@ window.Views.LoyaltyView= ({
     const [sortBy, setSortBy] = React.useState('name');
     const [sortOrder, setSortOrder] = React.useState('asc');
     const [filterBy, setFilterBy] = React.useState('all'); // 'all', 'active', 'inactive'
+    const [customerAvatars, setCustomerAvatars] = React.useState({});
+    const [actionMenuOpen, setActionMenuOpen] = React.useState(null);
 
-    // Load customers on component mount
+
+    // Load customer avatars
+    const loadCustomerAvatar = async (customerId) => {
+        try {
+            const response = await fetch(`/api/customers/${customerId}/avatar`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setCustomerAvatars(prev => ({
+                    ...prev,
+                    [customerId]: data.avatar.image_data
+                }));
+            }
+        } catch (error) {
+            console.log('No avatar found for customer', customerId);
+        }
+    };
+
+    // Load avatars for all customers
+    React.useEffect(() => {
+        if (customers.length > 0) {
+            customers.forEach(customer => {
+                if (!customerAvatars[customer.id]) {
+                    loadCustomerAvatar(customer.id);
+                }
+            });
+        }
+    }, [customers]);
+
+    // Toggle action menu
+    const toggleActionMenu = (customerId) => {
+        setActionMenuOpen(actionMenuOpen === customerId ? null : customerId);
+    };
+    
+    // Close action menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (actionMenuOpen && !event.target.closest('.relative')) {
+                setActionMenuOpen(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [actionMenuOpen]);
+        // Load customers on component mount
     React.useEffect(() => {
         if (onRefreshCustomers) {
             onRefreshCustomers();
@@ -342,31 +391,74 @@ window.Views.LoyaltyView= ({
                                 className: 'p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors' 
                             }, [
                                 React.createElement('div', { key: 'customer-header', className: 'flex justify-between items-start mb-3' }, [
-                                    React.createElement('div', { key: 'customer-info' }, [
-                                        React.createElement('div', { key: 'customer-name', className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
-                                        React.createElement('div', { key: 'customer-loyalty', className: 'text-sm text-blue-600 font-mono' }, customer.loyalty_number),
-                                        customer.email && React.createElement('div', { key: 'customer-email', className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.email),
-                                        customer.phone && React.createElement('div', { key: 'customer-phone', className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.phone)
+                                    React.createElement('div', { key: 'customer-info', className: 'flex items-center gap-3' }, [
+                                        // Avatar
+                                        React.createElement('div', { 
+                                            key: 'customer-avatar',
+                                            className: 'w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden'
+                                        }, [
+                                            customerAvatars[customer.id] ? 
+                                                React.createElement('img', {
+                                                    key: 'avatar-img',
+                                                    src: customerAvatars[customer.id],
+                                                    alt: customer.name,
+                                                    className: 'w-full h-full object-cover'
+                                                }) :
+                                                React.createElement(User, { key: 'avatar-placeholder', size: 24, className: 'text-gray-400' })
+                                        ]),
+                                        React.createElement('div', { key: 'customer-details' }, [
+                                            React.createElement('div', { key: 'customer-name', className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
+                                            React.createElement('div', { key: 'customer-loyalty', className: 'text-sm text-blue-600 font-mono' }, customer.loyalty_number),
+                                            customer.email && React.createElement('div', { key: 'customer-email', className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.email),
+                                            customer.phone && React.createElement('div', { key: 'customer-phone', className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.phone)
+                                        ])
                                     ]),
-                                    React.createElement('div', { key: 'actions', className: 'flex gap-1' }, [
+                                    // Action menu
+                                    React.createElement('div', { key: 'actions', className: 'relative' }, [
                                         React.createElement('button', {
-                                            key: 'view-history-btn',
-                                            onClick: () => onLoadCustomerHistory(customer.id),
-                                            className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
-                                            title: 'View History'
-                                        }, React.createElement(Eye, { key: 'eye-icon', size: 16 })),
-                                        React.createElement('button', {
-                                            key: 'edit-btn',
-                                            onClick: () => onEditCustomer(customer),
-                                            className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
-                                            title: 'Edit'
-                                        }, React.createElement(Edit, { key: 'edit-icon', size: 16 })),
-                                        React.createElement('button', {
-                                            key: 'delete-btn',
-                                            onClick: () => onDeleteCustomer(customer.id),
-                                            className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
-                                            title: 'Delete'
-                                        }, React.createElement(Trash2, { key: 'trash-icon', size: 16 }))
+                                            key: 'action-menu-btn',
+                                            onClick: () => toggleActionMenu(customer.id),
+                                            className: 'p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors',
+                                            title: 'Actions'
+                                        }, React.createElement('span', { key: 'menu-icon' }, '⋯')),
+                                        actionMenuOpen === customer.id && React.createElement('div', {
+                                            key: 'action-menu',
+                                            className: 'absolute right-0 top-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-[120px]'
+                                        }, [
+                                            React.createElement('button', {
+                                                key: 'view-history-action',
+                                                onClick: () => {
+                                                    onLoadCustomerHistory(customer.id);
+                                                    setActionMenuOpen(null);
+                                                },
+                                                className: 'w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2'
+                                            }, [
+                                                React.createElement(Eye, { key: 'eye-icon', size: 14 }),
+                                                'View History'
+                                            ]),
+                                            React.createElement('button', {
+                                                key: 'edit-action',
+                                                onClick: () => {
+                                                    onEditCustomer(customer);
+                                                    setActionMenuOpen(null);
+                                                },
+                                                className: 'w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2'
+                                            }, [
+                                                React.createElement(Edit, { key: 'edit-icon', size: 14 }),
+                                                'Edit'
+                                            ]),
+                                            React.createElement('button', {
+                                                key: 'delete-action',
+                                                onClick: () => {
+                                                    onDeleteCustomer(customer.id);
+                                                    setActionMenuOpen(null);
+                                                },
+                                                className: 'w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2'
+                                            }, [
+                                                React.createElement(Trash2, { key: 'trash-icon', size: 14 }),
+                                                'Delete'
+                                            ])
+                                        ])
                                     ])
                                 ]),
                                 React.createElement('div', { key: 'customer-stats', className: 'grid grid-cols-3 gap-4 text-sm' }, [
