@@ -137,7 +137,29 @@ window.Views.LoyaltyView= ({
         ])
     );
 
-    const CustomerCard = ({ customer }) => {
+    const CustomerCard = ({ customer, avatar }) => {
+        const { MoreVertical } = window.Icons;
+        const [showMenu, setShowMenu] = React.useState(false);
+        const menuRef = React.useRef(null);
+
+        const toggleMenu = (e) => {
+            e.stopPropagation();
+            setShowMenu(prev => !prev);
+        };
+
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowMenu(false);
+            }
+        };
+
+        React.useEffect(() => {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, []);
+
         // Status styling
         const getStatusStyle = (status) => {
             switch (status) {
@@ -182,51 +204,78 @@ window.Views.LoyaltyView= ({
             }` 
         }, [
             React.createElement('div', { key: 'header', className: 'flex justify-between items-start mb-3' }, [
-                React.createElement('div', { key: 'info' }, [
-                    React.createElement('div', { className: 'flex items-center gap-2 mb-1' }, [
-                        React.createElement('h3', { className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
-                        React.createElement('span', { 
-                            className: `px-2 py-1 text-xs rounded-full ${
-                                customer.member_type === 'Corporate' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                            }`
-                        }, customer.member_type === 'Corporate' ? '🏢 Corp' : '👤 Ind')
+                React.createElement('div', { key: 'info', className: 'flex items-start gap-3' }, [
+                    // Avatar
+                    React.createElement('div', { 
+                        key: 'avatar',
+                        className: 'w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0'
+                    }, [
+                        avatar ? 
+                            React.createElement('img', {
+                                key: 'avatar-img',
+                                src: avatar,
+                                alt: customer.name,
+                                className: 'w-full h-full object-cover'
+                            }) :
+                            React.createElement(User, { key: 'avatar-placeholder', size: 24, className: 'text-gray-400' })
                     ]),
-                    React.createElement('p', { className: 'text-sm text-blue-600 font-mono mb-1' }, customer.loyalty_number),
-                    customer.email && React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.email),
-                    customer.phone && React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.phone),
-                    
-                    // Status and Tier badges
-                    React.createElement('div', { className: 'flex flex-wrap gap-2 mt-2' }, [
-                        React.createElement('span', { 
-                            key: 'status',
-                            className: `px-2 py-1 text-xs rounded-full border ${getStatusStyle(customer.member_status)}`
-                        }, customer.member_status),
-                        React.createElement('span', { 
-                            key: 'tier',
-                            className: `px-2 py-1 text-xs rounded-full ${tierStyle.bg} ${tierStyle.text}`
-                        }, [
-                            React.createElement('span', { key: 'icon' }, tierStyle.icon + ' '),
-                            React.createElement('span', { key: 'text' }, customer.customer_tier)
+                    React.createElement('div', { key: 'details' }, [
+                        React.createElement('div', { className: 'flex items-center gap-2 mb-1' }, [
+                            React.createElement('h3', { className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
+                            React.createElement('span', { 
+                                className: `px-2 py-1 text-xs rounded-full ${
+                                    customer.member_type === 'Corporate' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                                }`
+                            }, customer.member_type === 'Corporate' ? '🏢 Corp' : '👤 Ind')
+                        ]),
+                        React.createElement('p', { className: 'text-sm text-blue-600 font-mono mb-1' }, customer.loyalty_number),
+                        customer.email && React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.email),
+                        customer.phone && React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.phone),
+                        
+                        // Status and Tier badges
+                        React.createElement('div', { className: 'flex flex-wrap gap-2 mt-2' }, [
+                            React.createElement('span', { 
+                                key: 'status',
+                                className: `px-2 py-1 text-xs rounded-full border ${getStatusStyle(customer.member_status)}`
+                            }, customer.member_status),
+                            React.createElement('span', { 
+                                key: 'tier',
+                                className: `px-2 py-1 text-xs rounded-full ${tierStyle.bg} ${tierStyle.text}`
+                            }, [
+                                React.createElement('span', { key: 'icon' }, tierStyle.icon + ' '),
+                                React.createElement('span', { key: 'text' }, customer.customer_tier)
+                            ])
                         ])
                     ])
                 ]),
-                React.createElement('div', { key: 'actions', className: 'flex gap-1' }, [
+                React.createElement('div', { key: 'actions', className: 'relative', ref: menuRef }, [
                     React.createElement('button', {
-                        onClick: () => onLoadCustomerHistory(customer.id),
-                        className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
-                        title: 'View History'
-                    }, React.createElement(Eye, { size: 16 })),
-                    React.createElement('button', {
-                        onClick: () => onEditCustomer(customer),
-                        className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
-                        title: 'Edit Customer'
-                    }, React.createElement(Edit, { size: 16 })),
-                    React.createElement('button', {
-                        onClick: () => onDeleteCustomer(customer.id),
-                        className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
-                        title: 'Delete Customer',
-                        disabled: customer.member_status === 'Under Fraud Investigation'
-                    }, React.createElement(Trash2, { size: 16 }))
+                        key: 'menu-button',
+                        onClick: toggleMenu,
+                        className: 'p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors',
+                        title: 'More Actions'
+                    }, React.createElement(MoreVertical, { key: 'more-icon', size: 16 })),
+                    showMenu && React.createElement('div', {
+                        key: 'action-menu',
+                        className: 'absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600'
+                    }, [
+                        React.createElement('button', {
+                            key: 'view-history-menu-item',
+                            onClick: () => { onLoadCustomerHistory(customer.id); setShowMenu(false); },
+                            className: 'flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-t-md'
+                        }, [React.createElement(Eye, { key: 'eye-icon', size: 16 }), 'View History']),
+                        React.createElement('button', {
+                            key: 'edit-menu-item',
+                            onClick: () => { onEditCustomer(customer); setShowMenu(false); },
+                            className: 'flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        }, [React.createElement(Edit, { key: 'edit-icon', size: 16 }), 'Edit']),
+                        React.createElement('button', {
+                            key: 'delete-menu-item',
+                            onClick: () => { onDeleteCustomer(customer.id); setShowMenu(false); },
+                            className: 'flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-800/50 rounded-b-md',
+                            disabled: customer.member_status === 'Under Fraud Investigation'
+                        }, [React.createElement(Trash2, { key: 'trash-icon', size: 16 }), 'Delete'])
+                    ])
                 ])
             ]),
             
@@ -601,7 +650,11 @@ window.Views.LoyaltyView= ({
                             key: 'customers-grid',
                             className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
                         }, sortedCustomers.map(customer => 
-                            React.createElement(CustomerCard, { key: customer.id, customer })
+                            React.createElement(CustomerCard, { 
+                                key: customer.id, 
+                                customer,
+                                avatar: customerAvatars[customer.id]
+                            })
                         ))
                     )
                 ])
