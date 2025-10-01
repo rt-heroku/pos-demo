@@ -282,24 +282,24 @@ window.Views.LoyaltyView= ({
             
             React.createElement('div', { key: 'stats', className: 'grid grid-cols-3 gap-4 pt-3 border-t' }, [
                 React.createElement('div', { key: 'points', className: 'text-center' }, [
-                    React.createElement('div', { className: 'font-bold text-xl text-green-600' }, customer.points || 0),
-                    React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide' }, 'Points')
+                    React.createElement('div', { key: 'points-value', className: 'font-bold text-xl text-green-600' }, customer.points || 0),
+                    React.createElement('div', { key: 'points-label', className: 'text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide' }, 'Points')
                 ]),
                 React.createElement('div', { key: 'spent', className: 'text-center' }, [
-                    React.createElement('div', { className: 'font-bold text-xl text-blue-600' }, 
+                    React.createElement('div', { key: 'spent-value', className: 'font-bold text-xl text-blue-600' }, 
                         `$${parseFloat(customer.total_spent || 0).toFixed(0)}`
                     ),
-                    React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide' }, 'Total Spent')
+                    React.createElement('div', { key: 'spent-label', className: 'text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide' }, 'Total Spent')
                 ]),
                 React.createElement('div', { key: 'visits', className: 'text-center' }, [
-                    React.createElement('div', { className: 'font-bold text-xl text-purple-600' }, customer.visit_count || 0),
-                    React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide' }, 'Visits')
+                    React.createElement('div', { key: 'visits-value', className: 'font-bold text-xl text-purple-600' }, customer.visit_count || 0),
+                    React.createElement('div', { key: 'visits-label', className: 'text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide' }, 'Visits')
                 ])
             ]),
             
             // Enhanced info section
             React.createElement('div', { key: 'enhanced-info', className: 'mt-3 pt-3 border-t space-y-1' }, [
-                React.createElement('div', { className: 'flex justify-between text-xs text-gray-500 dark:text-gray-400' }, [
+                React.createElement('div', { key: 'info-row', className: 'flex justify-between text-xs text-gray-500 dark:text-gray-400' }, [
                     React.createElement('span', { key: 'member-since' }, [
                         React.createElement('span', { key: 'label' }, 'Member: '),
                         React.createElement('span', { key: 'duration' }, 
@@ -313,7 +313,7 @@ window.Views.LoyaltyView= ({
                         React.createElement('span', { key: 'score' }, parseFloat(customer.tier_calculation_number).toFixed(0))
                     ])
                 ]),
-                customer.last_visit && React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400' }, [
+                customer.last_visit && React.createElement('div', { key: 'last-visit', className: 'text-xs text-gray-500 dark:text-gray-400' }, [
                     React.createElement('span', { key: 'label' }, 'Last Visit: '),
                     React.createElement('span', { key: 'date' }, new Date(customer.last_visit).toLocaleDateString())
                 ])
