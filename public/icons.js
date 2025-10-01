@@ -315,5 +315,11 @@ window.Icons = {
         React.createElement('path', { key: 'path2', d: "M21 3v5h-5" }),
         React.createElement('path', { key: 'path3', d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }),
         React.createElement('path', { key: 'path4', d: "M3 21v-5h5" })
+    ]),
+
+    MoreVertical: (props) => React.createElement('svg', { ...iconProps, ...props }, [
+        React.createElement('circle', { key: 'circle1', cx: "12", cy: "12", r: "1" }),
+        React.createElement('circle', { key: 'circle2', cx: "12", cy: "5", r: "1" }),
+        React.createElement('circle', { key: 'circle3', cx: "12", cy: "19", r: "1" })
     ])
 };

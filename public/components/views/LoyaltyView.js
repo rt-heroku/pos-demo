@@ -220,20 +220,21 @@ window.Views.LoyaltyView= ({
                             React.createElement(User, { key: 'avatar-placeholder', size: 24, className: 'text-gray-400' })
                     ]),
                     React.createElement('div', { key: 'details' }, [
-                        React.createElement('div', { className: 'flex items-center gap-2 mb-1' }, [
-                            React.createElement('h3', { className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
+                        React.createElement('div', { key: 'name-row', className: 'flex items-center gap-2 mb-1' }, [
+                            React.createElement('h3', { key: 'customer-name', className: 'font-semibold text-lg text-gray-900 dark:text-white' }, customer.name),
                             React.createElement('span', { 
+                                key: 'member-type',
                                 className: `px-2 py-1 text-xs rounded-full ${
                                     customer.member_type === 'Corporate' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                                 }`
                             }, customer.member_type === 'Corporate' ? '🏢 Corp' : '👤 Ind')
                         ]),
-                        React.createElement('p', { className: 'text-sm text-blue-600 font-mono mb-1' }, customer.loyalty_number),
-                        customer.email && React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.email),
-                        customer.phone && React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.phone),
+                        React.createElement('p', { key: 'loyalty-number', className: 'text-sm text-blue-600 font-mono mb-1' }, customer.loyalty_number),
+                        customer.email && React.createElement('p', { key: 'email', className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.email),
+                        customer.phone && React.createElement('p', { key: 'phone', className: 'text-sm text-gray-600 dark:text-gray-300' }, customer.phone),
                         
                         // Status and Tier badges
-                        React.createElement('div', { className: 'flex flex-wrap gap-2 mt-2' }, [
+                        React.createElement('div', { key: 'badges', className: 'flex flex-wrap gap-2 mt-2' }, [
                             React.createElement('span', { 
                                 key: 'status',
                                 className: `px-2 py-1 text-xs rounded-full border ${getStatusStyle(customer.member_status)}`
