@@ -2731,6 +2731,7 @@ app.post('/api/locations', async (req, res) => {
         } = req.body;
         
         console.log('Creating location with logo_base64:', !!logo_base64, logo_base64?.length);
+        console.log('Full request body:', JSON.stringify(req.body, null, 2));
         
         // Validate required fields
         if (!store_code || !store_name || !brand || !address_line1 || !city || !state || !zip_code) {
@@ -2804,6 +2805,9 @@ app.put('/api/locations/:id', async (req, res) => {
             manager_name,
             logo_base64
         } = req.body;
+        
+        console.log('Updating location with logo_base64:', !!logo_base64, logo_base64?.length);
+        console.log('Full request body:', JSON.stringify(req.body, null, 2));
         
         const result = await pool.query(`
             UPDATE locations SET 
