@@ -4429,6 +4429,74 @@ app.post('/api/products/improve/:productId', async (req, res) => {
   }
 });
 
+// Generate random inventory for all products
+app.post('/api/products/generate-inventory', async (req, res) => {
+  try {
+    const { keepExistingStock } = req.body;
+    
+    console.log('Generating random inventory, keepExistingStock:', keepExistingStock);
+    
+    // Get all products
+    const productsResult = await pool.query('SELECT id, stock FROM products WHERE is_active = true');
+    const products = productsResult.rows;
+    
+    if (products.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'No active products found',
+        updated: 0 
+      });
+    }
+    
+    let updatedCount = 0;
+    const updates = [];
+    
+    for (const product of products) {
+      let newStock;
+      
+      if (keepExistingStock && product.stock > 0) {
+        // Keep existing stock if it's greater than 0
+        newStock = product.stock;
+        console.log(`Keeping existing stock for product ${product.id}: ${newStock}`);
+      } else {
+        // Generate random stock between 0 and 100
+        newStock = Math.floor(Math.random() * 101);
+        console.log(`Generated random stock for product ${product.id}: ${newStock}`);
+      }
+      
+      updates.push({
+        id: product.id,
+        stock: newStock
+      });
+    }
+    
+    // Update all products in batch
+    for (const update of updates) {
+      await pool.query(
+        'UPDATE products SET stock = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [update.stock, update.id]
+      );
+      updatedCount++;
+    }
+    
+    console.log(`Updated inventory for ${updatedCount} products`);
+    
+    res.json({
+      success: true,
+      message: `Successfully generated random inventory for ${updatedCount} products`,
+      updated: updatedCount,
+      keepExistingStock
+    });
+    
+  } catch (error) {
+    console.error('Error generating random inventory:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate random inventory',
+      details: error.message 
+    });
+  }
+});
+
 // Serve React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

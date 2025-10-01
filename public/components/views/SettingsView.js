@@ -95,6 +95,9 @@ window.Views.SettingsView = ({
     const [showTestDataOutput, setShowTestDataOutput] = React.useState(false);
     const [showLoadFromCloudModal, setShowLoadFromCloudModal] = React.useState(false);
         const [showDataLoaderModal, setShowDataLoaderModal] = React.useState(false);
+        const [showInventoryModal, setShowInventoryModal] = React.useState(false);
+        const [keepExistingStock, setKeepExistingStock] = React.useState(true);
+        const [generatingInventory, setGeneratingInventory] = React.useState(false);
         const [showLoyaltyResultsModal, setShowLoyaltyResultsModal] = React.useState(false);
         const [loyaltyResults, setLoyaltyResults] = React.useState(null);
         const [syncingLoyalty, setSyncingLoyalty] = React.useState(false);
@@ -1313,6 +1316,34 @@ sfdc.account=`;
             } catch (error) {
                 console.error('Error removing logo:', error);
                 window.NotificationManager.error('Failed to remove logo', error.message);
+            }
+        };
+
+        // Handle random inventory generation
+        const handleGenerateInventory = async () => {
+            setGeneratingInventory(true);
+            try {
+                const response = await fetch('/api/products/generate-inventory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ keepExistingStock })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    window.NotificationManager.success('Inventory Generated', result.message);
+                    setShowInventoryModal(false);
+                } else {
+                    throw new Error('Failed to generate inventory');
+                }
+            } catch (error) {
+                console.error('Error generating inventory:', error);
+                window.NotificationManager.error('Generation Failed', error.message);
+            } finally {
+                setGeneratingInventory(false);
             }
         };
 
@@ -3243,6 +3274,24 @@ sfdc.account=`;
                            }, 'Data Loader')
                        ]),
 
+                       // Generate Random Inventory Card
+                       React.createElement('div', { key: 'inventory-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-200 dark:border-green-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
+                           React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center' }, [
+                                   React.createElement('span', { key: 'icon-text', className: 'text-green-600 dark:text-green-400 text-lg' }, '📦')
+                               ]),
+                               React.createElement('h3', { key: 'title', className: 'font-semibold text-gray-900 dark:text-white' }, 'Generate Random Inventory')
+                           ]),
+                           React.createElement('p', { key: 'description', className: 'text-sm text-gray-600 dark:text-gray-400 mb-4' }, 
+                               'Generate random stock quantities for all products'
+                           ),
+                           React.createElement('button', {
+                               key: 'inventory-btn',
+                               onClick: () => setShowInventoryModal(true),
+                               className: 'w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
+                           }, 'Generate Inventory')
+                       ]),
+
                        // Send to Loyalty Card
                        React.createElement('div', { key: 'loyalty-card', className: 'bg-white dark:bg-gray-800 rounded-xl p-6 border border-orange-200 dark:border-orange-800 shadow-sm hover:shadow-md transition-all duration-200' }, [
                            React.createElement('div', { key: 'card-header', className: 'flex items-center gap-3 mb-4' }, [
@@ -4204,6 +4253,63 @@ sfdc.account=`;
                onClose: closeLoadFromCloudModal,
                onProductsLoaded: handleProductsLoaded
            }),
+
+           // Generate Random Inventory Modal
+           showInventoryModal && React.createElement('div', { key: 'inventory-modal', className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4' }, [
+               React.createElement('div', { key: 'modal-content', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6' }, [
+                   React.createElement('div', { key: 'modal-header', className: 'flex items-center gap-3 mb-6' }, [
+                       React.createElement('div', { key: 'icon', className: 'w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center' }, [
+                           React.createElement('span', { key: 'icon-text', className: 'text-green-600 dark:text-green-400 text-lg' }, '📦')
+                       ]),
+                       React.createElement('div', { key: 'title-section' }, [
+                           React.createElement('h3', { key: 'title', className: 'text-xl font-bold text-gray-900 dark:text-white' }, 'Generate Random Inventory'),
+                           React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 text-sm' }, 'Set random stock quantities for all products')
+                       ])
+                   ]),
+                   
+                   React.createElement('div', { key: 'modal-body', className: 'space-y-4' }, [
+                       React.createElement('div', { key: 'checkbox-container', className: 'flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg' }, [
+                           React.createElement('input', {
+                               key: 'checkbox',
+                               type: 'checkbox',
+                               id: 'keep-existing-stock',
+                               checked: keepExistingStock,
+                               onChange: (e) => setKeepExistingStock(e.target.checked),
+                               className: 'w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                           }),
+                           React.createElement('label', { 
+                               key: 'checkbox-label',
+                               htmlFor: 'keep-existing-stock',
+                               className: 'text-sm font-medium text-gray-900 dark:text-white'
+                           }, 'Keep existing stock if greater than 0')
+                       ]),
+                       
+                       React.createElement('div', { key: 'info-text', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                           keepExistingStock 
+                               ? 'Products with existing stock will keep their current quantities. Products with 0 stock will get random quantities (0-100).'
+                               : 'All products will get new random stock quantities between 0 and 100.'
+                       )
+                   ]),
+                   
+                   React.createElement('div', { key: 'modal-footer', className: 'flex gap-3 mt-6' }, [
+                       React.createElement('button', {
+                           key: 'cancel-btn',
+                           onClick: () => setShowInventoryModal(false),
+                           className: 'flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+                       }, 'Cancel'),
+                       React.createElement('button', {
+                           key: 'generate-btn',
+                           onClick: handleGenerateInventory,
+                           disabled: generatingInventory,
+                           className: `flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                               generatingInventory 
+                                   ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
+                                   : 'bg-green-600 hover:bg-green-700 text-white'
+                           }`
+                       }, generatingInventory ? 'Generating...' : 'Generate Inventory')
+                   ])
+               ])
+           ]),
 
            // Data Loader Modal
            showDataLoaderModal && React.createElement(window.Modals.DataLoaderModal, {
