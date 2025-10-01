@@ -1079,7 +1079,7 @@ const POSApp = () => {
                     try {
                         const avatarResponse = await window.API.call(`/customers/${currentCustomer.id}/avatar`, {
                             method: 'POST',
-                            body: avatarData
+                            body: JSON.stringify(avatarData)
                         });
                         console.log('Avatar upload response:', avatarResponse);
                     } catch (avatarError) {
@@ -1103,7 +1103,7 @@ const POSApp = () => {
                     try {
                         const avatarResponse = await window.API.call(`/customers/${response.id}/avatar`, {
                             method: 'POST',
-                            body: avatarData
+                            body: JSON.stringify(avatarData)
                         });
                         console.log('Avatar upload response:', avatarResponse);
                     } catch (avatarError) {
