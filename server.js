@@ -781,9 +781,9 @@ app.get('/api/loyalty/catalogs', async (req, res) => {
     const mulesoftEndpoint = settingsResult.rows[0].setting_value;
     const catalogsUrl = `${mulesoftEndpoint}/loyalty/catalogs`;
 
-    console.log('=== MuleSoft Catalogs Request ===');
-    console.log('MuleSoft endpoint:', catalogsUrl);
-    console.log('==================================');
+//    console.log('=== MuleSoft Catalogs Request ===');
+//    console.log('MuleSoft endpoint:', catalogsUrl);
+//    console.log('==================================');
 
     // Call MuleSoft API to get catalogs
     const mulesoftResponse = await fetch(catalogsUrl, {
@@ -803,7 +803,7 @@ app.get('/api/loyalty/catalogs', async (req, res) => {
     }
 
     const catalogs = await mulesoftResponse.json();
-    console.log('MuleSoft catalogs response:', catalogs);
+//    console.log('MuleSoft catalogs response:', catalogs);
 
     res.json(catalogs);
   } catch (err) {
@@ -834,10 +834,10 @@ app.post('/api/loyalty/products/load', async (req, res) => {
     const mulesoftEndpoint = settingsResult.rows[0].setting_value;
     const loadProductsUrl = `${mulesoftEndpoint}/loyalty/products/load?catalog=${catalogId}`;
 
-    console.log('=== MuleSoft Load Products Request ===');
-    console.log('Catalog ID:', catalogId);
-    console.log('MuleSoft endpoint:', loadProductsUrl);
-    console.log('=====================================');
+    // console.log('=== MuleSoft Load Products Request ===');
+    // console.log('Catalog ID:', catalogId);
+    // console.log('MuleSoft endpoint:', loadProductsUrl);
+    // console.log('=====================================');
 
     // Call MuleSoft API to load products
     const mulesoftResponse = await fetch(loadProductsUrl, {
@@ -857,7 +857,7 @@ app.post('/api/loyalty/products/load', async (req, res) => {
     }
 
     const result = await mulesoftResponse.json();
-    console.log('MuleSoft load products response:', result);
+    // console.log('MuleSoft load products response:', result);
 
     res.json(result);
   } catch (err) {
@@ -895,10 +895,10 @@ app.post('/api/products/image/find', async (req, res) => {
       brand: brand || ''
     };
 
-    console.log('=== MuleSoft Image Find Request ===');
-    console.log('Search parameters:', searchParams);
-    console.log('MuleSoft endpoint:', findImageUrl);
-    console.log('===================================');
+    // console.log('=== MuleSoft Image Find Request ===');
+    // console.log('Search parameters:', searchParams);
+    // console.log('MuleSoft endpoint:', findImageUrl);
+    // console.log('===================================');
 
     // Call MuleSoft API to find image
     const mulesoftResponse = await fetch(findImageUrl, {
@@ -919,7 +919,7 @@ app.post('/api/products/image/find', async (req, res) => {
     }
 
     const imageResult = await mulesoftResponse.json();
-    console.log('MuleSoft image find response:', imageResult);
+    // console.log('MuleSoft image find response:', imageResult);
 
     res.json(imageResult);
   } catch (err) {
@@ -934,10 +934,10 @@ app.post('/api/products/import', async (req, res) => {
     const products = req.body;
     
     // Log the POST body for debugging
-    console.log('=== MuleSoft Products Import Request ===');
-    console.log('Number of products:', products.length);
-    console.log('Products data:', JSON.stringify(products, null, 2));
-    console.log('==========================================');
+    // console.log('=== MuleSoft Products Import Request ===');
+    // console.log('Number of products:', products.length);
+    // console.log('Products data:', JSON.stringify(products, null, 2));
+    // console.log('==========================================');
     
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: 'Products array is required and cannot be empty' });
@@ -956,7 +956,7 @@ app.post('/api/products/import', async (req, res) => {
     const mulesoftEndpoint = settingsResult.rows[0].setting_value;
     const importUrl = `${mulesoftEndpoint}/products/import`;
 
-    console.log('MuleSoft endpoint:', importUrl);
+    // console.log('MuleSoft endpoint:', importUrl);
 
     // Forward the request to MuleSoft
     const mulesoftResponse = await fetch(importUrl, {
@@ -4400,7 +4400,7 @@ app.post('/api/products/improve/:productId', async (req, res) => {
     const muleSoftBaseUrl = settingsResult.rows[0].setting_value;
     const improveUrl = `${muleSoftBaseUrl}/products/improve?product=${productId}`;
     
-    console.log('Calling MuleSoft AI improvement endpoint:', improveUrl);
+    //  console.log('Calling MuleSoft AI improvement endpoint:', improveUrl);
     
     // Call MuleSoft API for product improvement
     const muleSoftResponse = await fetch(improveUrl, {
@@ -4434,7 +4434,7 @@ app.post('/api/products/generate-inventory', async (req, res) => {
   try {
     const { keepExistingStock } = req.body;
     
-    console.log('Generating random inventory, keepExistingStock:', keepExistingStock);
+    // console.log('Generating random inventory, keepExistingStock:', keepExistingStock);
     
     // Get all products
     const productsResult = await pool.query('SELECT id, stock FROM products WHERE is_active = true');
@@ -4457,11 +4457,11 @@ app.post('/api/products/generate-inventory', async (req, res) => {
       if (keepExistingStock && product.stock > 0) {
         // Keep existing stock if it's greater than 0
         newStock = product.stock;
-        console.log(`Keeping existing stock for product ${product.id}: ${newStock}`);
+        // console.log(`Keeping existing stock for product ${product.id}: ${newStock}`);
       } else {
         // Generate random stock between 0 and 100
         newStock = Math.floor(Math.random() * 101);
-        console.log(`Generated random stock for product ${product.id}: ${newStock}`);
+        // console.log(`Generated random stock for product ${product.id}: ${newStock}`);
       }
       
       updates.push({
@@ -4479,7 +4479,7 @@ app.post('/api/products/generate-inventory', async (req, res) => {
       updatedCount++;
     }
     
-    console.log(`Updated inventory for ${updatedCount} products`);
+    // console.log(`Updated inventory for ${updatedCount} products`);
     
     res.json({
       success: true,
@@ -4505,10 +4505,10 @@ app.post('/api/customers/:id/avatar', async (req, res) => {
     const { id } = req.params;
     const { image_data, filename, file_size, width, height } = req.body;
     
-    console.log(`Avatar upload request for customer ${id}`);
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Image data present:', !!image_data);
-    console.log('Image data length:', image_data ? image_data.length : 0);
+    // console.log(`Avatar upload request for customer ${id}`);
+    // console.log('Request body keys:', Object.keys(req.body));
+    // console.log('Image data present:', !!image_data);
+    // console.log('Image data length:', image_data ? image_data.length : 0);
     
     if (!image_data) {
       console.log('No image data provided');
@@ -4522,7 +4522,7 @@ app.post('/api/customers/:id/avatar', async (req, res) => {
       return res.status(404).json({ error: 'Customer not found' });
     }
     
-    console.log(`Customer ${id} found, proceeding with avatar upload`);
+    // console.log(`Customer ${id} found, proceeding with avatar upload`);
     
     // Delete existing avatar if any
     const deleteResult = await pool.query('DELETE FROM customer_images WHERE customer_id = $1', [id]);
@@ -4534,7 +4534,7 @@ app.post('/api/customers/:id/avatar', async (req, res) => {
       [id, filename || 'avatar.jpg', image_data, file_size || 0, width || 0, height || 0]
     );
     
-    console.log(`Avatar uploaded successfully for customer ${id}, avatar_id: ${result.rows[0].id}`);
+    // console.log(`Avatar uploaded successfully for customer ${id}, avatar_id: ${result.rows[0].id}`);
     
     res.json({
       success: true,
@@ -4552,7 +4552,7 @@ app.post('/api/customers/:id/avatar', async (req, res) => {
 app.get('/api/customers/:id/avatar', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`Fetching avatar for customer ID: ${id}`);
+   // console.log(`Fetching avatar for customer ID: ${id}`);
     
     // Check if customer exists first
     const customerCheck = await pool.query('SELECT id FROM customers WHERE id = $1', [id]);
@@ -4566,7 +4566,7 @@ app.get('/api/customers/:id/avatar', async (req, res) => {
       [id]
     );
     
-    console.log(`Avatar query result for customer ${id}: ${result.rows.length} rows`);
+   // console.log(`Avatar query result for customer ${id}: ${result.rows.length} rows`);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'No avatar found' });

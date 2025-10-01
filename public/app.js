@@ -1061,16 +1061,16 @@ const POSApp = () => {
         try {
             setLoading(true);
             
-            console.log('handleSaveCustomer called with:', {
-                customerData,
-                avatarData,
-                hasAvatar: !!avatarData,
-                isEdit: !!currentCustomer
-            });
+            // console.log('handleSaveCustomer called with:', {
+            //     customerData,
+            //     avatarData,
+            //     hasAvatar: !!avatarData,
+            //     isEdit: !!currentCustomer
+            // });
             
             if (currentCustomer) {
                 // Update existing customer
-                console.log('Updating existing customer:', currentCustomer.id);
+                // console.log('Updating existing customer:', currentCustomer.id);
                 await window.API.customers.update(currentCustomer.id, customerData);
                 
                 // Handle avatar upload if provided
@@ -1093,19 +1093,19 @@ const POSApp = () => {
                 window.NotificationManager.success('Customer Updated', 'Customer information updated successfully');
             } else {
                 // Create new customer
-                console.log('Creating new customer');
+                // console.log('Creating new customer');
                 const response = await window.API.customers.createEnhanced(customerData);
-                console.log('New customer response:', response);
+                // console.log('New customer response:', response);
                 
                 // Handle avatar upload if provided and we have a customer ID
                 if (avatarData && response && response.id) {
-                    console.log('Uploading avatar for new customer:', response.id);
+                    // console.log('Uploading avatar for new customer:', response.id);
                     try {
                         const avatarResponse = await window.API.call(`/customers/${response.id}/avatar`, {
                             method: 'POST',
                             body: JSON.stringify(avatarData)
                         });
-                        console.log('Avatar upload response:', avatarResponse);
+                        // console.log('Avatar upload response:', avatarResponse);
                     } catch (avatarError) {
                         console.error('Avatar upload failed:', avatarError);
                         window.NotificationManager.warning('Avatar Upload Failed', 'Customer created but avatar upload failed: ' + avatarError.message);
