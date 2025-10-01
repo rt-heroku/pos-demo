@@ -102,7 +102,14 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         }
     };
 
-    // Handle avatar removal
+
+    // Debug function to log avatar data
+    const debugAvatarData = () => {
+        console.log('Avatar data:', avatarData);
+        console.log('Avatar preview:', avatarPreview);
+        console.log('Uploading avatar:', uploadingAvatar);
+    };
+        // Handle avatar removal
     const handleAvatarRemove = () => {
         setAvatarData(null);
         setAvatarPreview(null);
@@ -237,6 +244,12 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
         if (!customer && !formData.loyalty_number.trim()) {
             delete saveData.loyalty_number;
         }
+
+        console.log('Saving customer with avatar data:', {
+            saveData,
+            avatarData,
+            hasAvatar: !!avatarData
+        });
 
         onSave(saveData, avatarData);
     };
