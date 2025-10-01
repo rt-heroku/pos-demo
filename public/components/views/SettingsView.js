@@ -1190,7 +1190,9 @@ sfdc.account=`;
             }
         };
 
-        // Handle logo upload
+
+        // Use global ImageUtils for image processing
+                // Handle logo upload
         const handleLogoUpload = (event, isForLocation = false) => {
             console.log('handleLogoUpload called', event, isForLocation);
             const file = event.target.files[0];
