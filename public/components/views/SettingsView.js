@@ -1301,8 +1301,11 @@ sfdc.account=`;
                 
                 if (response.ok) {
                     const updatedLocation = await response.json();
-                    // Update the selected location with removed logo
+                    console.log('Logo removed, updated location:', updatedLocation);
+                    
+                    // Update the selected location with the removed logo
                     onLocationChange(updatedLocation);
+                    
                     window.NotificationManager.success('Logo removed successfully');
                 } else {
                     throw new Error('Failed to remove logo');
@@ -1909,7 +1912,7 @@ sfdc.account=`;
                     React.createElement('div', {key: 'current-location-container', className: 'flex items-center justify-between' }, [
                         React.createElement('div', { key: 'current-info', className: 'flex items-center gap-3' }, [
                             selectedLocation.logo_base64 && React.createElement('img', {
-                                key: 'logo',
+                                key: `logo-${selectedLocation.id}-${selectedLocation.logo_base64 ? 'has-logo' : 'no-logo'}`,
                                 src: selectedLocation.logo_base64,
                                 alt: 'Current location logo',
                                 className: 'w-12 h-12 object-contain rounded'
