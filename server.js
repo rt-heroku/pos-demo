@@ -4650,6 +4650,283 @@ app.delete('/api/customers/:id/avatar', async (req, res) => {
   }
 });
 
+// ==================== VOUCHER ENDPOINTS ====================
+
+// Get all vouchers for a customer
+app.get('/api/customers/:id/vouchers', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      SELECT 
+        cv.*,
+        p.name as product_name,
+        p.price as product_price
+      FROM customer_vouchers cv
+      LEFT JOIN products p ON cv.product_id = p.id
+      WHERE cv.customer_id = $1 
+        AND cv.status = 'Issued' 
+        AND cv.is_active = true
+        AND (cv.expiration_date IS NULL OR cv.expiration_date >= CURRENT_DATE)
+        AND (cv.voucher_type != 'Value' OR cv.remaining_value > 0)
+      ORDER BY cv.created_date DESC
+    `, [id]);
+    
+    res.json({
+      success: true,
+      vouchers: result.rows
+    });
+    
+  } catch (error) {
+    console.error('Error getting customer vouchers:', error);
+    res.status(500).json({ error: 'Failed to get vouchers' });
+  }
+});
+
+// Get specific voucher details
+app.get('/api/vouchers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      SELECT 
+        cv.*,
+        c.name as customer_name,
+        c.loyalty_number,
+        p.name as product_name
+      FROM customer_vouchers cv
+      JOIN customers c ON cv.customer_id = c.id
+      LEFT JOIN products p ON cv.product_id = p.id
+      WHERE cv.id = $1
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Voucher not found' });
+    }
+    
+    res.json({
+      success: true,
+      voucher: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Error getting voucher:', error);
+    res.status(500).json({ error: 'Failed to get voucher' });
+  }
+});
+
+// Sync vouchers from MuleSoft
+app.post('/api/vouchers/sync', async (req, res) => {
+  try {
+    const { customer_id, vouchers } = req.body;
+    
+    if (!customer_id || !vouchers || !Array.isArray(vouchers)) {
+      return res.status(400).json({ error: 'Invalid request data' });
+    }
+    
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Clear existing vouchers for this customer
+      await client.query('DELETE FROM customer_vouchers WHERE customer_id = $1', [customer_id]);
+      
+      // Insert new vouchers
+      for (const voucher of vouchers) {
+        const {
+          Id: sf_id,
+          Name: name,
+          VoucherCode: voucher_code,
+          Status: status,
+          ExpirationDate: expiration_date,
+          CreatedDate: created_date,
+          UseDate: use_date,
+          VoucherDefinition: voucher_def
+        } = voucher;
+        
+        const {
+          FaceValue: face_value,
+          Description: description,
+          IsActive: is_active,
+          ImageUrl: image_url,
+          ProductId: product_id,
+          Name: def_name,
+          Type: type,
+          DiscountPercent: discount_percent,
+          EffectiveDate: effective_date
+        } = voucher_def || {};
+        
+        // Determine voucher type
+        let voucher_type = 'Value';
+        if (discount_percent) {
+          voucher_type = 'Discount';
+        } else if (product_id) {
+          voucher_type = 'ProductSpecific';
+        }
+        
+        // Calculate remaining value for value vouchers
+        const remaining_value = face_value || 0;
+        
+        await client.query(`
+          INSERT INTO customer_vouchers (
+            sf_id, customer_id, voucher_code, name, status, voucher_type,
+            face_value, discount_percent, product_id, remaining_value,
+            description, image_url, is_active, effective_date, expiration_date,
+            created_date, use_date
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        `, [
+          sf_id, customer_id, voucher_code, name, status, voucher_type,
+          face_value, discount_percent, product_id, remaining_value,
+          description, image_url, is_active === 'true', effective_date, expiration_date,
+          created_date, use_date
+        ]);
+      }
+      
+      await client.query('COMMIT');
+      
+      res.json({
+        success: true,
+        message: `Synced ${vouchers.length} vouchers for customer ${customer_id}`
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error syncing vouchers:', error);
+    res.status(500).json({ error: 'Failed to sync vouchers' });
+  }
+});
+
+// Validate voucher before use
+app.get('/api/vouchers/validate/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('SELECT is_voucher_valid($1) as is_valid', [id]);
+    const isValid = result.rows[0].is_valid;
+    
+    if (!isValid) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Voucher is not valid or has expired' 
+      });
+    }
+    
+    // Get voucher details for validation response
+    const voucherResult = await pool.query(`
+      SELECT * FROM customer_vouchers WHERE id = $1
+    `, [id]);
+    
+    if (voucherResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Voucher not found' });
+    }
+    
+    res.json({
+      success: true,
+      valid: true,
+      voucher: voucherResult.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Error validating voucher:', error);
+    res.status(500).json({ error: 'Failed to validate voucher' });
+  }
+});
+
+// Apply voucher to transaction
+app.post('/api/transactions/:id/apply-voucher', async (req, res) => {
+  try {
+    const { id: transaction_id } = req.params;
+    const { voucher_id, item_id } = req.body;
+    
+    if (!voucher_id || !item_id) {
+      return res.status(400).json({ error: 'Voucher ID and Item ID are required' });
+    }
+    
+    // Validate voucher
+    const voucherResult = await pool.query('SELECT is_voucher_valid($1) as is_valid', [voucher_id]);
+    if (!voucherResult.rows[0].is_valid) {
+      return res.status(400).json({ error: 'Voucher is not valid' });
+    }
+    
+    // Get item details
+    const itemResult = await pool.query(`
+      SELECT ti.*, p.name as product_name, p.price
+      FROM transaction_items ti
+      JOIN products p ON ti.product_id = p.id
+      WHERE ti.id = $1 AND ti.transaction_id = $2
+    `, [item_id, transaction_id]);
+    
+    if (itemResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Transaction item not found' });
+    }
+    
+    const item = itemResult.rows[0];
+    
+    // Calculate discount
+    const discountResult = await pool.query(`
+      SELECT calculate_voucher_discount($1, $2, $3) as discount_amount
+    `, [voucher_id, item.price, item.product_id]);
+    
+    const discount_amount = discountResult.rows[0].discount_amount;
+    
+    if (discount_amount <= 0) {
+      return res.status(400).json({ error: 'Voucher cannot be applied to this item' });
+    }
+    
+    // Update transaction item with voucher
+    await pool.query(`
+      UPDATE transaction_items 
+      SET voucher_id = $1, discount_amount = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+    `, [voucher_id, discount_amount, item_id]);
+    
+    res.json({
+      success: true,
+      message: 'Voucher applied successfully',
+      discount_amount: discount_amount
+    });
+    
+  } catch (error) {
+    console.error('Error applying voucher:', error);
+    res.status(500).json({ error: 'Failed to apply voucher' });
+  }
+});
+
+// Remove voucher from transaction
+app.delete('/api/transactions/:id/remove-voucher', async (req, res) => {
+  try {
+    const { id: transaction_id } = req.params;
+    const { item_id } = req.body;
+    
+    if (!item_id) {
+      return res.status(400).json({ error: 'Item ID is required' });
+    }
+    
+    // Remove voucher from transaction item
+    await pool.query(`
+      UPDATE transaction_items 
+      SET voucher_id = NULL, discount_amount = 0, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND transaction_id = $2
+    `, [item_id, transaction_id]);
+    
+    res.json({
+      success: true,
+      message: 'Voucher removed successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error removing voucher:', error);
+    res.status(500).json({ error: 'Failed to remove voucher' });
+  }
+});
+
 // Serve React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

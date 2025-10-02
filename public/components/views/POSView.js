@@ -77,6 +77,15 @@ window.Views.POSView = ({
         errors: {}
     });
 
+    // Voucher state management
+    const [vouchers, setVouchers] = React.useState([]);
+    const [selectedVouchers, setSelectedVouchers] = React.useState([]);
+    const [appliedVouchers, setAppliedVouchers] = React.useState([]);
+    const [voucherLoading, setVoucherLoading] = React.useState(false);
+    const [showVoucherSelector, setShowVoucherSelector] = React.useState(false);
+    const [showVoucherEditModal, setShowVoucherEditModal] = React.useState(false);
+    const [editingVoucher, setEditingVoucher] = React.useState(null);
+
     // Credit card validation functions
     const validateCreditCard = (cardNumber) => {
         // Remove spaces and non-digits
@@ -233,6 +242,123 @@ window.Views.POSView = ({
         if (cleanNumber.length < 4) return '';
         return '**** **** **** ' + cleanNumber.slice(-4);
     };
+
+    // Voucher functions
+    const loadCustomerVouchers = async (customerId) => {
+        if (!customerId) return;
+        
+        setVoucherLoading(true);
+        try {
+            const response = await fetch(`/api/customers/${customerId}/vouchers`);
+            const data = await response.json();
+            
+            if (data.success) {
+                setVouchers(data.vouchers);
+                // Auto-apply product-specific vouchers
+                autoApplyProductVouchers(data.vouchers);
+            }
+        } catch (error) {
+            console.error('Error loading vouchers:', error);
+        } finally {
+            setVoucherLoading(false);
+        }
+    };
+
+    const autoApplyProductVouchers = (vouchers) => {
+        const productSpecificVouchers = vouchers.filter(v => v.voucher_type === 'ProductSpecific');
+        const cartProductIds = cart.map(item => item.product_id);
+        
+        const applicableVouchers = productSpecificVouchers.filter(voucher => 
+            cartProductIds.includes(voucher.product_id)
+        );
+        
+        if (applicableVouchers.length > 0) {
+            setAppliedVouchers(prev => [...prev, ...applicableVouchers]);
+        }
+    };
+
+    const handleVoucherSelect = (voucher) => {
+        setSelectedVouchers(prev => {
+            const isSelected = prev.find(v => v.id === voucher.id);
+            if (isSelected) {
+                return prev.filter(v => v.id !== voucher.id);
+            } else {
+                return [...prev, voucher];
+            }
+        });
+    };
+
+    const handleApplyVoucher = (voucher) => {
+        setAppliedVouchers(prev => {
+            const isApplied = prev.find(v => v.id === voucher.id);
+            if (!isApplied) {
+                return [...prev, voucher];
+            }
+            return prev;
+        });
+        setShowVoucherSelector(false);
+    };
+
+    const handleRemoveVoucher = (voucher) => {
+        setAppliedVouchers(prev => prev.filter(v => v.id !== voucher.id));
+    };
+
+    const handleEditVoucher = (voucher) => {
+        setEditingVoucher(voucher);
+        setShowVoucherEditModal(true);
+    };
+
+    const handleSaveVoucherAmount = (voucher, amount) => {
+        // Update the voucher amount in applied vouchers
+        setAppliedVouchers(prev => 
+            prev.map(v => 
+                v.id === voucher.id 
+                    ? { ...v, applied_amount: amount }
+                    : v
+            )
+        );
+    };
+
+    // Load vouchers when customer is selected
+    React.useEffect(() => {
+        if (selectedCustomer) {
+            loadCustomerVouchers(selectedCustomer.id);
+        } else {
+            setVouchers([]);
+            setSelectedVouchers([]);
+            setAppliedVouchers([]);
+        }
+    }, [selectedCustomer]);
+
+    // Calculate voucher discounts
+    const calculateVoucherDiscounts = () => {
+        let totalDiscount = 0;
+        
+        appliedVouchers.forEach(voucher => {
+            switch (voucher.voucher_type) {
+                case 'Value':
+                    const valueAmount = voucher.applied_amount || voucher.remaining_value || 0;
+                    totalDiscount += Math.min(valueAmount, subtotal);
+                    break;
+                case 'Discount':
+                    totalDiscount += subtotal * (voucher.discount_percent / 100);
+                    break;
+                case 'ProductSpecific':
+                    const productItems = cart.filter(item => item.product_id === voucher.product_id);
+                    const productSubtotal = productItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    if (voucher.discount_percent) {
+                        totalDiscount += productSubtotal * (voucher.discount_percent / 100);
+                    } else if (voucher.face_value) {
+                        totalDiscount += Math.min(voucher.face_value, productSubtotal);
+                    }
+                    break;
+            }
+        });
+        
+        return totalDiscount;
+    };
+
+    const voucherDiscounts = calculateVoucherDiscounts();
 
     // Helper function to get product image with priority order
     const getProductImage = (product) => {
@@ -413,6 +539,54 @@ window.Views.POSView = ({
                     )
                 ]),
 
+                // Voucher Section
+                selectedCustomer && React.createElement(React.Fragment, { key: 'voucher-section' }, [
+                    React.createElement('div', { key: 'voucher-header', className: 'mb-4' }, [
+                        React.createElement('div', { key: 'voucher-title', className: 'flex items-center justify-between mb-3' }, [
+                            React.createElement('h4', { 
+                                key: 'voucher-title-text', 
+                                className: 'font-medium text-gray-900 dark:text-white flex items-center gap-2' 
+                            }, [
+                                React.createElement('span', { key: 'voucher-icon' }, '🎫'),
+                                'Vouchers'
+                            ]),
+                            React.createElement('button', {
+                                key: 'manage-vouchers-btn',
+                                onClick: () => setShowVoucherSelector(true),
+                                className: 'text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors'
+                            }, 'Manage')
+                        ]),
+                        
+                        // Applied Vouchers
+                        appliedVouchers.length > 0 && React.createElement(window.Components.VoucherApplied, {
+                            key: 'applied-vouchers',
+                            appliedVouchers,
+                            onRemoveVoucher: handleRemoveVoucher,
+                            onEditVoucher: handleEditVoucher
+                        }),
+                        
+                        // No vouchers message
+                        appliedVouchers.length === 0 && vouchers.length === 0 && !voucherLoading && React.createElement('div', { 
+                            key: 'no-vouchers', 
+                            className: 'text-center py-4 text-gray-500 dark:text-gray-400' 
+                        }, [
+                            React.createElement('div', { key: 'no-vouchers-icon', className: 'text-2xl mb-2' }, '🎫'),
+                            React.createElement('div', { key: 'no-vouchers-text', className: 'text-sm' }, 'No vouchers available')
+                        ]),
+                        
+                        // Loading vouchers
+                        voucherLoading && React.createElement('div', { 
+                            key: 'voucher-loading', 
+                            className: 'text-center py-4' 
+                        }, [
+                            React.createElement('div', { 
+                                key: 'voucher-spinner', 
+                                className: 'animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto' 
+                            })
+                        ])
+                    ])
+                ]),
+
                 // Enhanced cart items display
                 React.createElement(React.Fragment, { key: 'cart-items-section' }, [
                     cart.length === 0 ? (
@@ -527,6 +701,10 @@ window.Views.POSView = ({
                         discount > 0 && React.createElement('div', { key: 'discount-row', className: 'flex justify-between text-green-600 dark:text-green-400' }, [
                             React.createElement('span', { key: 'discount-label' }, 'Discount:'),
                             React.createElement('span', { key: 'discount-value' }, `-${discount.toFixed(2)}`)
+                        ]),
+                        voucherDiscounts > 0 && React.createElement('div', { key: 'voucher-discount-row', className: 'flex justify-between text-blue-600 dark:text-blue-400' }, [
+                            React.createElement('span', { key: 'voucher-discount-label' }, 'Voucher Discount:'),
+                            React.createElement('span', { key: 'voucher-discount-value' }, `-$${voucherDiscounts.toFixed(2)}`)
                         ]),
                         React.createElement('div', { key: 'tax-row', className: 'flex justify-between items-center dark:text-white' }, [
                             React.createElement('div', { key: 'tax-label-container', className: 'flex items-center gap-2' }, [
@@ -736,6 +914,28 @@ window.Views.POSView = ({
                     ])
                 ])
             ])
-        ])
+        ]),
+
+        // Voucher Modals
+        showVoucherSelector && React.createElement(window.Components.VoucherSelector, {
+            key: 'voucher-selector',
+            customer: selectedCustomer,
+            vouchers,
+            selectedVouchers,
+            onVoucherSelect: handleVoucherSelect,
+            onVoucherDeselect: handleVoucherSelect,
+            onApplyVoucher: handleApplyVoucher,
+            onRemoveVoucher: handleRemoveVoucher,
+            loading: voucherLoading
+        }),
+
+        showVoucherEditModal && React.createElement(window.Components.VoucherEditModal, {
+            key: 'voucher-edit-modal',
+            voucher: editingVoucher,
+            isOpen: showVoucherEditModal,
+            onClose: () => setShowVoucherEditModal(false),
+            onSave: handleSaveVoucherAmount,
+            onCancel: () => setShowVoucherEditModal(false)
+        })
     ]);
 };
