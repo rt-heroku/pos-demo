@@ -314,7 +314,7 @@ window.Views.POSView = ({
         ]);
     };
 
-    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6 h-[calc(100vh-5rem)] lg:h-[calc(100vh-6rem)]' }, [
+    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6 h-[calc(100vh-8rem)] lg:h-[calc(100vh-9rem)]' }, [
         // Products Section
         React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
             React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
@@ -359,7 +359,7 @@ window.Views.POSView = ({
             ]),
             React.createElement('div', { 
                 key: 'products-grid',
-                className: 'flex-1 p-4 lg:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto custom-scrollbar' 
+                className: 'flex-1 p-4 lg:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto custom-scrollbar max-h-0' 
             }, products.map(product =>
                 React.createElement(ProductCard, { key: product.id, product })
             ))
@@ -422,7 +422,7 @@ window.Views.POSView = ({
                             React.createElement('p', { key: 'empty-subtext', className: 'text-sm mt-2' }, 'Add products to get started')
                         ])
                     ) : (
-                        React.createElement('div', { key: 'cart-items', className: 'space-y-3 mb-6 max-h-96 overflow-y-auto custom-scrollbar' }, cart.map(item => {
+                        React.createElement('div', { key: 'cart-items', className: 'space-y-3 mb-6 max-h-80 overflow-y-auto custom-scrollbar' }, cart.map(item => {
                             const itemImage = getProductImage(item);
                             return React.createElement('div', { 
                                 key: item.id,
