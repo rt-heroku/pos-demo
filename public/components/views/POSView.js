@@ -314,7 +314,7 @@ window.Views.POSView = ({
         ]);
     };
 
-    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6 h-[calc(100vh-12rem)] lg:h-[calc(100vh-13rem)]' }, [
+    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-2 lg:gap-3 h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)]' }, [
         // Products Section
         React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
             React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
