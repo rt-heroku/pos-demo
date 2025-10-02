@@ -314,7 +314,7 @@ window.Views.POSView = ({
         ]);
     };
 
-    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-2 lg:gap-3 h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)]' }, [
+    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-2 lg:gap-3 h-[calc(100vh-10rem)] lg:h-[calc(100vh-11rem)] px-4 lg:px-6' }, [
         // Products Section
         React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
             React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
@@ -366,7 +366,7 @@ window.Views.POSView = ({
         ]),
 
         // Enhanced Cart Section with Discount System
-        React.createElement('div', { key: 'cart', className: 'cart-panel bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col lg:relative' }, [
+        React.createElement('div', { key: 'cart', className: 'cart-panel bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col lg:relative h-full' }, [
             React.createElement('div', { key: 'cart-header', className: 'p-4 lg:p-6 border-b dark:border-gray-700' }, [
                 React.createElement('h2', { key: 'cart-title', className: 'text-lg lg:text-xl font-bold flex items-center gap-2 dark:text-white' }, [
                     React.createElement(ShoppingCart, { key: 'cart-icon', size: 20 }),
