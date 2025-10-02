@@ -25,7 +25,7 @@
         }, [
             React.createElement('div', { key: 'modal', className: 'bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full' }, [
                 React.createElement('div', { key: 'header', className: 'flex justify-between items-center mb-6' }, [
-                    React.createElement('h2', { className: 'text-xl font-bold' }, 'Loyalty Customer'),
+                    React.createElement('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white' }, 'Loyalty Customer'),
                     React.createElement('button', {
                         onClick: onClose,
                         className: 'text-gray-400 hover:text-gray-600'
@@ -34,13 +34,13 @@
 
                 React.createElement('div', { key: 'content', className: 'space-y-4' }, [
                     React.createElement('div', { key: 'loyalty-input' }, [
-                        React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Loyalty Number'),
+                        React.createElement('label', { className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Loyalty Number'),
                         React.createElement('input', {
                             type: 'text',
                             value: loyaltyNumber,
                             onChange: (e) => setLoyaltyNumber(e.target.value.toUpperCase()),
                             placeholder: 'Enter loyalty number (e.g., LOY001)',
-                            className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600'
                         })
                     ]),
 
@@ -53,7 +53,7 @@
                     React.createElement('div', { key: 'divider', className: 'text-center text-gray-500' }, 'OR'),
 
                     React.createElement('div', { key: 'search-input' }, [
-                        React.createElement('label', { className: 'block text-sm font-medium mb-2' }, 'Search by Name/Email'),
+                        React.createElement('label', { className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Search by Name/Email'),
                         React.createElement('input', {
                             type: 'text',
                             value: loyaltySearchTerm,
@@ -62,7 +62,7 @@
                                 onSearchCustomers(e.target.value);
                             },
                             placeholder: 'Enter name or email',
-                            className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className: 'w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600'
                         })
                     ]),
 

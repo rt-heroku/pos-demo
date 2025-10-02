@@ -123,7 +123,7 @@ window.Views.InventoryView = ({
         }, [
             // Product Image
 //            React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-50 dark:bg-gray-800 items-center justify-center' }, [
-            React.createElement('div', { key: 'image', className: 'relative h-48 bg-white dark:bg-gray-800 items-center justify-center' }, [
+            React.createElement('div', { key: 'image', className: 'relative h-48 flex bg-white items-center justify-center' }, [
                     // Show actual image if available centered
                 productImage.type === 'url' ? (
                     React.createElement('img', {
@@ -187,7 +187,7 @@ window.Views.InventoryView = ({
                     React.createElement('div', { key: 'title-section', className: 'flex-1 pr-2' }, [
                         React.createElement('h3', { key: 'title-h3', className: 'font-semibold text-lg text-gray-900 dark:text-white line-clamp-2 mb-1' }, product.name),
                         React.createElement('p', { key: 'sku-p', className: 'text-sm text-gray-600 dark:text-gray-300 font-mono' }, product.sku),
-                        product.brand && React.createElement('p', { key: 'brand-p', className: 'text-sm text-blue-600 font-medium' },
+                        product.brand && React.createElement('p', { key: 'brand-p', className: 'text-sm text-blue-600 dark:text-blue-400 font-medium' },
                             `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
                         )
                     ]),
@@ -215,11 +215,11 @@ window.Views.InventoryView = ({
 
                 React.createElement('div', { key: 'details', className: 'space-y-3' }, [
                     React.createElement('div', { key: 'price-section', className: 'flex justify-between items-center' }, [
-                        React.createElement('span', { key: 'price-span', className: 'text-2xl font-bold text-green-600' },
+                        React.createElement('span', { key: 'price-span', className: 'text-2xl font-bold text-green-600 dark:text-green-400' },
                             `$${parseFloat(product.price).toFixed(2)}`
                         ),
                         React.createElement('div', { key: 'stock-section', className: 'text-right' }, [
-                            React.createElement('div', { key: 'stock-div', className: 'text-sm font-medium' },
+                            React.createElement('div', { key: 'stock-div', className: 'text-sm font-medium dark:text-gray-200' },
                                 `Stock: ${product.stock}`
                             ),
                             React.createElement('div', { key: 'category-div', className: 'text-xs text-gray-500 dark:text-gray-400' },
@@ -276,7 +276,7 @@ window.Views.InventoryView = ({
 
         return React.createElement('tr', {
             key: 'product-row',
-            className: `hover:bg-gray-50 border-b transition-colors ${selectedProducts.includes(product.id) ? 'bg-blue-50' : ''
+            className: `hover:bg-gray-50 border-b dark:border-gray-700 transition-colors ${selectedProducts.includes(product.id) ? 'bg-blue-50' : ''
                 } ${!product.is_active ? 'opacity-60' : ''}`
         }, [
             React.createElement('td', { key: 'select', className: 'p-4' }, [
@@ -314,19 +314,19 @@ window.Views.InventoryView = ({
                         }, productImage.src)
                     ]),
                     React.createElement('div', { key: 'name-div', className: 'min-w-0 flex-1' }, [
-                        React.createElement('div', { key: 'name-div', className: 'font-medium text-gray-900 dark:text-white truncate' }, product.name),
+                        React.createElement('div', { key: 'name-div', className: 'font-medium text-gray-900 dark:text-gray-200 truncate' }, product.name),
                         React.createElement('div', { key: 'sku-div', className: 'text-sm text-gray-600 dark:text-gray-300 font-mono' }, product.sku),
-                        product.brand && React.createElement('div', { key: 'brand-div', className: 'text-sm text-blue-600' },
+                        product.brand && React.createElement('div', { key: 'brand-div', className: 'text-sm text-blue-600 dark:text-blue-400' },
                             `${product.brand}${product.collection ? ` • ${product.collection}` : ''}`
                         )
                     ])
                 ])
             ]),
             React.createElement('td', { key: 'category', className: 'p-4' }, [
-                React.createElement('div', { key: 'category-div', className: 'text-sm' }, product.category),
+                React.createElement('div', { key: 'category-div', className: 'text-sm text-gray-700 dark:text-gray-200' }, product.category),
                 product.product_type && React.createElement('div', { key: 'product-type-div', className: 'text-xs text-gray-500 dark:text-gray-400' }, product.product_type)
             ]),
-            React.createElement('td', { key: 'price', className: 'p-4 font-medium text-green-600' },
+            React.createElement('td', { key: 'price', className: 'p-4 font-medium text-green-600 dark:text-green-400' },
                 `$${parseFloat(product.price).toFixed(2)}`
             ),
             React.createElement('td', { key: 'attributes', className: 'p-4' }, [
@@ -418,7 +418,7 @@ window.Views.InventoryView = ({
         ])
     ]);
 
-    return React.createElement('div', { key: 'inventory-view', className: 'space-y-4 lg:space-y-6' }, [
+    return React.createElement('div', { key: 'inventory-view', className: 'space-y-4 lg:space-y-3' }, [
         // Header with controls
         React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6' }, [
             React.createElement('div', { key: 'header-content', className: 'flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6' }, [
@@ -504,17 +504,18 @@ window.Views.InventoryView = ({
                     React.createElement('button', {
                         key: 'sort-order-btn',
                         onClick: () => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'),
-                        className: 'touch-button p-2 border rounded-lg hover:bg-gray-50 transition-colors',
+                        // className: 'touch-button p-2 border rounded-lg hover:bg-gray-50 transition-colors',
+                        className: 'touch-button p-2 border rounded-lg hover:bg-gray-50 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600',
                         title: `Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`
                     }, sortOrder === 'asc' ? '↑' : '↓')
                 ]),
 
                 // View mode toggle
-                React.createElement('div', { key: 'view-toggle', className: 'flex border rounded-lg overflow-hidden' }, [
+                React.createElement('div', { key: 'view-toggle', className: 'flex border rounded-lg overflow-hidden bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600' }, [
                     React.createElement('button', {
                         key: 'grid-view-btn',
                         onClick: () => onViewModeChange('grid'),
-                        className: `touch-button p-2 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-600'
+                        className: `touch-button p-2 transition-colors bg-white  dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-600'
                             }`,
                         title: 'Grid View'
                     }, React.createElement(Grid3X3, { size: 20 })),
@@ -703,7 +704,7 @@ window.Views.InventoryView = ({
         ]),
 
         // Products display
-        React.createElement('div', { key: 'products' }, [
+        React.createElement('div', { key: 'products', className: 'h-[calc(100vh-20rem)]'}, [
             loading ? (
                 React.createElement('div', { key: 'loading-div', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center' }, [
                     React.createElement('div', { key: 'loading-spinner', className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4' }),
@@ -714,8 +715,8 @@ window.Views.InventoryView = ({
                 React.createElement(EmptyState, { key: 'empty-state' })
             ) : viewMode === 'grid' ? (
                 // Grid view
-                React.createElement('div', { key: 'grid-view', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
-                    React.createElement('div', { key: 'grid-header', className: 'p-6 border-b' }, [
+                React.createElement('div', { key: 'grid-view', className: 'bg-white dark:bg-gray-800 rounded-t-xl rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-full' }, [
+                    React.createElement('div', { key: 'grid-header', className: 'p-6 border-b rounded-t-xl dark:bg-gray-700 dark:border-gray-600' }, [
                         React.createElement('div', { key: 'grid-header-content', className: 'flex items-center justify-between mb-4' }, [
                             React.createElement('div', { key: 'grid-header-select', className: 'flex items-center gap-4' }, [
                                 React.createElement('label', { key: 'grid-header-select-label', className: 'flex items-center gap-2 cursor-pointer' }, [
@@ -745,10 +746,10 @@ window.Views.InventoryView = ({
                 ])
             ) : (
                 // List view
-                React.createElement('div', { key: 'list-view', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden' }, [
+                React.createElement('div', { key: 'list-view', className: 'flex flex-col h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden' }, [
                     React.createElement('div', { key: 'list-view-content', className: 'overflow-x-auto' }, [
                         React.createElement('table', { key: 'list-view-table', className: 'w-full min-w-[800px]' }, [
-                            React.createElement('thead', { key: 'thead', className: 'bg-gray-50 border-b' }, [
+                            React.createElement('thead', { key: 'thead', className: 'bg-white dark:bg-gray-700 border-b dark:border-gray-600' }, [
                                 React.createElement('tr', { key: 'header-row' }, [
                                     React.createElement('th', { key: 'select', className: 'p-4 text-left w-16' }, [
                                         React.createElement('input', {
@@ -773,7 +774,7 @@ window.Views.InventoryView = ({
                             )
                         ])
                     ]),
-                    React.createElement('div', { key: 'list-view-footer', className: 'p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-600 dark:text-gray-300' },
+                    React.createElement('div', { key: 'list-view-footer', className: 'mt-auto p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-600 dark:text-gray-300' },
                         `Showing ${sortedProducts.length} of ${products.length} products`
                     )
                 ])

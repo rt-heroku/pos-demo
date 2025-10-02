@@ -36,7 +36,7 @@ const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Database connection
 const pool = new Pool({
@@ -1255,7 +1255,27 @@ app.put('/api/customers/:id', async (req, res) => {
       member_type, enrollment_date, customer_tier, date_of_birth,
       address_line1, address_line2, city, state, country, zip_code
     } = req.body;
-    
+    // Debug info for incoming customer update
+    console.debug('PUT /api/customers/:id req.body:', JSON.stringify(req.body, null, 2));
+    console.debug('Parsed values:', {
+      id,
+      name,
+      email,
+      phone,
+      points,
+      notes,
+      member_status,
+      member_type,
+      enrollment_date,
+      customer_tier,
+      date_of_birth,
+      address_line1,
+      address_line2,
+      city,
+      state,
+      country,
+      zip_code
+    });
     // Validate required fields
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Customer name is required' });
@@ -4634,38 +4654,6 @@ app.delete('/api/customers/:id/avatar', async (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// Create customer_images table if it doesn't exist
-const createCustomerImagesTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS customer_images (
-        id SERIAL PRIMARY KEY,
-        customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-        filename VARCHAR(255) NOT NULL,
-        image_data TEXT NOT NULL,
-        file_size INTEGER,
-        width INTEGER,
-        height INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Create index if it doesn't exist
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_customer_images_customer_id 
-      ON customer_images(customer_id)
-    `);
-    
-    console.log('Customer images table created/verified successfully');
-  } catch (error) {
-    console.error('Error creating customer_images table:', error);
-  }
-};
-
-// Initialize database tables
-createCustomerImagesTable();
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

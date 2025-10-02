@@ -254,7 +254,7 @@ window.Views.POSView = ({
         return React.createElement('button', {
             onClick: () => onAddToCart(product),
             disabled: isOutOfStock,
-            className: `p-2 lg:p-2 rounded-lg border transition-all duration-200 touch-button ${
+            className: `max-h-max p-2 lg:p-2 rounded-lg border transition-all duration-200 touch-button ${
                 isOutOfStock
                     ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
                     : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:shadow-md active:scale-95 hover:bg-blue-50 dark:hover:bg-blue-900/20'

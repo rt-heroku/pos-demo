@@ -321,7 +321,7 @@ window.Views.LoyaltyView= ({
         ]);
     };
 
-            return React.createElement('div', { className: 'space-y-4 lg:space-y-6' }, [
+            return React.createElement('div', { className: 'space-y-2 lg:space-y-3' }, [
         // Header with tabs
         React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
             React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between mb-6' }, [
@@ -429,7 +429,7 @@ window.Views.LoyaltyView= ({
                 ]),
 
                 // Search results
-                customerSearchResults.length > 0 && React.createElement('div', { key: 'search-results', className: 'mt-6' }, [
+                customerSearchResults.length > 0 && React.createElement('div', { key: 'search-results', className: 'mt-3' }, [
                     React.createElement('h4', { key: 'search-results-title', className: 'font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2' }, [
                         React.createElement(Users, { key: 'search-results-icon', size: 18 }),
                         'Search Results'
@@ -535,7 +535,7 @@ window.Views.LoyaltyView= ({
         ]),
 
         // Customer Management Tab
-        currentTab === 'manage' && React.createElement('div', { key: 'manage-content', className: 'space-y-6' }, [
+        currentTab === 'manage' && React.createElement('div', { key: 'manage-content', className: 'space-y-3' }, [
             // Controls
             React.createElement('div', { key: 'controls', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
                 React.createElement('div', { key: 'controls-content', className: 'flex flex-col lg:flex-row lg:items-center gap-4' }, [
