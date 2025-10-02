@@ -1344,7 +1344,7 @@ const POSApp = () => {
             key: 'header', 
             className: 'fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 hidden lg:block' 
         }, [
-            React.createElement('div', { key: 'header-container', className: 'max-w-7xl mx-auto px-6 py-4' }, [
+            React.createElement('div', { key: 'header-container', className: 'w-full px-6 py-4' }, [
                 React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between' }, [
                     React.createElement('div', { key: 'logo-section', className: 'flex items-center gap-3' }, [
                         // Location logo
@@ -1432,7 +1432,7 @@ const POSApp = () => {
             key: 'mobile-header', 
             className: 'fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 lg:hidden safe-area-top' 
         }, [
-            React.createElement('div', { key: 'mobile-header-container', className: 'px-4 py-3' }, [
+            React.createElement('div', { key: 'mobile-header-container', className: 'w-full px-4 py-3' }, [
                 React.createElement('div', { key: 'mobile-header-content', className: 'flex items-center justify-between' }, [
                     React.createElement('div', { key: 'mobile-logo-section', className: 'flex items-center gap-2' }, [
                         selectedLocation?.logo_base64 && React.createElement('img', {
