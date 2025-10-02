@@ -314,9 +314,9 @@ window.Views.POSView = ({
         ]);
     };
 
-    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6 h-full' }, [
+    return React.createElement('div', { className: 'flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6 h-[calc(100vh-5rem)] lg:h-[calc(100vh-6rem)]' }, [
         // Products Section
-        React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700' }, [
+        React.createElement('div', { key: 'products', className: 'lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col' }, [
             React.createElement('div', { key: 'header', className: 'p-6 border-b dark:border-gray-700' }, [
                 React.createElement('div', { key: 'title', className: 'mb-4' }, [
                     React.createElement('h2', { key: 'products-title', className: 'text-xl font-bold dark:text-white' }, 'Products'),
@@ -359,7 +359,7 @@ window.Views.POSView = ({
             ]),
             React.createElement('div', { 
                 key: 'products-grid',
-                className: 'p-4 lg:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto custom-scrollbar' 
+                className: 'flex-1 p-4 lg:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto custom-scrollbar' 
             }, products.map(product =>
                 React.createElement(ProductCard, { key: product.id, product })
             ))
@@ -373,7 +373,7 @@ window.Views.POSView = ({
                     `Cart (${cart.length})`
                 ])
             ]),
-            React.createElement('div', { key: 'cart-content', className: 'flex-1 p-4 lg:p-6 custom-scrollbar' }, [
+            React.createElement('div', { key: 'cart-content', className: 'flex-1 p-4 lg:p-6 overflow-y-auto custom-scrollbar' }, [
                 // Enhanced customer info section
                 React.createElement(React.Fragment, { key: 'customer-section' }, [
                     selectedCustomer ? (
@@ -422,7 +422,7 @@ window.Views.POSView = ({
                             React.createElement('p', { key: 'empty-subtext', className: 'text-sm mt-2' }, 'Add products to get started')
                         ])
                     ) : (
-                        React.createElement('div', { key: 'cart-items', className: 'space-y-3 mb-6' }, cart.map(item => {
+                        React.createElement('div', { key: 'cart-items', className: 'space-y-3 mb-6 max-h-96 overflow-y-auto custom-scrollbar' }, cart.map(item => {
                             const itemImage = getProductImage(item);
                             return React.createElement('div', { 
                                 key: item.id,

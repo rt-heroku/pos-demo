@@ -1342,7 +1342,7 @@ const POSApp = () => {
         // Header (hidden on mobile)
         React.createElement('header', { 
             key: 'header', 
-            className: 'bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 hidden lg:block' 
+            className: 'fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 hidden lg:block' 
         }, [
             React.createElement('div', { key: 'header-container', className: 'max-w-7xl mx-auto px-6 py-4' }, [
                 React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between' }, [
@@ -1430,7 +1430,7 @@ const POSApp = () => {
         // Mobile Header
         React.createElement('header', { 
             key: 'mobile-header', 
-            className: 'bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 lg:hidden safe-area-top' 
+            className: 'fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 lg:hidden safe-area-top' 
         }, [
             React.createElement('div', { key: 'mobile-header-container', className: 'px-4 py-3' }, [
                 React.createElement('div', { key: 'mobile-header-content', className: 'flex items-center justify-between' }, [
@@ -1476,7 +1476,7 @@ const POSApp = () => {
         ]),
 
         // Main Content
-        React.createElement('main', { key: 'main', className: 'pos-container pb-20 lg:pb-6' }, [
+        React.createElement('main', { key: 'main', className: 'pos-container pb-20 lg:pb-6 pt-16 lg:pt-20' }, [
             currentView === 'pos' && selectedLocation && React.createElement(window.Views.POSView, { 
                 key: 'pos-view',
                 products: filteredProducts,
