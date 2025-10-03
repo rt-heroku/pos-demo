@@ -695,8 +695,18 @@ const POSApp = () => {
                 discount
             });
             
-            clearCart();
+            // Store the current values for the receipt before clearing cart
+            setLastTransaction({
+                ...transactionData,
+                subtotal: subtotal,
+                tax: tax,
+                total: total,
+                appliedVouchers: appliedVouchers,
+                voucherDiscounts: voucherDiscounts
+            });
+            
             setShowReceipt(true);
+            clearCart();
         } catch (error) {
             console.error('Failed to process payment:', error);
             window.NotificationManager.error('Payment Failed', 'Failed to process payment. Please try again.');
@@ -1695,9 +1705,13 @@ const POSApp = () => {
         React.createElement(window.Modals.ReceiptModal, { 
             key: 'receipt-modal',
             show: showReceipt, onClose: () => setShowReceipt(false),
-            transaction: lastTransaction, subtotal: subtotal, tax, total,
+            transaction: lastTransaction, 
+            subtotal: lastTransaction?.subtotal || subtotal, 
+            tax: lastTransaction?.tax || tax, 
+            total: lastTransaction?.total || total,
             paymentMethod, amountReceived, change, discount,
-            appliedVouchers, voucherDiscounts
+            appliedVouchers: lastTransaction?.appliedVouchers || appliedVouchers, 
+            voucherDiscounts: lastTransaction?.voucherDiscounts || voucherDiscounts
         }),
 
         React.createElement(window.Modals.ProductModal, {
