@@ -338,7 +338,21 @@ window.Views.POSView = ({
             switch (voucher.voucher_type) {
                 case 'Value':
                     const valueAmount = voucher.applied_amount || voucher.remaining_value || 0;
-                    totalDiscount += Math.min(valueAmount, subtotal);
+                    // For value vouchers, apply to cheapest items first
+                    const sortedCart = [...cart].sort((a, b) => a.price - b.price);
+                    let remainingValue = valueAmount;
+                    let voucherDiscount = 0;
+                    
+                    for (const item of sortedCart) {
+                        if (remainingValue <= 0) break;
+                        
+                        const itemTotal = item.price * item.quantity;
+                        const discountForItem = Math.min(remainingValue, itemTotal);
+                        voucherDiscount += discountForItem;
+                        remainingValue -= discountForItem;
+                    }
+                    
+                    totalDiscount += voucherDiscount;
                     break;
                 case 'Discount':
                     totalDiscount += subtotal * (voucher.discount_percent / 100);

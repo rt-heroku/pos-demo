@@ -4683,6 +4683,33 @@ app.get('/api/customers/:id/vouchers', async (req, res) => {
   }
 });
 
+// Get all vouchers for a customer (including expired, redeemed, etc.)
+app.get('/api/customers/:id/vouchers/all', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      SELECT 
+        cv.*,
+        p.name as product_name,
+        p.price as product_price
+      FROM customer_vouchers cv
+      LEFT JOIN products p ON cv.product_id = p.id
+      WHERE cv.customer_id = $1 
+      ORDER BY cv.created_date DESC
+    `, [id]);
+    
+    res.json({
+      success: true,
+      vouchers: result.rows
+    });
+    
+  } catch (error) {
+    console.error('Error getting all customer vouchers:', error);
+    res.status(500).json({ error: 'Failed to get all vouchers' });
+  }
+});
+
 // Get specific voucher details
 app.get('/api/vouchers/:id', async (req, res) => {
   try {

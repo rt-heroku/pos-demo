@@ -8,7 +8,7 @@ CREATE TABLE customer_vouchers (
     customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
     voucher_code VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
-    status VARCHAR(50) DEFAULT 'Issued' CHECK (status IN ('Issued', 'Redeemed', 'Expired', 'Cancelled')),
+    status VARCHAR(50) DEFAULT 'Issued' CHECK (status IN ('Issued', 'Redeemed', 'Expired', 'Cancelled', 'Reserved')),
     
     -- Voucher Definition Fields
     voucher_definition_id VARCHAR(100), -- Salesforce VoucherDefinition ID
