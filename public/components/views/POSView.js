@@ -795,8 +795,20 @@ window.Views.POSView = ({
                                         // Find the product and add it to cart
                                         const product = products.find(p => p.id === voucherError.requiredProductId);
                                         if (product) {
+                                            // Store the voucher reference before clearing error
+                                            const voucherToApply = voucherError.voucher;
+                                            
                                             onAddToCart(product);
+                                            
+                                            // Clear the error immediately
                                             setVoucherError(null);
+                                            
+                                            // Auto-apply the voucher after a short delay to allow cart to update
+                                            setTimeout(() => {
+                                                if (voucherToApply) {
+                                                    handleApplyVoucher(voucherToApply);
+                                                }
+                                            }, 100);
                                         }
                                     },
                                     className: 'px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors'
