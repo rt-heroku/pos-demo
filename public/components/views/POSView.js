@@ -707,39 +707,6 @@ window.Views.POSView = ({
                     ])
                 ]),
 
-                cart.length > 0 && React.createElement(React.Fragment, { key: 'discount-section' }, [
-                    // Discount Section
-                    React.createElement('div', { key: 'discount', className: 'border-t dark:border-gray-600 pt-4 mb-4' }, [
-                        React.createElement('h4', { key: 'discount-title', className: 'font-medium mb-3 dark:text-white flex items-center gap-2' }, [
-                            React.createElement(Percent, { key: 'discount-icon', size: 18 }),
-                            'Discount'
-                        ]),
-                        React.createElement('div', { key: 'discount-controls', className: 'grid grid-cols-3 gap-2 mb-2' }, [
-                            React.createElement('select', {
-                                key: 'discount-type',
-                                value: discountType,
-                                onChange: (e) => setDiscountType(e.target.value),
-                                className: 'px-3 py-2 text-sm border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
-                            }, [
-                                React.createElement('option', { key: 'fixed', value: 'fixed' }, '$'),
-                                React.createElement('option', { key: 'percentage', value: 'percentage' }, '%')
-                            ]),
-                            React.createElement('input', {
-                                key: 'discount-amount',
-                                type: 'number',
-                                step: discountType === 'percentage' ? '1' : '0.01',
-                                min: '0',
-                                max: discountType === 'percentage' ? '100' : undefined,
-                                value: discountAmount,
-                                onChange: (e) => setDiscountAmount(e.target.value),
-                                placeholder: discountType === 'percentage' ? '10' : '5.00',
-                                className: 'col-span-2 px-3 py-2 text-sm border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
-                            })
-                        ]),
-                        discount > 0 && React.createElement('div', { key: 'discount-applied', className: 'text-sm text-green-600 dark:text-green-400 font-medium' }, 
-                            `Discount Applied: -$${discount.toFixed(2)}`
-                        )
-                    ]),
 
                     // Totals Section
                     React.createElement('div', { key: 'totals', className: 'border-t dark:border-gray-600 pt-4 space-y-2 mb-6' }, [
