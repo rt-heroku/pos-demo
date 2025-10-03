@@ -267,7 +267,7 @@ window.Views.POSView = ({
 
     const autoApplyProductVouchers = (vouchers) => {
         const productSpecificVouchers = vouchers.filter(v => v.voucher_type === 'ProductSpecific');
-        const cartProductIds = cart.map(item => item.product_id);
+        const cartProductIds = cart.map(item => item.id);
         
         const applicableVouchers = productSpecificVouchers.filter(voucher => 
             cartProductIds.includes(voucher.product_id)
@@ -297,7 +297,7 @@ window.Views.POSView = ({
 
         // For product-specific vouchers, check if the product is in cart (unless skipping validation)
         if (!skipValidation && voucher.voucher_type === 'ProductSpecific' && voucher.product_id) {
-            const productInCart = cart.find(item => item.product_id === voucher.product_id);
+            const productInCart = cart.find(item => item.id === voucher.product_id);
             if (!productInCart) {
                 // Show error message and don't apply voucher
                 setVoucherError({
@@ -409,7 +409,7 @@ window.Views.POSView = ({
                     totalDiscount += subtotal * (voucher.discount_percent / 100);
                     break;
                 case 'ProductSpecific':
-                    const productItems = cart.filter(item => item.product_id === voucher.product_id);
+                    const productItems = cart.filter(item => item.id === voucher.product_id);
                     const productSubtotal = productItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     if (voucher.discount_percent) {
                         totalDiscount += productSubtotal * (voucher.discount_percent / 100);
