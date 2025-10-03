@@ -626,6 +626,9 @@ const POSApp = () => {
     const effectiveTaxRate = taxRate ? parseFloat(taxRate) / 100 : (selectedLocation?.tax_rate || 0.08);
     const tax = discountedSubtotal * effectiveTaxRate;
     const total = discountedSubtotal + tax;
+    
+    // Debug logging
+    console.log('App calculations:', { subtotal, discount, voucherDiscounts, discountedSubtotal, tax, total, cart });
     const change = parseFloat(amountReceived) - total;
     const categories = ['All', ...new Set(products.map(p => p.category))];
 

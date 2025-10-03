@@ -6,6 +6,9 @@ window.Modals.ReceiptModal = function ReceiptModal({
     show, onClose, transaction, subtotal, tax, total, paymentMethod, amountReceived, change, appliedVouchers, voucherDiscounts
 }) {
     if (!show || !transaction) return null;
+    
+    // Debug logging
+    console.log('ReceiptModal props:', { subtotal, tax, total, appliedVouchers, voucherDiscounts });
 
     return React.createElement('div', {
         className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
