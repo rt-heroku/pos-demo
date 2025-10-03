@@ -22,6 +22,7 @@ window.Views.LoyaltyView= ({
     
     const [currentTab, setCurrentTab] = React.useState('search'); // 'search', 'manage', or 'vouchers'
     const [selectedCustomerForVouchers, setSelectedCustomerForVouchers] = React.useState(null);
+    const [showVouchersModal, setShowVouchersModal] = React.useState(false);
     const [searchMode, setSearchMode] = React.useState('loyalty'); // 'loyalty' or 'general'
     const [sortBy, setSortBy] = React.useState('name');
     const [sortOrder, setSortOrder] = React.useState('asc');
@@ -345,28 +346,22 @@ window.Views.LoyaltyView= ({
                 ])
             ]),
 
-            // Tab navigation
-            React.createElement('div', { key: 'tabs', className: 'flex gap-2 mb-6' }, [
-                React.createElement(TabButton, { 
-                    key: 'search-tab',
-                    tab: 'search', 
-                    label: 'Customer Search', 
-                    active: currentTab === 'search' 
-                }),
-                React.createElement(TabButton, { 
-                    key: 'manage-tab',
-                    tab: 'manage', 
-                    label: 'Manage Customers', 
-                    active: currentTab === 'manage',
-                    count: customers.length 
-                }),
-                React.createElement(TabButton, { 
-                    key: 'vouchers-tab',
-                    tab: 'vouchers', 
-                    label: 'Customer Vouchers', 
-                    active: currentTab === 'vouchers'
-                })
-            ])
+        // Tab navigation
+        React.createElement('div', { key: 'tabs', className: 'flex gap-2 mb-6' }, [
+            React.createElement(TabButton, { 
+                key: 'search-tab',
+                tab: 'search', 
+                label: 'Customer Search', 
+                active: currentTab === 'search' 
+            }),
+            React.createElement(TabButton, { 
+                key: 'manage-tab',
+                tab: 'manage', 
+                label: 'Manage Customers', 
+                active: currentTab === 'manage',
+                count: customers.length 
+            })
+        ])
         ]),
 
         // Customer Search Tab
@@ -503,6 +498,18 @@ window.Views.LoyaltyView= ({
                                             }, [
                                                 React.createElement(Edit, { key: 'edit-icon', size: 14 }),
                                                 'Edit'
+                                            ]),
+                                            React.createElement('button', {
+                                                key: 'vouchers-action',
+                                                onClick: () => {
+                                                    setSelectedCustomerForVouchers(customer);
+                                                    setShowVouchersModal(true);
+                                                    setActionMenuOpen(null);
+                                                },
+                                                className: 'w-full px-3 py-2 text-left text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2'
+                                            }, [
+                                                React.createElement('span', { key: 'voucher-icon' }, '🎫'),
+                                                'View Vouchers'
                                             ]),
                                             React.createElement('button', {
                                                 key: 'delete-action',
@@ -669,63 +676,16 @@ window.Views.LoyaltyView= ({
             ])
         ]),
 
-        // Customer Vouchers Tab
-        currentTab === 'vouchers' && React.createElement('div', { key: 'vouchers-content', className: 'space-y-6' }, [
-            selectedCustomerForVouchers ? (
-                React.createElement(window.Views.CustomerVoucherView, {
-                    key: 'customer-voucher-view',
-                    customer: selectedCustomerForVouchers,
-                    onBack: () => setSelectedCustomerForVouchers(null)
-                })
-            ) : (
-                React.createElement('div', { key: 'voucher-selection', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
-                    React.createElement('div', { key: 'voucher-header', className: 'text-center mb-6' }, [
-                        React.createElement('div', { key: 'voucher-icon', className: 'text-4xl mb-4' }, '🎫'),
-                        React.createElement('h3', { key: 'voucher-title', className: 'text-xl font-semibold text-gray-900 dark:text-white mb-2' }, 'Customer Vouchers'),
-                        React.createElement('p', { key: 'voucher-description', className: 'text-gray-600 dark:text-gray-400' }, 'Select a customer to view their voucher history and status')
-                    ]),
-                    
-                    React.createElement('div', { key: 'customer-selection', className: 'space-y-4' }, [
-                        React.createElement('h4', { key: 'selection-title', className: 'font-medium text-gray-900 dark:text-white' }, 'Select Customer:'),
-                        React.createElement('div', { 
-                            key: 'customers-list', 
-                            className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto' 
-                        }, customers.map(customer => 
-                            React.createElement('button', {
-                                key: customer.id,
-                                onClick: () => setSelectedCustomerForVouchers(customer),
-                                className: 'p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left'
-                            }, [
-                                React.createElement('div', { key: 'customer-info', className: 'flex items-center gap-3 mb-2' }, [
-                                    React.createElement('div', { 
-                                        key: 'customer-avatar',
-                                        className: 'w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden'
-                                    }, [
-                                        customerAvatars[customer.id] ? (
-                                            React.createElement('img', {
-                                                key: 'avatar-img',
-                                                src: customerAvatars[customer.id],
-                                                alt: customer.name,
-                                                className: 'w-full h-full object-cover'
-                                            })
-                                        ) : (
-                                            React.createElement(User, { key: 'avatar-icon', size: 20, className: 'text-gray-500' })
-                                        )
-                                    ]),
-                                    React.createElement('div', { key: 'customer-details', className: 'flex-1 min-w-0' }, [
-                                        React.createElement('div', { key: 'customer-name', className: 'font-medium text-gray-900 dark:text-white truncate' }, customer.name),
-                                        React.createElement('div', { key: 'customer-loyalty', className: 'text-sm text-gray-600 dark:text-gray-400' }, customer.loyalty_number)
-                                    ])
-                                ]),
-                                React.createElement('div', { key: 'customer-stats', className: 'text-xs text-gray-500 dark:text-gray-400' }, [
-                                    React.createElement('div', { key: 'points' }, `${customer.points} points`),
-                                    React.createElement('div', { key: 'tier' }, `${customer.customer_tier} tier`)
-                                ])
-                            ])
-                        ))
-                    ])
-                ])
-            )
-        ])
+        // Customer Vouchers Modal
+        React.createElement(window.Components.CustomerVouchersModal, {
+            key: 'vouchers-modal',
+            customer: selectedCustomerForVouchers,
+            isOpen: showVouchersModal,
+            onClose: () => {
+                setShowVouchersModal(false);
+                setSelectedCustomerForVouchers(null);
+            }
+        })
+
     ]);
 };
