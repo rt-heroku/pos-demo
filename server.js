@@ -4781,7 +4781,12 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     );
 
     if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
-      return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+      // MuleSoft endpoint not configured - return empty vouchers for demo
+      console.log('MuleSoft endpoint not configured - returning empty vouchers for demo');
+      return res.json({ 
+        message: 'MuleSoft endpoint not configured - no vouchers refreshed',
+        vouchers: []
+      });
     }
 
     const mulesoftEndpoint = settingsResult.rows[0].setting_value;
@@ -4797,6 +4802,14 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     });
     
     if (!mulesoftResponse.ok) {
+      if (mulesoftResponse.status === 404) {
+        // MuleSoft endpoint not found - return empty vouchers for demo
+        console.log('MuleSoft API endpoint not found (404) - returning empty vouchers for demo');
+        return res.json({ 
+          message: 'MuleSoft API endpoint not available - no vouchers refreshed',
+          vouchers: []
+        });
+      }
       throw new Error(`MuleSoft API error: ${mulesoftResponse.status}`);
     }
     

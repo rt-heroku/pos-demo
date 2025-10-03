@@ -344,8 +344,14 @@ window.Views.POSView = ({
             });
             
             if (response.ok) {
+                const data = await response.json();
                 // Reload vouchers after refresh
                 await loadCustomerVouchers();
+                
+                // Show message if no vouchers were refreshed
+                if (data.message) {
+                    console.log('Voucher refresh info:', data.message);
+                }
             } else {
                 console.error('Failed to refresh vouchers');
             }
