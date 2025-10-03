@@ -795,7 +795,7 @@ window.Views.POSView = ({
                                         // Find the product and add it to cart
                                         const product = products.find(p => p.id === voucherError.requiredProductId);
                                         if (product) {
-                                            addToCart(product);
+                                            onAddToCart(product);
                                             setVoucherError(null);
                                         }
                                     },

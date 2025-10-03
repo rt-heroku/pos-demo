@@ -35,7 +35,7 @@
 
                 React.createElement('div', { key: 'content', className: 'space-y-4' }, [
                     React.createElement('div', { key: 'loyalty-input' }, [
-                        React.createElement('label', { className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Loyalty Number'),
+                        React.createElement('label', { key: 'loyalty-label', className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Loyalty Number'),
                         React.createElement('input', {
                             type: 'text',
                             value: loyaltyNumber,
