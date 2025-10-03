@@ -4774,8 +4774,21 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     
     const loyaltyNumber = customerResult.rows[0].loyalty_number;
     
+    // Get MuleSoft endpoint from system settings
+    const settingsResult = await pool.query(
+      'SELECT setting_value FROM system_settings WHERE setting_key = $1',
+      ['mulesoft_loyalty_sync_endpoint']
+    );
+
+    if (!settingsResult.rows.length || !settingsResult.rows[0].setting_value) {
+      return res.status(400).json({ error: 'MuleSoft endpoint not configured' });
+    }
+
+    const mulesoftEndpoint = settingsResult.rows[0].setting_value;
+    const vouchersUrl = `${mulesoftEndpoint}/members/vouchers?member=${loyaltyNumber}`;
+    
     // Call MuleSoft API
-    const mulesoftResponse = await fetch(`/members/vouchers?member=${loyaltyNumber}`, {
+    const mulesoftResponse = await fetch(vouchersUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

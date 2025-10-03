@@ -125,8 +125,8 @@ BEGIN
         RETURN FALSE;
     END IF;
     
-    -- Check if voucher has remaining value
-    IF v_voucher.remaining_value IS NOT NULL AND v_voucher.remaining_value <= 0 THEN
+    -- Check if voucher has remaining value (only for Value vouchers)
+    IF v_voucher.voucher_type = 'Value' AND v_voucher.remaining_value IS NOT NULL AND v_voucher.remaining_value <= 0 THEN
         RETURN FALSE;
     END IF;
     
