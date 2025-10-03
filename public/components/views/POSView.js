@@ -803,10 +803,16 @@ window.Views.POSView = ({
                                             // Clear the error immediately
                                             setVoucherError(null);
                                             
-                                            // Auto-apply the voucher after a short delay to allow cart to update
+                                            // Directly add the voucher to applied vouchers without re-validation
                                             setTimeout(() => {
                                                 if (voucherToApply) {
-                                                    handleApplyVoucher(voucherToApply);
+                                                    setAppliedVouchers(prev => {
+                                                        const isApplied = prev.find(v => v.id === voucherToApply.id);
+                                                        if (!isApplied) {
+                                                            return [...prev, voucherToApply];
+                                                        }
+                                                        return prev;
+                                                    });
                                                 }
                                             }, 100);
                                         }
