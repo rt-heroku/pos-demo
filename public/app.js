@@ -58,6 +58,10 @@ const POSApp = () => {
     const [transactions, setTransactions] = useState([]);
     const [locations, setLocations] = useState([]);
     const [selectedLocation, setSelectedLocation] = useState(null);
+    
+    // Voucher state for receipt
+    const [appliedVouchers, setAppliedVouchers] = useState([]);
+    const [voucherDiscounts, setVoucherDiscounts] = useState(0);
     const [userSettings, setUserSettings] = useState({
         theme_mode: 'light',
         selected_location_id: null
@@ -616,7 +620,7 @@ const POSApp = () => {
     const discount = discountType === 'percentage' 
         ? subtotal * (parseFloat(discountAmount) || 0) / 100
         : parseFloat(discountAmount) || 0;
-    const discountedSubtotal = Math.max(0, subtotal - discount);
+    const discountedSubtotal = Math.max(0, subtotal - discount - voucherDiscounts);
     const effectiveTaxRate = taxRate ? parseFloat(taxRate) / 100 : (selectedLocation?.tax_rate || 0.08);
     const tax = discountedSubtotal * effectiveTaxRate;
     const total = discountedSubtotal + tax;
@@ -1496,6 +1500,8 @@ const POSApp = () => {
                 tax, total,
                 taxRate, setTaxRate,
                 discount, discountAmount, setDiscountAmount,
+                appliedVouchers, setAppliedVouchers,
+                voucherDiscounts, setVoucherDiscounts,
                 discountType, setDiscountType,
                 paymentMethod, setPaymentMethod,
                 amountReceived, setAmountReceived,
@@ -1683,7 +1689,8 @@ const POSApp = () => {
             key: 'receipt-modal',
             show: showReceipt, onClose: () => setShowReceipt(false),
             transaction: lastTransaction, subtotal: discountedSubtotal, tax, total,
-            paymentMethod, amountReceived, change, discount
+            paymentMethod, amountReceived, change, discount,
+            appliedVouchers, voucherDiscounts
         }),
 
         React.createElement(window.Modals.ProductModal, {

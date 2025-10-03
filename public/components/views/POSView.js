@@ -80,7 +80,6 @@ window.Views.POSView = ({
     // Voucher state management
     const [vouchers, setVouchers] = React.useState([]);
     const [selectedVouchers, setSelectedVouchers] = React.useState([]);
-    const [appliedVouchers, setAppliedVouchers] = React.useState([]);
     const [voucherLoading, setVoucherLoading] = React.useState(false);
     const [showVoucherSelector, setShowVoucherSelector] = React.useState(false);
     const [showVoucherEditModal, setShowVoucherEditModal] = React.useState(false);
@@ -424,6 +423,11 @@ window.Views.POSView = ({
     };
 
     const voucherDiscounts = calculateVoucherDiscounts();
+    
+    // Update voucher discounts in parent component
+    React.useEffect(() => {
+        setVoucherDiscounts(voucherDiscounts);
+    }, [voucherDiscounts, setVoucherDiscounts]);
 
     // Helper function to get product image with priority order
     const getProductImage = (product) => {
