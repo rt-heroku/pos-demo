@@ -613,6 +613,8 @@ const POSApp = () => {
         setAmountReceived('');
         setDiscountAmount('');
         setLoyaltyNumber('');
+        setAppliedVouchers([]);
+        setVoucherDiscounts(0);
     };
 
     // Enhanced calculations with discount support
@@ -660,7 +662,9 @@ const POSApp = () => {
                 locationId: selectedLocation.id,
                 discountAmount: discount,
                 discountType: discountAmount ? discountType : null,
-                discountReason: discountAmount ? 'Manual discount' : null
+                discountReason: discountAmount ? 'Manual discount' : null,
+                appliedVouchers: appliedVouchers || [],
+                voucherDiscounts: voucherDiscounts || 0
             };
 
             // Add credit card info if applicable

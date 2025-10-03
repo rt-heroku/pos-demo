@@ -3181,7 +3181,9 @@ app.post('/api/transactions', async (req, res) => {
             discountReason = null,
             cardLastFour = null,
             cardType = null,
-            paymentReference = null
+            paymentReference = null,
+            appliedVouchers = [],
+            voucherDiscounts = 0
         } = req.body;
         
         if (!locationId) {
@@ -3213,6 +3215,51 @@ app.post('/api/transactions', async (req, res) => {
                 'INSERT INTO transaction_items (transaction_id, product_id, product_name, product_price, quantity, subtotal) VALUES ($1, $2, $3, $4, $5, $6)',
                 [transactionId, item.id, item.name, item.price, item.quantity, item.price * item.quantity]
             );
+        }
+        
+        // Process applied vouchers
+        if (appliedVouchers && appliedVouchers.length > 0) {
+            for (const voucher of appliedVouchers) {
+                // Validate voucher eligibility
+                const isEligible = await client.query(
+                    'SELECT is_voucher_eligible_for_transaction($1, $2) as is_eligible',
+                    [voucher.id, customerId]
+                );
+                
+                if (!isEligible.rows[0].is_eligible) {
+                    throw new Error(`Voucher ${voucher.name} is not eligible for this transaction`);
+                }
+                
+                // Calculate applied amount and discount amount
+                let appliedAmount = 0;
+                let discountAmount = 0;
+                
+                if (voucher.voucher_type === 'Value') {
+                    appliedAmount = voucher.applied_amount || voucher.remaining_value || 0;
+                    discountAmount = appliedAmount;
+                } else if (voucher.voucher_type === 'Discount') {
+                    appliedAmount = 0; // No amount applied for percentage discounts
+                    discountAmount = subtotal * (voucher.discount_percent / 100);
+                } else if (voucher.voucher_type === 'ProductSpecific') {
+                    // Find items that match this voucher's product
+                    const matchingItems = items.filter(item => item.id === voucher.product_id);
+                    const productSubtotal = matchingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    
+                    if (voucher.discount_percent) {
+                        appliedAmount = 0;
+                        discountAmount = productSubtotal * (voucher.discount_percent / 100);
+                    } else if (voucher.face_value) {
+                        appliedAmount = Math.min(voucher.face_value, productSubtotal);
+                        discountAmount = appliedAmount;
+                    }
+                }
+                
+                // Insert transaction voucher record
+                await client.query(`
+                    INSERT INTO transaction_vouchers (transaction_id, voucher_id, applied_amount, discount_amount)
+                    VALUES ($1, $2, $3, $4)
+                `, [transactionId, voucher.id, appliedAmount, discountAmount]);
+            }
         }
         
         await client.query('COMMIT');
