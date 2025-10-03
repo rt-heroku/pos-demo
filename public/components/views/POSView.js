@@ -644,32 +644,81 @@ window.Views.POSView = ({
                             }, 'Manage')
                         ]),
                         
-                        // Applied Vouchers - Compact
+                        // Applied Vouchers - Detailed Cards
                         appliedVouchers.length > 0 && React.createElement('div', { 
-                            key: 'applied-vouchers-compact', 
-                            className: 'space-y-1' 
+                            key: 'applied-vouchers-detailed', 
+                            className: 'space-y-3' 
                         }, appliedVouchers.map(voucher => 
                             React.createElement('div', { 
                                 key: voucher.id, 
-                                className: 'flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs' 
+                                className: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm' 
                             }, [
-                                React.createElement('div', { key: 'voucher-info', className: 'flex-1' }, [
-                                    React.createElement('div', { key: 'voucher-code', className: 'font-medium text-gray-900 dark:text-white' }, voucher.voucher_code),
-                                    React.createElement('div', { key: 'voucher-value', className: 'text-green-600 dark:text-green-400' }, 
-                                        voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
-                                        voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
-                                        'Product voucher'
-                                    ),
-                                    voucher.expiration_date && React.createElement('div', { 
-                                        key: 'voucher-expiry', 
-                                        className: 'text-xs text-gray-500 dark:text-gray-400' 
-                                    }, `Expires: ${new Date(voucher.expiration_date).toLocaleDateString()}`)
+                                // Voucher Header
+                                React.createElement('div', { 
+                                    key: 'voucher-header', 
+                                    className: 'flex items-start justify-between mb-3' 
+                                }, [
+                                    React.createElement('div', { key: 'voucher-info', className: 'flex-1' }, [
+                                        React.createElement('div', { 
+                                            key: 'voucher-code', 
+                                            className: 'font-bold text-lg text-gray-900 dark:text-white mb-1' 
+                                        }, voucher.voucher_code),
+                                        React.createElement('div', { 
+                                            key: 'voucher-name', 
+                                            className: 'text-sm text-gray-600 dark:text-gray-400 font-medium' 
+                                        }, voucher.name || 'Applied Voucher')
+                                    ]),
+                                    React.createElement('button', {
+                                        key: 'remove-btn',
+                                        onClick: () => handleRemoveVoucher(voucher),
+                                        className: 'text-red-500 hover:text-red-700 text-sm font-medium'
+                                    }, 'Remove')
                                 ]),
-                                React.createElement('button', {
-                                    key: 'remove-btn',
-                                    onClick: () => handleRemoveVoucher(voucher),
-                                    className: 'text-red-500 hover:text-red-700 text-xs'
-                                }, '×')
+
+                                // Voucher Value
+                                React.createElement('div', { 
+                                    key: 'voucher-value', 
+                                    className: 'text-xl font-bold text-gray-900 dark:text-white mb-3 text-center py-2 bg-gray-100 dark:bg-gray-700 rounded-lg' 
+                                }, 
+                                    voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
+                                    voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
+                                    'Product voucher'
+                                ),
+
+                                // Voucher Details
+                                React.createElement('div', { 
+                                    key: 'voucher-details', 
+                                    className: 'space-y-2 text-sm' 
+                                }, [
+                                    React.createElement('div', { 
+                                        key: 'type', 
+                                        className: 'flex justify-between items-center py-1 border-b border-gray-200 dark:border-gray-600' 
+                                    }, [
+                                        React.createElement('span', { key: 'type-label', className: 'text-gray-600 dark:text-gray-400' }, 'Type:'),
+                                        React.createElement('span', { key: 'type-value', className: 'font-medium text-gray-900 dark:text-white' }, voucher.voucher_type)
+                                    ]),
+                                    voucher.expiration_date && React.createElement('div', { 
+                                        key: 'expires', 
+                                        className: 'flex justify-between items-center py-1 border-b border-gray-200 dark:border-gray-600' 
+                                    }, [
+                                        React.createElement('span', { key: 'expires-label', className: 'text-gray-600 dark:text-gray-400' }, 'Expires:'),
+                                        React.createElement('span', { 
+                                            key: 'expires-value', 
+                                            className: `font-medium ${
+                                                new Date(voucher.expiration_date) < new Date() 
+                                                    ? 'text-red-600 dark:text-red-400' 
+                                                    : 'text-gray-900 dark:text-white'
+                                            }` 
+                                        }, new Date(voucher.expiration_date).toLocaleDateString())
+                                    ]),
+                                    voucher.description && React.createElement('div', { 
+                                        key: 'description', 
+                                        className: 'mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg' 
+                                    }, [
+                                        React.createElement('div', { key: 'desc-label', className: 'text-xs text-gray-500 dark:text-gray-400 mb-1' }, 'Description:'),
+                                        React.createElement('div', { key: 'desc-value', className: 'text-sm text-gray-700 dark:text-gray-300' }, voucher.description)
+                                    ])
+                                ])
                             ])
                         )),
                         
@@ -935,16 +984,16 @@ window.Views.POSView = ({
                 ])
             ])
         ]),
-        // Voucher Modals
-        showVoucherSelector && React.createElement(window.Components.VoucherSelector, {
-            key: 'voucher-selector',
+        // Voucher Management Modal
+        React.createElement(window.Components.VoucherManagementModal, {
+            key: 'voucher-management-modal',
             customer: selectedCustomer,
             vouchers,
-            selectedVouchers,
-            onVoucherSelect: handleVoucherSelect,
-            onVoucherDeselect: handleVoucherSelect,
+            appliedVouchers,
             onApplyVoucher: handleApplyVoucher,
             onRemoveVoucher: handleRemoveVoucher,
+            isOpen: showVoucherSelector,
+            onClose: () => setShowVoucherSelector(false),
             loading: voucherLoading
         }),
 
