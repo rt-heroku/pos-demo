@@ -53,7 +53,7 @@ window.Modals.ReceiptModal = function ReceiptModal({
             React.createElement('div', { key: 'totals', className: 'border-t dark:border-gray-600 pt-4 space-y-1' }, [
                 React.createElement('div', { key: 'subtotal', className: 'flex justify-between text-gray-900 dark:text-gray-100' }, [
                     React.createElement('span', { key: 'label' }, 'Subtotal:'),
-                    React.createElement('span', { key: 'value' }, `$${subtotal.toFixed(2)}`)
+                    React.createElement('span', { key: 'value' }, `$${(subtotal || 0).toFixed(2)}`)
                 ]),
                 voucherDiscounts && voucherDiscounts > 0 && React.createElement('div', { key: 'voucher-discount', className: 'flex justify-between text-green-600 dark:text-green-400' }, [
                     React.createElement('span', { key: 'label' }, 'Voucher Discount:'),
@@ -61,11 +61,11 @@ window.Modals.ReceiptModal = function ReceiptModal({
                 ]),
                 React.createElement('div', { key: 'tax', className: 'flex justify-between text-gray-900 dark:text-gray-100' }, [
                     React.createElement('span', { key: 'label' }, 'Tax:'),
-                    React.createElement('span', { key: 'value' }, `$${tax.toFixed(2)}`)
+                    React.createElement('span', { key: 'value' }, `$${(tax || 0).toFixed(2)}`)
                 ]),
                 React.createElement('div', { key: 'total', className: 'flex justify-between font-bold text-lg text-gray-900 dark:text-gray-100' }, [
                     React.createElement('span', { key: 'label' }, 'Total:'),
-                    React.createElement('span', { key: 'value' }, `$${total.toFixed(2)}`)
+                    React.createElement('span', { key: 'value' }, `$${(total || 0).toFixed(2)}`)
                 ]),
                 paymentMethod === 'cash' && amountReceived && [
                     React.createElement('div', { key: 'received', className: 'flex justify-between' }, [
