@@ -10,8 +10,6 @@ CREATE TABLE customer_vouchers (
     name VARCHAR(255) NOT NULL,
     status VARCHAR(50) DEFAULT 'Issued' CHECK (status IN ('Issued', 'Redeemed', 'Expired', 'Cancelled', 'Reserved')),
     
-    -- Voucher Definition Fields
-    voucher_definition_id VARCHAR(100), -- Salesforce VoucherDefinition ID
     voucher_type VARCHAR(50) NOT NULL CHECK (voucher_type IN ('Value', 'Discount', 'ProductSpecific')),
     face_value DECIMAL(10,2), -- Original value for value vouchers
     discount_percent DECIMAL(5,2), -- Percentage discount (0-100)

@@ -4790,7 +4790,7 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     }
 
     const mulesoftEndpoint = settingsResult.rows[0].setting_value;
-    const vouchersUrl = `${mulesoftEndpoint}/members/vouchers?member=${loyaltyNumber}`;
+    const vouchersUrl = `${mulesoftEndpoint}/members/vouchers?member=${id}`;
     
     // Call MuleSoft API
     const mulesoftResponse = await fetch(vouchersUrl, {
