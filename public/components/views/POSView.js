@@ -290,7 +290,7 @@ window.Views.POSView = ({
 
     const handleApplyVoucher = (voucher, skipValidation = false) => {
         // Check if voucher is already applied
-        if (appliedVouchers.find(v => v.id === voucher.id)) {
+        if ((appliedVouchers || []).find(v => v.id === voucher.id)) {
             return;
         }
 
@@ -384,7 +384,7 @@ window.Views.POSView = ({
     const calculateVoucherDiscounts = () => {
         let totalDiscount = 0;
         
-        appliedVouchers.forEach(voucher => {
+        (appliedVouchers || []).forEach(voucher => {
             switch (voucher.voucher_type) {
                 case 'Value':
                     const valueAmount = voucher.applied_amount || voucher.remaining_value || 0;
@@ -699,10 +699,10 @@ window.Views.POSView = ({
                         ]),
                         
                         // Applied Vouchers - Detailed Cards
-                        appliedVouchers.length > 0 && React.createElement('div', { 
+                        (appliedVouchers || []).length > 0 && React.createElement('div', { 
                             key: 'applied-vouchers-detailed', 
                             className: 'space-y-3' 
-                        }, appliedVouchers.map(voucher => 
+                        }, (appliedVouchers || []).map(voucher => 
                             React.createElement('div', { 
                                 key: voucher.id, 
                                 className: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm' 
@@ -829,7 +829,7 @@ window.Views.POSView = ({
                         ]),
 
                         // Available Vouchers - Compact
-                        vouchers.length > 0 && appliedVouchers.length === 0 && !voucherError && React.createElement('div', { 
+                        vouchers.length > 0 && (appliedVouchers || []).length === 0 && !voucherError && React.createElement('div', { 
                             key: 'available-vouchers-compact', 
                             className: 'space-y-1 max-h-32 overflow-y-auto' 
                         }, vouchers.slice(0, 3).map(voucher => 
@@ -848,7 +848,7 @@ window.Views.POSView = ({
                         )),
                         
                         // No vouchers message
-                        appliedVouchers.length === 0 && vouchers.length === 0 && !voucherLoading && React.createElement('div', { 
+                        (appliedVouchers || []).length === 0 && vouchers.length === 0 && !voucherLoading && React.createElement('div', { 
                             key: 'no-vouchers', 
                             className: 'text-center py-2 text-gray-500 dark:text-gray-400 text-xs' 
                         }, 'No vouchers available'),
