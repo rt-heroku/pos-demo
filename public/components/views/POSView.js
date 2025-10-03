@@ -86,7 +86,6 @@ window.Views.POSView = ({
     const [showVoucherEditModal, setShowVoucherEditModal] = React.useState(false);
     const [editingVoucher, setEditingVoucher] = React.useState(null);
     const [voucherError, setVoucherError] = React.useState(null);
-    const [isApplyingVoucher, setIsApplyingVoucher] = React.useState(false);
 
     // Credit card validation functions
     const validateCreditCard = (cardNumber) => {
@@ -296,26 +295,20 @@ window.Views.POSView = ({
             return;
         }
 
-        // Skip validation if we're in the process of applying a voucher (to prevent loops)
-        if (!isApplyingVoucher) {
-            // For product-specific vouchers, check if the product is in cart
-            if (voucher.voucher_type === 'ProductSpecific' && voucher.product_id) {
-                const productInCart = cart.find(item => item.product_id === voucher.product_id);
-                if (!productInCart) {
-                    // Show error message and don't apply voucher
-                    setVoucherError({
-                        type: 'product_required',
-                        message: `This voucher requires "${voucher.product_name || 'the specified product'}" to be in your cart.`,
-                        voucher: voucher,
-                        requiredProductId: voucher.product_id
-                    });
-                    return;
-                }
+        // For product-specific vouchers, always check if the product is in cart
+        if (voucher.voucher_type === 'ProductSpecific' && voucher.product_id) {
+            const productInCart = cart.find(item => item.product_id === voucher.product_id);
+            if (!productInCart) {
+                // Show error message and don't apply voucher
+                setVoucherError({
+                    type: 'product_required',
+                    message: `This voucher requires "${voucher.product_name || 'the specified product'}" to be in your cart.`,
+                    voucher: voucher,
+                    requiredProductId: voucher.product_id
+                });
+                return;
             }
         }
-
-        // Set flag to prevent validation loops
-        setIsApplyingVoucher(true);
 
         // Apply the voucher
         setAppliedVouchers(prev => {
@@ -329,11 +322,6 @@ window.Views.POSView = ({
         // Clear any previous errors
         setVoucherError(null);
         setShowVoucherSelector(false);
-        
-        // Reset flag after a short delay
-        setTimeout(() => {
-            setIsApplyingVoucher(false);
-        }, 200);
     };
 
     const handleRemoveVoucher = (voucher) => {
