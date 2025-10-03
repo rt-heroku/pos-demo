@@ -60,7 +60,11 @@ window.Views.POSView = ({
     setAmountReceived,
     change,
     onProcessPayment,
-    loading
+    loading,
+    appliedVouchers,
+    setAppliedVouchers,
+    voucherDiscounts,
+    setVoucherDiscounts
 }) => {
     const { ShoppingCart, Search, Users, Plus, Minus, X, CreditCard, DollarSign, Percent } = window.Icons;
 
@@ -422,12 +426,12 @@ window.Views.POSView = ({
         return totalDiscount;
     };
 
-    const voucherDiscounts = calculateVoucherDiscounts();
+    const calculatedVoucherDiscounts = calculateVoucherDiscounts();
     
     // Update voucher discounts in parent component
     React.useEffect(() => {
-        setVoucherDiscounts(voucherDiscounts);
-    }, [voucherDiscounts, setVoucherDiscounts]);
+        setVoucherDiscounts(calculatedVoucherDiscounts);
+    }, [calculatedVoucherDiscounts, setVoucherDiscounts]);
 
     // Helper function to get product image with priority order
     const getProductImage = (product) => {
