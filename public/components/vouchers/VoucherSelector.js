@@ -120,59 +120,38 @@ window.Components.VoucherSelector = function({
             React.createElement('div', { key: 'message' }, 'No vouchers available')
         ]),
 
-        // Voucher Groups
+        // Simple Voucher List
         !loading && filteredVouchers.length > 0 && React.createElement('div', { 
             key: 'vouchers', 
-            className: 'space-y-6' 
-        }, [
-            ...Object.entries(groupedVouchers).map(([type, typeVouchers]) => 
-                typeVouchers.length > 0 && React.createElement('div', { key: type }, [
-                    // Type Header
-                    React.createElement('div', { 
-                        key: 'type-header', 
-                        className: 'flex items-center justify-between mb-3' 
-                    }, [
-                        React.createElement('h4', { 
-                            key: 'type-title', 
-                            className: 'font-medium text-gray-900 dark:text-white' 
-                        }, getTypeDisplayName(type)),
-                        React.createElement('span', { 
-                            key: 'type-count', 
-                            className: 'text-sm text-gray-500 dark:text-gray-400' 
-                        }, `${typeVouchers.length} available`)
-                    ]),
-
-                    // Voucher Cards - Compact
-                    React.createElement('div', { 
-                        key: 'voucher-cards', 
-                        className: 'space-y-2' 
-                    }, typeVouchers.map(voucher => 
-                        React.createElement('div', { 
-                            key: voucher.id, 
-                            className: 'flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors' 
-                        }, [
-                            React.createElement('div', { key: 'voucher-info', className: 'flex-1' }, [
-                                React.createElement('div', { key: 'voucher-code', className: 'font-medium text-gray-900 dark:text-white text-sm' }, voucher.voucher_code),
-                                React.createElement('div', { key: 'voucher-name', className: 'text-xs text-gray-600 dark:text-gray-400' }, voucher.name),
-                                React.createElement('div', { key: 'voucher-value', className: 'text-sm text-blue-600 dark:text-blue-400' }, 
-                                    voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
-                                    voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
-                                    'Product voucher'
-                                )
-                            ]),
-                            React.createElement('button', {
-                                key: 'action-btn',
-                                onClick: isVoucherApplied(voucher) ? () => handleRemoveVoucher(voucher) : () => handleApplyVoucher(voucher),
-                                className: `px-3 py-1 text-xs rounded transition-colors ${
-                                    isVoucherApplied(voucher) 
-                                        ? 'bg-red-500 text-white hover:bg-red-600' 
-                                        : 'bg-green-500 text-white hover:bg-green-600'
-                                }`
-                            }, isVoucherApplied(voucher) ? 'Remove' : 'Apply')
-                        ])
-                    ))
-                ])
-            )
-        ])
+            className: 'space-y-2' 
+        }, filteredVouchers.map(voucher => 
+            React.createElement('div', { 
+                key: voucher.id, 
+                className: 'flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors' 
+            }, [
+                React.createElement('div', { key: 'voucher-info', className: 'flex-1' }, [
+                    React.createElement('div', { key: 'voucher-code', className: 'font-medium text-gray-900 dark:text-white text-sm' }, voucher.voucher_code),
+                    React.createElement('div', { key: 'voucher-name', className: 'text-xs text-gray-600 dark:text-gray-400' }, voucher.name),
+                    React.createElement('div', { key: 'voucher-value', className: 'text-sm text-blue-600 dark:text-blue-400' }, 
+                        voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
+                        voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
+                        'Product voucher'
+                    ),
+                    voucher.expiration_date && React.createElement('div', { 
+                        key: 'voucher-expiry', 
+                        className: 'text-xs text-gray-500 dark:text-gray-400' 
+                    }, `Expires: ${new Date(voucher.expiration_date).toLocaleDateString()}`)
+                ]),
+                React.createElement('button', {
+                    key: 'action-btn',
+                    onClick: isVoucherApplied(voucher) ? () => handleRemoveVoucher(voucher) : () => handleApplyVoucher(voucher),
+                    className: `px-3 py-1 text-xs rounded transition-colors ${
+                        isVoucherApplied(voucher) 
+                            ? 'bg-red-500 text-white hover:bg-red-600' 
+                            : 'bg-green-500 text-white hover:bg-green-600'
+                    }`
+                }, isVoucherApplied(voucher) ? 'Remove' : 'Apply')
+            ])
+        ))
     ]);
 };

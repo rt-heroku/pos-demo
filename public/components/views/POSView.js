@@ -659,7 +659,11 @@ window.Views.POSView = ({
                                         voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
                                         voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
                                         'Product voucher'
-                                    )
+                                    ),
+                                    voucher.expiration_date && React.createElement('div', { 
+                                        key: 'voucher-expiry', 
+                                        className: 'text-xs text-gray-500 dark:text-gray-400' 
+                                    }, `Expires: ${new Date(voucher.expiration_date).toLocaleDateString()}`)
                                 ]),
                                 React.createElement('button', {
                                     key: 'remove-btn',
