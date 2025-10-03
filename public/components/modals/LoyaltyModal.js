@@ -25,8 +25,9 @@
         }, [
             React.createElement('div', { key: 'modal', className: 'bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full' }, [
                 React.createElement('div', { key: 'header', className: 'flex justify-between items-center mb-6' }, [
-                    React.createElement('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white' }, 'Loyalty Customer'),
+                    React.createElement('h2', { key: 'title', className: 'text-xl font-bold text-gray-900 dark:text-white' }, 'Loyalty Customer'),
                     React.createElement('button', {
+                        key: 'close-btn',
                         onClick: onClose,
                         className: 'text-gray-400 hover:text-gray-600'
                     }, React.createElement(X, { size: 24 }))

@@ -28,14 +28,16 @@ window.Components.VoucherCard = function({ voucher, isSelected, onSelect, onDese
     const getVoucherValue = () => {
         switch (voucher_type) {
             case 'Value':
-                return `$${remaining_value?.toFixed(2) || face_value?.toFixed(2) || '0.00'}`;
+                const remaining = parseFloat(remaining_value) || 0;
+                const face = parseFloat(face_value) || 0;
+                return `$${(remaining || face).toFixed(2)}`;
             case 'Discount':
                 return `${discount_percent}% off`;
             case 'ProductSpecific':
                 if (discount_percent) {
                     return `${discount_percent}% off ${product_name || 'product'}`;
                 } else if (face_value) {
-                    return `$${face_value.toFixed(2)} off ${product_name || 'product'}`;
+                    return `$${parseFloat(face_value).toFixed(2)} off ${product_name || 'product'}`;
                 }
                 return `Free ${product_name || 'item'}`;
             default:

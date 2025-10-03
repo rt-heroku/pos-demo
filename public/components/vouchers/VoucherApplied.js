@@ -21,14 +21,16 @@ window.Components.VoucherApplied = function({
     const getVoucherValue = (voucher) => {
         switch (voucher.voucher_type) {
             case 'Value':
-                return `$${voucher.remaining_value?.toFixed(2) || voucher.face_value?.toFixed(2) || '0.00'}`;
+                const remaining = parseFloat(voucher.remaining_value) || 0;
+                const face = parseFloat(voucher.face_value) || 0;
+                return `$${(remaining || face).toFixed(2)}`;
             case 'Discount':
                 return `${voucher.discount_percent}% off`;
             case 'ProductSpecific':
                 if (voucher.discount_percent) {
                     return `${voucher.discount_percent}% off`;
                 } else if (voucher.face_value) {
-                    return `$${voucher.face_value.toFixed(2)} off`;
+                    return `$${parseFloat(voucher.face_value).toFixed(2)} off`;
                 }
                 return 'Free';
             default:
