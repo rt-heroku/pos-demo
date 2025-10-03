@@ -707,7 +707,7 @@ window.Views.POSView = ({
                     ])
                 ]),
 
-
+                cart.length > 0 && React.createElement(React.Fragment, { key: 'totals-section' }, [
                     // Totals Section
                     React.createElement('div', { key: 'totals', className: 'border-t dark:border-gray-600 pt-4 space-y-2 mb-6' }, [
                         React.createElement('div', { key: 'subtotal', className: 'flex justify-between dark:text-white' }, [
@@ -931,7 +931,6 @@ window.Views.POSView = ({
                 ])
             ])
         ]),
-
         // Voucher Modals
         showVoucherSelector && React.createElement(window.Components.VoucherSelector, {
             key: 'voucher-selector',
