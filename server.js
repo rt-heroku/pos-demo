@@ -4710,6 +4710,86 @@ app.get('/api/customers/:id/vouchers/all', async (req, res) => {
   }
 });
 
+// Refresh vouchers from MuleSoft API
+app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get customer loyalty number
+    const customerResult = await pool.query(
+      'SELECT loyalty_number FROM customers WHERE id = $1',
+      [id]
+    );
+    
+    if (customerResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    
+    const loyaltyNumber = customerResult.rows[0].loyalty_number;
+    
+    // Call MuleSoft API
+    const mulesoftResponse = await fetch(`/members/vouchers?member=${loyaltyNumber}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add any required authentication headers here
+      }
+    });
+    
+    if (!mulesoftResponse.ok) {
+      throw new Error(`MuleSoft API error: ${mulesoftResponse.status}`);
+    }
+    
+    const mulesoftData = await mulesoftResponse.json();
+    
+    // Clear existing vouchers for this customer
+    await pool.query('DELETE FROM customer_vouchers WHERE customer_id = $1', [id]);
+    
+    // Insert new vouchers from MuleSoft
+    const vouchers = mulesoftData.vouchers || [];
+    for (const voucher of vouchers) {
+      await pool.query(`
+        INSERT INTO customer_vouchers (
+          sf_id, customer_id, voucher_code, name, status, voucher_type,
+          face_value, discount_percent, product_id, remaining_value,
+          description, image_url, is_active, effective_date, expiration_date,
+          created_date, use_date
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      `, [
+        voucher.Id,
+        id,
+        voucher.VoucherCode,
+        voucher.Name,
+        voucher.Status,
+        voucher.VoucherDefinition?.Type === 'ProductOrService' ? 'ProductSpecific' : 
+        voucher.DiscountPercent ? 'Discount' : 'Value',
+        voucher.VoucherDefinition?.FaceValue,
+        voucher.DiscountPercent,
+        voucher.VoucherDefinition?.ProductId ? 
+          (await pool.query('SELECT id FROM products WHERE sf_id = $1', [voucher.VoucherDefinition.ProductId])).rows[0]?.id : null,
+        voucher.RemainingValue,
+        voucher.VoucherDefinition?.Description,
+        voucher.VoucherDefinition?.ImageUrl,
+        voucher.VoucherDefinition?.IsActive === 'true',
+        voucher.VoucherDefinition?.EffectiveDate,
+        voucher.ExpirationDate,
+        voucher.CreatedDate,
+        voucher.UseDate
+      ]);
+    }
+    
+    res.json({
+      success: true,
+      message: `Refreshed ${vouchers.length} vouchers from MuleSoft`,
+      vouchers: vouchers.length
+    });
+    
+  } catch (error) {
+    console.error('Error refreshing vouchers from MuleSoft:', error);
+    res.status(500).json({ error: 'Failed to refresh vouchers from MuleSoft' });
+  }
+});
+
 // Get specific voucher details
 app.get('/api/vouchers/:id', async (req, res) => {
   try {

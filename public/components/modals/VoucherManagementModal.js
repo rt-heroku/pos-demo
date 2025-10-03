@@ -8,6 +8,7 @@ window.Components.VoucherManagementModal = function({
     appliedVouchers = [],
     onApplyVoucher,
     onRemoveVoucher,
+    onRefreshVouchers,
     isOpen,
     onClose,
     loading = false 
@@ -60,17 +61,42 @@ window.Components.VoucherManagementModal = function({
                 key: 'header', 
                 className: 'flex items-center justify-between p-6 border-b dark:border-gray-700' 
             }, [
-                React.createElement('div', { key: 'title-section', className: 'flex items-center gap-4' }, [
-                    React.createElement('div', { key: 'voucher-icon', className: 'text-2xl' }, '🎫'),
-                    React.createElement('div', { key: 'title-info' }, [
-                        React.createElement('h2', { 
-                            key: 'title', 
-                            className: 'text-xl font-bold text-gray-900 dark:text-white' 
-                        }, 'Available Vouchers'),
-                        customer && React.createElement('p', { 
-                            key: 'subtitle', 
-                            className: 'text-gray-600 dark:text-gray-400' 
-                        }, `For: ${customer.name} (${customer.loyalty_number})`)
+                React.createElement('div', { key: 'title-section', className: 'flex items-center justify-between w-full' }, [
+                    React.createElement('div', { key: 'title-left', className: 'flex items-center gap-4' }, [
+                        React.createElement('div', { key: 'voucher-icon', className: 'text-2xl' }, '🎫'),
+                        React.createElement('div', { key: 'title-info' }, [
+                            React.createElement('h2', { 
+                                key: 'title', 
+                                className: 'text-xl font-bold text-gray-900 dark:text-white' 
+                            }, 'Available Vouchers'),
+                            customer && React.createElement('p', { 
+                                key: 'subtitle', 
+                                className: 'text-gray-600 dark:text-gray-400' 
+                            }, `For: ${customer.name} (${customer.loyalty_number})`)
+                        ])
+                    ]),
+                    React.createElement('button', {
+                        key: 'refresh-btn',
+                        onClick: onRefreshVouchers,
+                        disabled: loading,
+                        className: 'flex items-center gap-2 px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
+                    }, [
+                        React.createElement('svg', {
+                            key: 'refresh-icon',
+                            className: `w-4 h-4 ${loading ? 'animate-spin' : ''}`,
+                            fill: 'none',
+                            stroke: 'currentColor',
+                            viewBox: '0 0 24 24'
+                        }, [
+                            React.createElement('path', {
+                                key: 'path',
+                                strokeLinecap: 'round',
+                                strokeLinejoin: 'round',
+                                strokeWidth: 2,
+                                d: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                            })
+                        ]),
+                        React.createElement('span', { key: 'refresh-text' }, loading ? 'Refreshing...' : 'Refresh')
                     ])
                 ]),
                 React.createElement('button', {

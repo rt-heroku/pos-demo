@@ -85,6 +85,7 @@ window.Views.POSView = ({
     const [showVoucherSelector, setShowVoucherSelector] = React.useState(false);
     const [showVoucherEditModal, setShowVoucherEditModal] = React.useState(false);
     const [editingVoucher, setEditingVoucher] = React.useState(null);
+    const [voucherError, setVoucherError] = React.useState(null);
 
     // Credit card validation functions
     const validateCreditCard = (cardNumber) => {
@@ -289,6 +290,26 @@ window.Views.POSView = ({
     };
 
     const handleApplyVoucher = (voucher) => {
+        // Check if voucher is already applied
+        if (appliedVouchers.find(v => v.id === voucher.id)) {
+            return;
+        }
+
+        // For product-specific vouchers, check if the product is in cart
+        if (voucher.voucher_type === 'ProductSpecific' && voucher.product_id) {
+            const productInCart = cart.find(item => item.product_id === voucher.product_id);
+            if (!productInCart) {
+                // Show error message and don't apply voucher
+                setVoucherError({
+                    type: 'product_required',
+                    message: `This voucher requires "${voucher.product_name || 'the specified product'}" to be in your cart.`,
+                    voucher: voucher,
+                    requiredProductId: voucher.product_id
+                });
+                return;
+            }
+        }
+
         setAppliedVouchers(prev => {
             const isApplied = prev.find(v => v.id === voucher.id);
             if (!isApplied) {
@@ -296,11 +317,37 @@ window.Views.POSView = ({
             }
             return prev;
         });
+        setVoucherError(null); // Clear any previous errors
         setShowVoucherSelector(false);
     };
 
     const handleRemoveVoucher = (voucher) => {
         setAppliedVouchers(prev => prev.filter(v => v.id !== voucher.id));
+    };
+
+    const handleRefreshVouchers = async () => {
+        if (!selectedCustomer) return;
+        
+        setVoucherLoading(true);
+        try {
+            const response = await fetch(`/api/customers/${selectedCustomer.id}/vouchers/refresh`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Reload vouchers after refresh
+                await loadCustomerVouchers();
+            } else {
+                console.error('Failed to refresh vouchers');
+            }
+        } catch (error) {
+            console.error('Error refreshing vouchers:', error);
+        } finally {
+            setVoucherLoading(false);
+        }
     };
 
     const handleEditVoucher = (voucher) => {
@@ -722,8 +769,48 @@ window.Views.POSView = ({
                             ])
                         )),
                         
+                        // Voucher Error Display
+                        voucherError && React.createElement('div', { 
+                            key: 'voucher-error', 
+                            className: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-3' 
+                        }, [
+                            React.createElement('div', { 
+                                key: 'error-header', 
+                                className: 'flex items-center gap-2 mb-2' 
+                            }, [
+                                React.createElement('span', { key: 'error-icon', className: 'text-red-500' }, '⚠️'),
+                                React.createElement('span', { key: 'error-title', className: 'font-medium text-red-800 dark:text-red-200' }, 'Voucher Error')
+                            ]),
+                            React.createElement('div', { 
+                                key: 'error-message', 
+                                className: 'text-sm text-red-700 dark:text-red-300 mb-3' 
+                            }, voucherError.message),
+                            voucherError.type === 'product_required' && React.createElement('div', { 
+                                key: 'error-actions', 
+                                className: 'flex gap-2' 
+                            }, [
+                                React.createElement('button', {
+                                    key: 'add-product-btn',
+                                    onClick: () => {
+                                        // Find the product and add it to cart
+                                        const product = products.find(p => p.id === voucherError.requiredProductId);
+                                        if (product) {
+                                            addToCart(product);
+                                            setVoucherError(null);
+                                        }
+                                    },
+                                    className: 'px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors'
+                                }, 'Add Required Product'),
+                                React.createElement('button', {
+                                    key: 'dismiss-btn',
+                                    onClick: () => setVoucherError(null),
+                                    className: 'px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors'
+                                }, 'Dismiss')
+                            ])
+                        ]),
+
                         // Available Vouchers - Compact
-                        vouchers.length > 0 && appliedVouchers.length === 0 && React.createElement('div', { 
+                        vouchers.length > 0 && appliedVouchers.length === 0 && !voucherError && React.createElement('div', { 
                             key: 'available-vouchers-compact', 
                             className: 'space-y-1 max-h-32 overflow-y-auto' 
                         }, vouchers.slice(0, 3).map(voucher => 
@@ -992,6 +1079,7 @@ window.Views.POSView = ({
             appliedVouchers,
             onApplyVoucher: handleApplyVoucher,
             onRemoveVoucher: handleRemoveVoucher,
+            onRefreshVouchers: handleRefreshVouchers,
             isOpen: showVoucherSelector,
             onClose: () => setShowVoucherSelector(false),
             loading: voucherLoading
