@@ -1692,7 +1692,7 @@ const POSApp = () => {
         React.createElement(window.Modals.ReceiptModal, { 
             key: 'receipt-modal',
             show: showReceipt, onClose: () => setShowReceipt(false),
-            transaction: lastTransaction, subtotal: discountedSubtotal, tax, total,
+            transaction: lastTransaction, subtotal: subtotal, tax, total,
             paymentMethod, amountReceived, change, discount,
             appliedVouchers, voucherDiscounts
         }),

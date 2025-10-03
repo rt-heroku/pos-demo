@@ -47,6 +47,7 @@
                     ]),
 
                     React.createElement('button', {
+                        key: 'search-btn',
                         onClick: () => onSearchByLoyalty(loyaltyNumber),
                         disabled: !loyaltyNumber.trim() || loading,
                         className: 'w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition-colors'

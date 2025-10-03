@@ -3238,16 +3238,16 @@ app.post('/api/transactions', async (req, res) => {
                     appliedAmount = voucher.applied_amount || voucher.remaining_value || 0;
                     discountAmount = appliedAmount;
                 } else if (voucher.voucher_type === 'Discount') {
-                    appliedAmount = 0; // No amount applied for percentage discounts
-                    discountAmount = subtotal * (voucher.discount_percent / 100);
+                    appliedAmount = subtotal * (voucher.discount_percent / 100); // Track discount amount as applied
+                    discountAmount = appliedAmount;
                 } else if (voucher.voucher_type === 'ProductSpecific') {
                     // Find items that match this voucher's product
                     const matchingItems = items.filter(item => item.id === voucher.product_id);
                     const productSubtotal = matchingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     
                     if (voucher.discount_percent) {
-                        appliedAmount = 0;
-                        discountAmount = productSubtotal * (voucher.discount_percent / 100);
+                        appliedAmount = productSubtotal * (voucher.discount_percent / 100); // Track discount amount as applied
+                        discountAmount = appliedAmount;
                     } else if (voucher.face_value) {
                         appliedAmount = Math.min(voucher.face_value, productSubtotal);
                         discountAmount = appliedAmount;
