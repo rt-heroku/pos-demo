@@ -289,14 +289,14 @@ window.Views.POSView = ({
         });
     };
 
-    const handleApplyVoucher = (voucher) => {
+    const handleApplyVoucher = (voucher, skipValidation = false) => {
         // Check if voucher is already applied
         if (appliedVouchers.find(v => v.id === voucher.id)) {
             return;
         }
 
-        // For product-specific vouchers, always check if the product is in cart
-        if (voucher.voucher_type === 'ProductSpecific' && voucher.product_id) {
+        // For product-specific vouchers, check if the product is in cart (unless skipping validation)
+        if (!skipValidation && voucher.voucher_type === 'ProductSpecific' && voucher.product_id) {
             const productInCart = cart.find(item => item.product_id === voucher.product_id);
             if (!productInCart) {
                 // Show error message and don't apply voucher
@@ -809,7 +809,7 @@ window.Views.POSView = ({
                                             // Apply the voucher after a short delay to allow cart to update
                                             setTimeout(() => {
                                                 if (voucherToApply) {
-                                                    handleApplyVoucher(voucherToApply);
+                                                    handleApplyVoucher(voucherToApply, true); // Skip validation since we just added the product
                                                 }
                                             }, 100);
                                         }
