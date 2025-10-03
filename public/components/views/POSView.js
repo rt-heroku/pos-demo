@@ -327,6 +327,7 @@ window.Views.POSView = ({
             setVouchers([]);
             setSelectedVouchers([]);
             setAppliedVouchers([]);
+            setShowVoucherSelector(false);
         }
     }, [selectedCustomer]);
 
@@ -553,53 +554,6 @@ window.Views.POSView = ({
                     )
                 ]),
 
-                // Voucher Section
-                selectedCustomer && React.createElement(React.Fragment, { key: 'voucher-section' }, [
-                    React.createElement('div', { key: 'voucher-header', className: 'mb-4' }, [
-                        React.createElement('div', { key: 'voucher-title', className: 'flex items-center justify-between mb-3' }, [
-                            React.createElement('h4', { 
-                                key: 'voucher-title-text', 
-                                className: 'font-medium text-gray-900 dark:text-white flex items-center gap-2' 
-                            }, [
-                                React.createElement('span', { key: 'voucher-icon' }, '🎫'),
-                                'Vouchers'
-                            ]),
-                            React.createElement('button', {
-                                key: 'manage-vouchers-btn',
-                                onClick: () => setShowVoucherSelector(true),
-                                className: 'text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors'
-                            }, 'Manage')
-                        ]),
-                        
-                        // Applied Vouchers
-                        appliedVouchers.length > 0 && React.createElement(window.Components.VoucherApplied, {
-                            key: 'applied-vouchers',
-                            appliedVouchers,
-                            onRemoveVoucher: handleRemoveVoucher,
-                            onEditVoucher: handleEditVoucher
-                        }),
-                        
-                        // No vouchers message
-                        appliedVouchers.length === 0 && vouchers.length === 0 && !voucherLoading && React.createElement('div', { 
-                            key: 'no-vouchers', 
-                            className: 'text-center py-4 text-gray-500 dark:text-gray-400' 
-                        }, [
-                            React.createElement('div', { key: 'no-vouchers-icon', className: 'text-2xl mb-2' }, '🎫'),
-                            React.createElement('div', { key: 'no-vouchers-text', className: 'text-sm' }, 'No vouchers available')
-                        ]),
-                        
-                        // Loading vouchers
-                        voucherLoading && React.createElement('div', { 
-                            key: 'voucher-loading', 
-                            className: 'text-center py-4' 
-                        }, [
-                            React.createElement('div', { 
-                                key: 'voucher-spinner', 
-                                className: 'animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto' 
-                            })
-                        ])
-                    ])
-                ]),
 
                 // Enhanced cart items display
                 React.createElement(React.Fragment, { key: 'cart-items-section' }, [
@@ -670,6 +624,87 @@ window.Views.POSView = ({
                             ]);
                         }))
                     )
+                ]),
+
+                // Voucher Section - Small List
+                selectedCustomer && React.createElement(React.Fragment, { key: 'voucher-section' }, [
+                    React.createElement('div', { key: 'voucher-header', className: 'mb-3' }, [
+                        React.createElement('div', { key: 'voucher-title', className: 'flex items-center justify-between mb-2' }, [
+                            React.createElement('h4', { 
+                                key: 'voucher-title-text', 
+                                className: 'text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1' 
+                            }, [
+                                React.createElement('span', { key: 'voucher-icon', className: 'text-xs' }, '🎫'),
+                                'Vouchers'
+                            ]),
+                            React.createElement('button', {
+                                key: 'manage-vouchers-btn',
+                                onClick: () => setShowVoucherSelector(true),
+                                className: 'text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors'
+                            }, 'Manage')
+                        ]),
+                        
+                        // Applied Vouchers - Compact
+                        appliedVouchers.length > 0 && React.createElement('div', { 
+                            key: 'applied-vouchers-compact', 
+                            className: 'space-y-1' 
+                        }, appliedVouchers.map(voucher => 
+                            React.createElement('div', { 
+                                key: voucher.id, 
+                                className: 'flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs' 
+                            }, [
+                                React.createElement('div', { key: 'voucher-info', className: 'flex-1' }, [
+                                    React.createElement('div', { key: 'voucher-code', className: 'font-medium text-gray-900 dark:text-white' }, voucher.voucher_code),
+                                    React.createElement('div', { key: 'voucher-value', className: 'text-green-600 dark:text-green-400' }, 
+                                        voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
+                                        voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
+                                        'Product voucher'
+                                    )
+                                ]),
+                                React.createElement('button', {
+                                    key: 'remove-btn',
+                                    onClick: () => handleRemoveVoucher(voucher),
+                                    className: 'text-red-500 hover:text-red-700 text-xs'
+                                }, '×')
+                            ])
+                        )),
+                        
+                        // Available Vouchers - Compact
+                        vouchers.length > 0 && appliedVouchers.length === 0 && React.createElement('div', { 
+                            key: 'available-vouchers-compact', 
+                            className: 'space-y-1 max-h-32 overflow-y-auto' 
+                        }, vouchers.slice(0, 3).map(voucher => 
+                            React.createElement('button', { 
+                                key: voucher.id, 
+                                onClick: () => handleApplyVoucher(voucher),
+                                className: 'w-full text-left p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors' 
+                            }, [
+                                React.createElement('div', { key: 'voucher-code', className: 'font-medium text-gray-900 dark:text-white' }, voucher.voucher_code),
+                                React.createElement('div', { key: 'voucher-value', className: 'text-gray-600 dark:text-gray-400' }, 
+                                    voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
+                                    voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
+                                    'Product voucher'
+                                )
+                            ])
+                        )),
+                        
+                        // No vouchers message
+                        appliedVouchers.length === 0 && vouchers.length === 0 && !voucherLoading && React.createElement('div', { 
+                            key: 'no-vouchers', 
+                            className: 'text-center py-2 text-gray-500 dark:text-gray-400 text-xs' 
+                        }, 'No vouchers available'),
+                        
+                        // Loading vouchers
+                        voucherLoading && React.createElement('div', { 
+                            key: 'voucher-loading', 
+                            className: 'text-center py-2' 
+                        }, [
+                            React.createElement('div', { 
+                                key: 'voucher-spinner', 
+                                className: 'animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mx-auto' 
+                            })
+                        ])
+                    ])
                 ]),
 
                 cart.length > 0 && React.createElement(React.Fragment, { key: 'discount-section' }, [

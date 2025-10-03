@@ -99,65 +99,6 @@ window.Components.VoucherSelector = function({
             }, `For: ${customer.name} (${customer.loyalty_number})`)
         ]),
 
-        // Search and Filter Controls
-        React.createElement('div', { key: 'controls', className: 'mb-4 space-y-2' }, [
-            // Search Input
-            React.createElement('div', { key: 'search', className: 'relative' }, [
-                React.createElement('input', {
-                    key: 'input',
-                    type: 'text',
-                    placeholder: 'Search vouchers...',
-                    value: searchTerm,
-                    onChange: (e) => setSearchTerm(e.target.value),
-                    className: 'w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                }),
-                React.createElement('div', {
-                    key: 'icon',
-                    className: 'absolute left-3 top-2.5 text-gray-400'
-                }, [
-                    React.createElement('svg', {
-                        key: 'search-icon',
-                        className: 'w-5 h-5',
-                        fill: 'none',
-                        stroke: 'currentColor',
-                        viewBox: '0 0 24 24'
-                    }, [
-                        React.createElement('path', {
-                            key: 'path',
-                            strokeLinecap: 'round',
-                            strokeLinejoin: 'round',
-                            strokeWidth: 2,
-                            d: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                        })
-                    ])
-                ])
-            ]),
-
-            // Type Filter
-            React.createElement('div', { key: 'filter', className: 'flex space-x-2' }, [
-                React.createElement('button', {
-                    key: 'all',
-                    onClick: () => setFilterType('all'),
-                    className: `px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        filterType === 'all' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                    }`
-                }, `All (${vouchers.length})`),
-                
-                ...Object.keys(groupedVouchers).map(type => 
-                    getTypeCount(type) > 0 && React.createElement('button', {
-                        key: type,
-                        onClick: () => setFilterType(type),
-                        className: `px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                            filterType === type 
-                                ? 'bg-blue-500 text-white' 
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                        }`
-                    }, `${getTypeDisplayName(type)} (${getTypeCount(type)})`)
-                )
-            ])
-        ]),
 
         // Loading State
         loading && React.createElement('div', { 
@@ -201,38 +142,33 @@ window.Components.VoucherSelector = function({
                         }, `${typeVouchers.length} available`)
                     ]),
 
-                    // Voucher Cards
+                    // Voucher Cards - Compact
                     React.createElement('div', { 
                         key: 'voucher-cards', 
-                        className: 'grid grid-cols-1 gap-3' 
+                        className: 'space-y-2' 
                     }, typeVouchers.map(voucher => 
-                        React.createElement('div', { key: voucher.id, className: 'relative' }, [
-                            React.createElement(window.Components.VoucherCard, {
-                                key: 'card',
-                                voucher,
-                                isSelected: isVoucherApplied(voucher),
-                                onSelect: handleVoucherSelect,
-                                onDeselect: handleVoucherSelect,
-                                canSelect: true
-                            }),
-                            
-                            // Action Buttons
-                            React.createElement('div', { 
-                                key: 'actions', 
-                                className: 'absolute top-2 right-2 flex space-x-1' 
-                            }, [
-                                isVoucherApplied(voucher) ? 
-                                    React.createElement('button', {
-                                        key: 'remove',
-                                        onClick: () => handleRemoveVoucher(voucher),
-                                        className: 'px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors'
-                                    }, 'Remove') :
-                                    React.createElement('button', {
-                                        key: 'apply',
-                                        onClick: () => handleApplyVoucher(voucher),
-                                        className: 'px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors'
-                                    }, 'Apply')
-                            ])
+                        React.createElement('div', { 
+                            key: voucher.id, 
+                            className: 'flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors' 
+                        }, [
+                            React.createElement('div', { key: 'voucher-info', className: 'flex-1' }, [
+                                React.createElement('div', { key: 'voucher-code', className: 'font-medium text-gray-900 dark:text-white text-sm' }, voucher.voucher_code),
+                                React.createElement('div', { key: 'voucher-name', className: 'text-xs text-gray-600 dark:text-gray-400' }, voucher.name),
+                                React.createElement('div', { key: 'voucher-value', className: 'text-sm text-blue-600 dark:text-blue-400' }, 
+                                    voucher.voucher_type === 'Value' ? `$${parseFloat(voucher.remaining_value || voucher.face_value || 0).toFixed(2)}` :
+                                    voucher.voucher_type === 'Discount' ? `${voucher.discount_percent}% off` :
+                                    'Product voucher'
+                                )
+                            ]),
+                            React.createElement('button', {
+                                key: 'action-btn',
+                                onClick: isVoucherApplied(voucher) ? () => handleRemoveVoucher(voucher) : () => handleApplyVoucher(voucher),
+                                className: `px-3 py-1 text-xs rounded transition-colors ${
+                                    isVoucherApplied(voucher) 
+                                        ? 'bg-red-500 text-white hover:bg-red-600' 
+                                        : 'bg-green-500 text-white hover:bg-green-600'
+                                }`
+                            }, isVoucherApplied(voucher) ? 'Remove' : 'Apply')
                         ])
                     ))
                 ])
