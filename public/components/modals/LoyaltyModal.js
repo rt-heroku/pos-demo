@@ -37,6 +37,7 @@
                     React.createElement('div', { key: 'loyalty-input' }, [
                         React.createElement('label', { key: 'loyalty-label', className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Loyalty Number'),
                         React.createElement('input', {
+                            key: 'loyalty-input-field',
                             type: 'text',
                             value: loyaltyNumber,
                             onChange: (e) => setLoyaltyNumber(e.target.value.toUpperCase()),
@@ -54,8 +55,9 @@
                     React.createElement('div', { key: 'divider', className: 'text-center text-gray-500' }, 'OR'),
 
                     React.createElement('div', { key: 'search-input' }, [
-                        React.createElement('label', { className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Search by Name/Email'),
+                        React.createElement('label', { key: 'search-label', className: 'block text-sm text-gray-900 dark:text-white font-medium mb-2' }, 'Search by Name/Email'),
                         React.createElement('input', {
+                            key: 'search-input-field',
                             type: 'text',
                             value: loyaltySearchTerm,
                             onChange: (e) => {
