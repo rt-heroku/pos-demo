@@ -4816,7 +4816,7 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     const mulesoftData = await mulesoftResponse.json();
     
     // Clear existing vouchers for this customer
-    await pool.query('DELETE FROM customer_vouchers WHERE customer_id = $1', [id]);
+    // await pool.query('DELETE FROM customer_vouchers WHERE customer_id = $1', [id]);
     
     // Insert new vouchers from MuleSoft
     const vouchers = mulesoftData.vouchers || [];
