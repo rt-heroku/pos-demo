@@ -4804,9 +4804,9 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     if (!mulesoftResponse.ok) {
       if (mulesoftResponse.status === 404) {
         // MuleSoft endpoint not found - return empty vouchers for demo
-        console.log('MuleSoft API endpoint not found (404) - returning empty vouchers for demo');
+        console.log('MuleSoft API endpoint ' + vouchersUrl + ' not found (404) - returning empty vouchers for demo');
         return res.json({ 
-          message: 'MuleSoft API endpoint not available - no vouchers refreshed',
+          message: 'MuleSoft API endpoint ' + vouchersUrl + ' not available - no vouchers refreshed',
           vouchers: []
         });
       }
