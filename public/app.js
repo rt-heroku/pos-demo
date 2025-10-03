@@ -1342,7 +1342,7 @@ const POSApp = () => {
         // Header (hidden on mobile)
         React.createElement('header', { 
             key: 'header', 
-            className: 'fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 hidden lg:block' 
+            className: 'fixed top-0 left-0 right-0 z-[60] bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 hidden lg:block' 
         }, [
             React.createElement('div', { key: 'header-container', className: 'w-full px-6 py-4' }, [
                 React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between' }, [
@@ -1430,7 +1430,7 @@ const POSApp = () => {
         // Mobile Header
         React.createElement('header', { 
             key: 'mobile-header', 
-            className: 'fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 lg:hidden safe-area-top' 
+            className: 'fixed top-0 left-0 right-0 z-[60] bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 lg:hidden safe-area-top' 
         }, [
             React.createElement('div', { key: 'mobile-header-container', className: 'w-full px-4 py-3' }, [
                 React.createElement('div', { key: 'mobile-header-content', className: 'flex items-center justify-between' }, [
