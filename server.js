@@ -4607,8 +4607,8 @@ app.post('/api/products/generate-inventory', async (req, res) => {
         paramCount++;
       }
       
-      setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
-      values.push(update.id);
+//      setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
+//      values.push(update.id);
       
       await pool.query(
         `UPDATE products SET ${setClauses.join(', ')} WHERE id = $${paramCount}`,
