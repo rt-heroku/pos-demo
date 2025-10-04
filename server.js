@@ -4517,12 +4517,24 @@ app.post('/api/products/improve/:productId', async (req, res) => {
 // Generate random inventory for all products
 app.post('/api/products/generate-inventory', async (req, res) => {
   try {
-    const { keepExistingStock } = req.body;
+    const { 
+      enableInventory = true, 
+      enablePricing = false, 
+      keepExistingStock = true,
+      priceRangeMin = 1,
+      priceRangeMax = 100,
+      keepExistingPrice = true
+    } = req.body;
     
-    // console.log('Generating random inventory, keepExistingStock:', keepExistingStock);
+    // Validate that at least one option is enabled
+    if (!enableInventory && !enablePricing) {
+      return res.status(400).json({ 
+        error: 'At least one option (inventory or pricing) must be enabled' 
+      });
+    }
     
-    // Get all products
-    const productsResult = await pool.query('SELECT id, stock FROM products WHERE is_active = true');
+    // Get all products with both stock and price
+    const productsResult = await pool.query('SELECT id, stock, price FROM products WHERE is_active = true');
     const products = productsResult.rows;
     
     if (products.length === 0) {
@@ -4537,46 +4549,95 @@ app.post('/api/products/generate-inventory', async (req, res) => {
     const updates = [];
     
     for (const product of products) {
-      let newStock;
+      const update = { id: product.id };
+      let shouldUpdate = false;
       
-      if (keepExistingStock && product.stock > 0) {
-        // Keep existing stock if it's greater than 0
-        newStock = product.stock;
-        // console.log(`Keeping existing stock for product ${product.id}: ${newStock}`);
-      } else {
-        // Generate random stock between 0 and 100
-        newStock = Math.floor(Math.random() * 101);
-        // console.log(`Generated random stock for product ${product.id}: ${newStock}`);
+      // Handle inventory generation
+      if (enableInventory) {
+        let newStock;
+        
+        if (keepExistingStock && product.stock > 0) {
+          // Keep existing stock if it's greater than 0
+          newStock = product.stock;
+        } else {
+          // Generate random stock between 0 and 100
+          newStock = Math.floor(Math.random() * 101);
+        }
+        
+        update.stock = newStock;
+        shouldUpdate = true;
       }
       
-      updates.push({
-        id: product.id,
-        stock: newStock
-      });
+      // Handle pricing generation
+      if (enablePricing) {
+        let newPrice;
+        
+        if (keepExistingPrice && product.price > 0) {
+          // Keep existing price if it's greater than 0
+          newPrice = product.price;
+        } else {
+          // Generate random price within the specified range
+          newPrice = (Math.random() * (priceRangeMax - priceRangeMin) + priceRangeMin).toFixed(2);
+        }
+        
+        update.price = parseFloat(newPrice);
+        shouldUpdate = true;
+      }
+      
+      if (shouldUpdate) {
+        updates.push(update);
+      }
     }
     
     // Update all products in batch
     for (const update of updates) {
+      const setClauses = [];
+      const values = [];
+      let paramCount = 1;
+      
+      if (update.stock !== undefined) {
+        setClauses.push(`stock = $${paramCount}`);
+        values.push(update.stock);
+        paramCount++;
+      }
+      
+      if (update.price !== undefined) {
+        setClauses.push(`price = $${paramCount}`);
+        values.push(update.price);
+        paramCount++;
+      }
+      
+      setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
+      values.push(update.id);
+      
       await pool.query(
-        'UPDATE products SET stock = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [update.stock, update.id]
+        `UPDATE products SET ${setClauses.join(', ')} WHERE id = $${paramCount}`,
+        values
       );
       updatedCount++;
     }
     
-    // console.log(`Updated inventory for ${updatedCount} products`);
+    // Build success message
+    const messages = [];
+    if (enableInventory) messages.push('inventory');
+    if (enablePricing) messages.push('pricing');
     
     res.json({
       success: true,
-      message: `Successfully generated random inventory for ${updatedCount} products`,
+      message: `Successfully generated random ${messages.join(' and ')} for ${updatedCount} products`,
       updated: updatedCount,
-      keepExistingStock
+      enableInventory,
+      enablePricing,
+      keepExistingStock,
+      priceRangeMin,
+      priceRangeMax,
+      keepExistingPrice
     });
     
   } catch (error) {
-    console.error('Error generating random inventory:', error);
+    console.error('Error generating random data:', error);
     res.status(500).json({ 
-      error: 'Failed to generate random inventory',
+      error: 'Failed to generate random data',
       details: error.message 
     });
   }
@@ -4816,40 +4877,40 @@ app.post('/api/customers/:id/vouchers/refresh', async (req, res) => {
     const mulesoftData = await mulesoftResponse.json();
     
     // Clear existing vouchers for this customer
-    await pool.query('DELETE FROM customer_vouchers WHERE customer_id = $1', [id]);
+    // await pool.query('DELETE FROM customer_vouchers WHERE customer_id = $1', [id]);
     
     // Insert new vouchers from MuleSoft
     const vouchers = mulesoftData.vouchers || [];
-    for (const voucher of vouchers) {
-      await pool.query(`
-        INSERT INTO customer_vouchers (
-          sf_id, customer_id, voucher_code, name, status, voucher_type,
-          face_value, discount_percent, product_id, remaining_value,
-          description, image_url, is_active, effective_date, expiration_date,
-          created_date, use_date
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-      `, [
-        voucher.Id,
-        id,
-        voucher.VoucherCode,
-        voucher.Name,
-        voucher.Status,
-        voucher.VoucherDefinition?.Type === 'ProductOrService' ? 'ProductSpecific' : 
-        voucher.DiscountPercent ? 'Discount' : 'Value',
-        voucher.VoucherDefinition?.FaceValue,
-        voucher.DiscountPercent,
-        voucher.VoucherDefinition?.ProductId ? 
-          (await pool.query('SELECT id FROM products WHERE sf_id = $1', [voucher.VoucherDefinition.ProductId])).rows[0]?.id : null,
-        voucher.RemainingValue,
-        voucher.VoucherDefinition?.Description,
-        voucher.VoucherDefinition?.ImageUrl,
-        voucher.VoucherDefinition?.IsActive === 'true',
-        voucher.VoucherDefinition?.EffectiveDate,
-        voucher.ExpirationDate,
-        voucher.CreatedDate,
-        voucher.UseDate
-      ]);
-    }
+    // for (const voucher of vouchers) {
+    //   await pool.query(`
+    //     INSERT INTO customer_vouchers (
+    //       sf_id, customer_id, voucher_code, name, status, voucher_type,
+    //       face_value, discount_percent, product_id, remaining_value,
+    //       description, image_url, is_active, effective_date, expiration_date,
+    //       created_date, use_date
+    //     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    //   `, [
+    //     voucher.Id,
+    //     id,
+    //     voucher.VoucherCode,
+    //     voucher.Name,
+    //     voucher.Status,
+    //     voucher.VoucherDefinition?.Type === 'ProductOrService' ? 'ProductSpecific' : 
+    //     voucher.DiscountPercent ? 'Discount' : 'Value',
+    //     voucher.VoucherDefinition?.FaceValue,
+    //     voucher.DiscountPercent,
+    //     voucher.VoucherDefinition?.ProductId ? 
+    //       (await pool.query('SELECT id FROM products WHERE sf_id = $1', [voucher.VoucherDefinition.ProductId])).rows[0]?.id : null,
+    //     voucher.RemainingValue,
+    //     voucher.VoucherDefinition?.Description,
+    //     voucher.VoucherDefinition?.ImageUrl,
+    //     voucher.VoucherDefinition?.IsActive === 'true',
+    //     voucher.VoucherDefinition?.EffectiveDate,
+    //     voucher.ExpirationDate,
+    //     voucher.CreatedDate,
+    //     voucher.UseDate
+    //   ]);
+    // }
     
     res.json({
       success: true,

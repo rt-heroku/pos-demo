@@ -144,6 +144,7 @@ CREATE TABLE customers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_user INTEGER
 );
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id);
 
 -- Transactions table with all columns
 CREATE TABLE transactions (

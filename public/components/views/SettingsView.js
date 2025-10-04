@@ -98,6 +98,13 @@ window.Views.SettingsView = ({
         const [showInventoryModal, setShowInventoryModal] = React.useState(false);
         const [keepExistingStock, setKeepExistingStock] = React.useState(true);
         const [generatingInventory, setGeneratingInventory] = React.useState(false);
+        
+        // New state for inventory/pricing modal
+        const [enableInventory, setEnableInventory] = React.useState(true);
+        const [enablePricing, setEnablePricing] = React.useState(false);
+        const [priceRangeMin, setPriceRangeMin] = React.useState(1);
+        const [priceRangeMax, setPriceRangeMax] = React.useState(100);
+        const [keepExistingPrice, setKeepExistingPrice] = React.useState(true);
         const [showLoyaltyResultsModal, setShowLoyaltyResultsModal] = React.useState(false);
         const [loyaltyResults, setLoyaltyResults] = React.useState(null);
         const [syncingLoyalty, setSyncingLoyalty] = React.useState(false);
@@ -1323,6 +1330,11 @@ sfdc.account=`;
 
         // Handle random inventory generation
         const handleGenerateInventory = async () => {
+            if (!enableInventory && !enablePricing) {
+                window.NotificationManager.warning('No Selection', 'Please enable at least one option (Inventory or Pricing)');
+                return;
+            }
+
             setGeneratingInventory(true);
             try {
                 const response = await fetch('/api/products/generate-inventory', {
@@ -1331,18 +1343,28 @@ sfdc.account=`;
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     },
-                    body: JSON.stringify({ keepExistingStock })
+                    body: JSON.stringify({
+                        enableInventory,
+                        enablePricing,
+                        keepExistingStock,
+                        priceRangeMin,
+                        priceRangeMax,
+                        keepExistingPrice
+                    })
                 });
                 
                 if (response.ok) {
                     const result = await response.json();
-                    window.NotificationManager.success('Inventory Generated', result.message);
+                    const message = [];
+                    if (enableInventory) message.push('inventory');
+                    if (enablePricing) message.push('pricing');
+                    window.NotificationManager.success('Generation Complete', `${message.join(' and ')} generated successfully`);
                     setShowInventoryModal(false);
                 } else {
-                    throw new Error('Failed to generate inventory');
+                    throw new Error('Failed to generate data');
                 }
             } catch (error) {
-                console.error('Error generating inventory:', error);
+                console.error('Error generating data:', error);
                 window.NotificationManager.error('Generation Failed', error.message);
             } finally {
                 setGeneratingInventory(false);
@@ -3291,7 +3313,7 @@ sfdc.account=`;
                                key: 'inventory-btn',
                                onClick: () => setShowInventoryModal(true),
                                className: 'w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md'
-                           }, 'Generate Inventory')
+                           }, 'Inventory or Pricing')
                        ]),
 
                        // Send to Loyalty Card
@@ -4264,33 +4286,125 @@ sfdc.account=`;
                            React.createElement('span', { key: 'icon-text', className: 'text-green-600 dark:text-green-400 text-lg' }, '📦')
                        ]),
                        React.createElement('div', { key: 'title-section' }, [
-                           React.createElement('h3', { key: 'title', className: 'text-xl font-bold text-gray-900 dark:text-white' }, 'Generate Random Inventory'),
-                           React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 text-sm' }, 'Set random stock quantities for all products')
+                           React.createElement('h3', { key: 'title', className: 'text-xl font-bold text-gray-900 dark:text-white' }, 'Inventory or Pricing'),
+                           React.createElement('p', { key: 'subtitle', className: 'text-gray-600 dark:text-gray-300 text-sm' }, 'Generate random inventory quantities and/or update product pricing')
                        ])
                    ]),
                    
-                   React.createElement('div', { key: 'modal-body', className: 'space-y-4' }, [
-                       React.createElement('div', { key: 'checkbox-container', className: 'flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg' }, [
-                           React.createElement('input', {
-                               key: 'checkbox',
-                               type: 'checkbox',
-                               id: 'keep-existing-stock',
-                               checked: keepExistingStock,
-                               onChange: (e) => setKeepExistingStock(e.target.checked),
-                               className: 'w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
-                           }),
-                           React.createElement('label', { 
-                               key: 'checkbox-label',
-                               htmlFor: 'keep-existing-stock',
-                               className: 'text-sm font-medium text-gray-900 dark:text-white'
-                           }, 'Keep existing stock if greater than 0')
+                   React.createElement('div', { key: 'modal-body', className: 'space-y-6' }, [
+                       // Inventory Section
+                       React.createElement('div', { key: 'inventory-section', className: 'p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600' }, [
+                           React.createElement('div', { key: 'inventory-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('input', {
+                                   key: 'inventory-checkbox',
+                                   type: 'checkbox',
+                                   id: 'enable-inventory',
+                                   checked: enableInventory,
+                                   onChange: (e) => setEnableInventory(e.target.checked),
+                                   className: 'w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                               }),
+                               React.createElement('label', { 
+                                   key: 'inventory-label',
+                                   htmlFor: 'enable-inventory',
+                                   className: 'text-lg font-semibold text-gray-900 dark:text-white'
+                               }, 'Inventory Generation')
+                           ]),
+                           
+                           enableInventory && React.createElement('div', { key: 'inventory-options', className: 'space-y-3' }, [
+                               React.createElement('div', { key: 'keep-stock-container', className: 'flex items-center gap-3' }, [
+                                   React.createElement('input', {
+                                       key: 'keep-stock-checkbox',
+                                       type: 'checkbox',
+                                       id: 'keep-existing-stock',
+                                       checked: keepExistingStock,
+                                       onChange: (e) => setKeepExistingStock(e.target.checked),
+                                       className: 'w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                   }),
+                                   React.createElement('label', { 
+                                       key: 'keep-stock-label',
+                                       htmlFor: 'keep-existing-stock',
+                                       className: 'text-sm font-medium text-gray-900 dark:text-white'
+                                   }, 'Keep existing stock if greater than 0')
+                               ]),
+                               
+                               React.createElement('div', { key: 'inventory-info', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                                   keepExistingStock 
+                                       ? 'Products with existing stock will keep their current quantities. Products with 0 stock will get random quantities (0-100).'
+                                       : 'All products will get new random stock quantities between 0 and 100.'
+                               )
+                           ])
                        ]),
                        
-                       React.createElement('div', { key: 'info-text', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
-                           keepExistingStock 
-                               ? 'Products with existing stock will keep their current quantities. Products with 0 stock will get random quantities (0-100).'
-                               : 'All products will get new random stock quantities between 0 and 100.'
-                       )
+                       // Pricing Section
+                       React.createElement('div', { key: 'pricing-section', className: 'p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600' }, [
+                           React.createElement('div', { key: 'pricing-header', className: 'flex items-center gap-3 mb-4' }, [
+                               React.createElement('input', {
+                                   key: 'pricing-checkbox',
+                                   type: 'checkbox',
+                                   id: 'enable-pricing',
+                                   checked: enablePricing,
+                                   onChange: (e) => setEnablePricing(e.target.checked),
+                                   className: 'w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                               }),
+                               React.createElement('label', { 
+                                   key: 'pricing-label',
+                                   htmlFor: 'enable-pricing',
+                                   className: 'text-lg font-semibold text-gray-900 dark:text-white'
+                               }, 'Pricing Generation')
+                           ]),
+                           
+                           enablePricing && React.createElement('div', { key: 'pricing-options', className: 'space-y-4' }, [
+                               React.createElement('div', { key: 'price-range', className: 'space-y-2' }, [
+                                   React.createElement('label', { 
+                                       key: 'range-label',
+                                       className: 'text-sm font-medium text-gray-900 dark:text-white'
+                                   }, 'Price Range'),
+                                   React.createElement('div', { key: 'range-inputs', className: 'flex items-center gap-3' }, [
+                                       React.createElement('input', {
+                                           key: 'min-price',
+                                           type: 'number',
+                                           value: priceRangeMin,
+                                           onChange: (e) => setPriceRangeMin(parseInt(e.target.value) || 1),
+                                           min: 1,
+                                           max: priceRangeMax - 1,
+                                           className: 'w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500'
+                                       }),
+                                       React.createElement('span', { key: 'range-separator', className: 'text-gray-500' }, 'to'),
+                                       React.createElement('input', {
+                                           key: 'max-price',
+                                           type: 'number',
+                                           value: priceRangeMax,
+                                           onChange: (e) => setPriceRangeMax(parseInt(e.target.value) || 100),
+                                           min: priceRangeMin + 1,
+                                           max: 1000,
+                                           className: 'w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500'
+                                       })
+                                   ])
+                               ]),
+                               
+                               React.createElement('div', { key: 'keep-price-container', className: 'flex items-center gap-3' }, [
+                                   React.createElement('input', {
+                                       key: 'keep-price-checkbox',
+                                       type: 'checkbox',
+                                       id: 'keep-existing-price',
+                                       checked: keepExistingPrice,
+                                       onChange: (e) => setKeepExistingPrice(e.target.checked),
+                                       className: 'w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                   }),
+                                   React.createElement('label', { 
+                                       key: 'keep-price-label',
+                                       htmlFor: 'keep-existing-price',
+                                       className: 'text-sm font-medium text-gray-900 dark:text-white'
+                                   }, 'Keep existing price if greater than 0')
+                               ]),
+                               
+                               React.createElement('div', { key: 'pricing-info', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
+                                   keepExistingPrice 
+                                       ? `Products with existing prices will keep their current prices. Products with $0 price will get random prices between $${priceRangeMin} and $${priceRangeMax}.`
+                                       : `All products will get new random prices between $${priceRangeMin} and $${priceRangeMax}.`
+                               )
+                           ])
+                       ])
                    ]),
                    
                    React.createElement('div', { key: 'modal-footer', className: 'flex gap-3 mt-6' }, [
@@ -4308,7 +4422,7 @@ sfdc.account=`;
                                    ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
                                    : 'bg-green-600 hover:bg-green-700 text-white'
                            }`
-                       }, generatingInventory ? 'Generating...' : 'Generate Inventory')
+                       }, generatingInventory ? 'Generating...' : 'Generate')
                    ])
                ])
            ]),
