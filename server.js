@@ -3259,6 +3259,34 @@ app.post('/api/transactions', async (req, res) => {
                     INSERT INTO transaction_vouchers (transaction_id, voucher_id, applied_amount, discount_amount)
                     VALUES ($1, $2, $3, $4)
                 `, [transactionId, voucher.id, appliedAmount, discountAmount]);
+                
+                // Notify MuleSoft about voucher redemption
+                try {
+                    const mulesoftEndpoint = await pool.query(
+                        "SELECT setting_value FROM system_settings WHERE setting_key = 'mulesoft_loyalty_sync_endpoint'"
+                    );
+                    
+                    if (mulesoftEndpoint.rows.length > 0 && mulesoftEndpoint.rows[0].setting_value) {
+                        const endpoint = mulesoftEndpoint.rows[0].setting_value.trim();
+                        
+                        // Call MuleSoft API to notify voucher redemption
+                        const mulesoftResponse = await fetch(`${endpoint}/member/vouchers/send?id=${voucher.id}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        
+                        if (!mulesoftResponse.ok) {
+                            console.warn(`MuleSoft voucher notification failed for voucher ${voucher.id}:`, mulesoftResponse.status, mulesoftResponse.statusText);
+                        } else {
+                            console.log(`Voucher ${voucher.id} redemption successfully notified to MuleSoft`);
+                        }
+                    }
+                } catch (mulesoftError) {
+                    console.warn('MuleSoft voucher notification error:', mulesoftError.message);
+                    // Don't fail the transaction if MuleSoft call fails
+                }
             }
         }
         
