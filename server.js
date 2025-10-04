@@ -3270,7 +3270,7 @@ app.post('/api/transactions', async (req, res) => {
                         const endpoint = mulesoftEndpoint.rows[0].setting_value.trim();
                         
                         // Call MuleSoft API to notify voucher redemption
-                        const mulesoftResponse = await fetch(`${endpoint}/member/vouchers/send?id=${voucher.id}`, {
+                        const mulesoftResponse = await fetch(`${endpoint}/members/vouchers/send?id=${voucher.id}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
