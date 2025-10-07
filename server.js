@@ -577,7 +577,7 @@ app.put('/api/products/:id', async (req, res) => {
     const { id } = req.params;
     const { name, price, category, stock, image } = req.body;
     const result = await pool.query(
-      'UPDATE products SET name = $1, price = $2, category = $3, stock = $4, image = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
+      'UPDATE products SET name = $1, price = $2, category = $3, stock = $4, image = $5, updated_at = CURRENT_TIMESTAMP, status = \'Updated\' WHERE id = $6 RETURNING *',
       [name, price, category, stock, image, id]
     );
     res.json(result.rows[0]);
@@ -1334,7 +1334,8 @@ app.put('/api/customers/:id', async (req, res) => {
           member_status = $6, member_type = $7, enrollment_date = $8, 
           customer_tier = $9, tier_calculation_number = $10, date_of_birth = $11,
           address_line1 = $12, address_line2 = $13, city = $14, state = $15, 
-          country = $16, zip_code = $17, updated_at = CURRENT_TIMESTAMP 
+          country = $16, zip_code = $17, updated_at = CURRENT_TIMESTAMP ,
+          status = 'Updated'
       WHERE id = $18 RETURNING *
     `, [
       name.trim(), 
@@ -4312,6 +4313,7 @@ async function insertCustomer(client, data) {
     if (updateFields.length > 0) {
       // Add updated_at
       updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+      updateFields.push(`status = 'Updated'`);
       
       // Add loyalty_number as the last parameter for WHERE clause
       updateValues.push(loyalty_number);
@@ -4348,14 +4350,14 @@ async function insertCustomer(client, data) {
       INSERT INTO customers (
         loyalty_number, first_name, last_name, name, email, phone, points,
         total_spent, visit_count, last_visit, member_type, member_status,
-        enrollment_date, notes, address_line1, address_line2, city, state, country, zip_code, date_of_birth
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        enrollment_date, notes, address_line1, address_line2, city, state, country, zip_code, date_of_birth, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING id
     `, [
       loyalty_number, first_name, last_name, name || `${first_name} ${last_name}`,
       email, phone, points || 0, total_spent || 0, visit_count || 0,
       last_visit, member_type, member_status, enrollment_date, notes,
-      address_line1, address_line2, city, state, country, zip_code, date_of_birth
+      address_line1, address_line2, city, state, country, zip_code, date_of_birth, 'Created'
     ]);
     
     return result.rows[0].id;

@@ -201,6 +201,7 @@ try {
 - Configure database connection string
 
 ### Environment Variables
+- .env could contain the env variables
 - `DATABASE_URL`: PostgreSQL connection string
 - `NODE_ENV`: Environment (development/production)
 - `PORT`: Server port (Heroku sets this automatically)
