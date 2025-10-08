@@ -1666,19 +1666,29 @@ app.post('/api/customers/enhanced', async (req, res) => {
           };
           console.log('Sending to Mulesoft endpoint ' + endpoint + '/member/create to create member with data:', memberData);
           // Call MuleSoft API
-          const mulesoftResponse = await fetch(`${endpoint}/member/create`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(memberData)
-          });
+          // Fire-and-forget: trigger MuleSoft API call asynchronously, don't await
+          (async () => {
+            try {
+              const mulesoftResponse = await fetch(`${endpoint}/member/create`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(memberData)
+              });
+              if (!mulesoftResponse.ok) {
+                console.warn('MuleSoft API call failed:', mulesoftResponse.status, mulesoftResponse.statusText);
+              } else {
+                console.log('Member successfully created in MuleSoft loyalty system');
+              }
+            } catch (err) {
+              console.warn('MuleSoft API call error:', err);
+            }
+          })();
+
+
+          console.log('MuleSoft API call triggered asynchronously');
           
-          if (!mulesoftResponse.ok) {
-            console.warn('MuleSoft API call failed:', mulesoftResponse.status, mulesoftResponse.statusText);
-          } else {
-            console.log('Member successfully created in MuleSoft loyalty system');
-          }
         } catch (urlError) {
           console.warn('Invalid MuleSoft endpoint URL:', endpoint);
         }
