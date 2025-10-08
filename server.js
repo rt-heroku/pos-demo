@@ -1664,7 +1664,7 @@ app.post('/api/customers/enhanced', async (req, res) => {
             email: email || null,
             date_of_birth: date_of_birth || null
           };
-          
+          console.log('Sending to Mulesoft endpoint ' + endpoint + '/member/create to create member with data:', memberData);
           // Call MuleSoft API
           const mulesoftResponse = await fetch(`${endpoint}/member/create`, {
             method: 'POST',
