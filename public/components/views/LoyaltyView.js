@@ -47,7 +47,7 @@ window.Views.LoyaltyView= ({
                 }));
             }
         } catch (error) {
-            console.log('No avatar found for customer', customerId);
+            console.log('No avatar found for customer', customerId, error.message);
         }
     };
 
@@ -56,11 +56,9 @@ window.Views.LoyaltyView= ({
         if (customers.length > 0) {
             customers.forEach(customer => {
                 if (!customerAvatars[customer.id]) {
-                    try{
-                        loadCustomerAvatar(customer.id);
-                    } catch (error) {
+                    loadCustomerAvatar(customer.id).catch(error => {
                         console.log('Error loading customer avatar:', error);
-                    }
+                    });
                 }
             });
         }
