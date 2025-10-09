@@ -30,15 +30,17 @@ window.Views.LoyaltyView= ({
     const [customerAvatars, setCustomerAvatars] = React.useState({});
     const [actionMenuOpen, setActionMenuOpen] = React.useState(null);
     const [loadingAvatars, setLoadingAvatars] = React.useState(new Set());
+    const attemptedAvatars = React.useRef(new Set());
 
 
     // Load customer avatars
     const loadCustomerAvatar = async (customerId) => {
         // Prevent duplicate requests
-        if (loadingAvatars.has(customerId) || customerAvatars[customerId]) {
+        if (loadingAvatars.has(customerId) || customerAvatars[customerId] || attemptedAvatars.current.has(customerId)) {
             return;
         }
 
+        attemptedAvatars.current.add(customerId);
         setLoadingAvatars(prev => new Set(prev).add(customerId));
         
         try {
@@ -77,12 +79,12 @@ window.Views.LoyaltyView= ({
     React.useEffect(() => {
         if (customers.length > 0) {
             customers.forEach(customer => {
-                if (!customerAvatars[customer.id] && !loadingAvatars.has(customer.id)) {
+                if (!attemptedAvatars.current.has(customer.id)) {
                     loadCustomerAvatar(customer.id);
                 }
             });
         }
-    }, [customers, customerAvatars, loadingAvatars]);
+    }, [customers]);
 
     // Toggle action menu
     const toggleActionMenu = (customerId) => {
