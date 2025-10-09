@@ -29,10 +29,18 @@ window.Views.LoyaltyView= ({
     const [filterBy, setFilterBy] = React.useState('all'); // 'all', 'active', 'inactive'
     const [customerAvatars, setCustomerAvatars] = React.useState({});
     const [actionMenuOpen, setActionMenuOpen] = React.useState(null);
+    const [loadingAvatars, setLoadingAvatars] = React.useState(new Set());
 
 
     // Load customer avatars
     const loadCustomerAvatar = async (customerId) => {
+        // Prevent duplicate requests
+        if (loadingAvatars.has(customerId) || customerAvatars[customerId]) {
+            return;
+        }
+
+        setLoadingAvatars(prev => new Set(prev).add(customerId));
+        
         try {
             const response = await fetch(`/api/customers/${customerId}/avatar`, {
                 headers: {
@@ -45,9 +53,23 @@ window.Views.LoyaltyView= ({
                     ...prev,
                     [customerId]: data.avatar.image_data
                 }));
+            } else if (response.status === 404) {
+                // Silently handle 404 - no avatar exists for this customer
+                return;
+            } else {
+                console.log('Error fetching avatar for customer', customerId, 'Status:', response.status);
             }
         } catch (error) {
-            console.log('No avatar found for customer', customerId, error.message);
+            // Only log non-network errors
+            if (error.name !== 'TypeError') {
+                console.log('Error loading avatar for customer', customerId, error.message);
+            }
+        } finally {
+            setLoadingAvatars(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customerId);
+                return newSet;
+            });
         }
     };
 
@@ -55,14 +77,12 @@ window.Views.LoyaltyView= ({
     React.useEffect(() => {
         if (customers.length > 0) {
             customers.forEach(customer => {
-                if (!customerAvatars[customer.id]) {
-                    loadCustomerAvatar(customer.id).catch(error => {
-                        console.log('Error loading customer avatar:', error);
-                    });
+                if (!customerAvatars[customer.id] && !loadingAvatars.has(customer.id)) {
+                    loadCustomerAvatar(customer.id);
                 }
             });
         }
-    }, [customers]);
+    }, [customers, customerAvatars, loadingAvatars]);
 
     // Toggle action menu
     const toggleActionMenu = (customerId) => {
