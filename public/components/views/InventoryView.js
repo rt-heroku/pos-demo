@@ -72,10 +72,10 @@ window.Views.InventoryView = ({
     };
 
     const getStockStatus = (stock) => {
-        if (stock <= 0) return { status: 'out', color: 'bg-red-100 text-red-800', text: 'Out of Stock' };
-        if (stock <= 5) return { status: 'low', color: 'bg-yellow-100 text-yellow-800', text: 'Low Stock' };
-        if (stock <= 10) return { status: 'medium', color: 'bg-orange-100 text-orange-800', text: 'Medium Stock' };
-        return { status: 'good', color: 'bg-green-100 text-green-800', text: 'In Stock' };
+        if (stock <= 0) return { status: 'out', color: 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300', text: 'Out of Stock' };
+        if (stock <= 5) return { status: 'low', color: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300', text: 'Low Stock' };
+        if (stock <= 10) return { status: 'medium', color: 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300', text: 'Medium Stock' };
+        return { status: 'good', color: 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300', text: 'In Stock' };
     };
 
     const sortProducts = (productsToSort) => {
@@ -123,7 +123,7 @@ window.Views.InventoryView = ({
         }, [
             // Product Image
 //            React.createElement('div', { key: 'image', className: 'relative h-48 bg-gray-50 dark:bg-gray-800 items-center justify-center' }, [
-            React.createElement('div', { key: 'image', className: 'relative h-48 flex bg-white items-center justify-center' }, [
+            React.createElement('div', { key: 'image', className: 'relative h-48 flex bg-white dark:bg-gray-800 items-center justify-center' }, [
                     // Show actual image if available centered
                 productImage.type === 'url' ? (
                     React.createElement('img', {
@@ -155,7 +155,7 @@ window.Views.InventoryView = ({
                 // Featured badge
                 product.featured && React.createElement('div', {
                     key: 'featured-badge',
-                    className: 'absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'
+                    className: 'absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'
                 }, '⭐ Featured'),
 
                 // Selection checkbox
@@ -219,7 +219,7 @@ window.Views.InventoryView = ({
                             `$${parseFloat(product.price).toFixed(2)}`
                         ),
                         React.createElement('div', { key: 'stock-section', className: 'text-right' }, [
-                            React.createElement('div', { key: 'stock-div', className: 'text-sm font-medium dark:text-gray-200' },
+                            React.createElement('div', { key: 'stock-div', className: 'text-sm font-medium text-gray-900 dark:text-gray-200' },
                                 `Stock: ${product.stock}`
                             ),
                             React.createElement('div', { key: 'category-div', className: 'text-xs text-gray-500 dark:text-gray-400' },
@@ -276,7 +276,7 @@ window.Views.InventoryView = ({
 
         return React.createElement('tr', {
             key: 'product-row',
-            className: `hover:bg-gray-50 border-b dark:border-gray-700 transition-colors ${selectedProducts.includes(product.id) ? 'bg-blue-50' : ''
+            className: `hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 transition-colors ${selectedProducts.includes(product.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                 } ${!product.is_active ? 'opacity-60' : ''}`
         }, [
             React.createElement('td', { key: 'select', className: 'p-4' }, [
@@ -355,12 +355,12 @@ window.Views.InventoryView = ({
                 React.createElement('div', { key: 'status-div', className: 'flex flex-wrap gap-1' }, [
                     React.createElement('span', {
                         key: 'status-span',
-                        className: `px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
+                        className: `px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
                             }`
                     }, product.is_active ? 'Active' : 'Inactive'),
                     product.featured && React.createElement('span', {
                         key: 'featured',
-                        className: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'
+                        className: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'
                     }, '⭐ Featured')
                 ])
             ]),
@@ -369,19 +369,19 @@ window.Views.InventoryView = ({
                     React.createElement('button', {
                         key: 'edit-btn',
                         onClick: () => onEditProduct(product),
-                        className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors',
+                        className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors',
                         title: 'Edit'
                     }, React.createElement(Edit, { size: 16 })),
                     React.createElement('button', {
                         key: 'duplicate-btn',
                         onClick: () => onDuplicateProduct(product.id),
-                        className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors',
+                        className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors',
                         title: 'Duplicate'
                     }, React.createElement(Copy, { size: 16 })),
                     React.createElement('button', {
                         key: 'delete-btn',
                         onClick: () => onDeleteProduct(product.id),
-                        className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors',
+                        className: 'p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors',
                         title: 'Delete'
                     }, React.createElement(Trash2, { size: 16 }))
                 ])
@@ -716,8 +716,8 @@ window.Views.InventoryView = ({
             ) : viewMode === 'grid' ? (
                 // Grid view
                 React.createElement('div', { key: 'grid-view', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col' }, [
-                    React.createElement('div', { key: 'grid-header', className: 'p-6 border-b dark:bg-gray-700 dark:border-gray-600 flex-shrink-0' }, [
-                        React.createElement('div', { key: 'grid-header-content', className: 'flex items-center justify-between mb-4' }, [
+                    React.createElement('div', { key: 'grid-header', className: 'p-5 rounded-t-xl border-b dark:bg-gray-700 dark:border-gray-600 flex-shrink-0' }, [
+                        React.createElement('div', { key: 'grid-header-content', className: 'flex items-center justify-between' }, [
                             React.createElement('div', { key: 'grid-header-select', className: 'flex items-center gap-4' }, [
                                 React.createElement('label', { key: 'grid-header-select-label', className: 'flex items-center gap-2 cursor-pointer' }, [
                                     React.createElement('input', {

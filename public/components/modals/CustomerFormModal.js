@@ -269,7 +269,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
             className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'
         }, [
             // Header
-            React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [
+            React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center' }, [
                 React.createElement('h2', { key: 'header-container', className: 'text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2' }, [
                     React.createElement(User, { key: 'icon', size: 24 }),
                     customer ? 'Edit Customer' : 'Add New Customer'
@@ -457,7 +457,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 value: formData.date_of_birth,
                                 onChange: (e) => handleInputChange('date_of_birth', e.target.value),
                                 max: new Date().toISOString().split('T')[0], // Can't be future date
-                                className: 'w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                             }),
                             React.createElement('p', {
                                 key: 'date-of-birth-note',
@@ -539,7 +539,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                             value: formData.enrollment_date,
                             onChange: (e) => handleInputChange('enrollment_date', e.target.value),
                             max: new Date().toISOString().split('T')[0], // Can't be future date
-                            className: 'w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                         }),
                         React.createElement('p', {
                             key: 'enrollment-date-note',
@@ -599,7 +599,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                                 min: '0',
                                 value: formData.points,
                                 onChange: (e) => handleInputChange('points', e.target.value),
-                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.points ? 'border-red-500' : 'border-gray-300'
+                                className: `w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${errors.points ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                                     }`,
                                 placeholder: '0'
                             }),
@@ -762,7 +762,7 @@ window.Modals.CustomerFormModal = function CustomerFormModal({
                         value: formData.notes,
                         onChange: (e) => handleInputChange('notes', e.target.value),
                         rows: 3,
-                        className: 'w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                        className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
                         placeholder: 'Add any special notes about this customer...'
                     })
                 ]),

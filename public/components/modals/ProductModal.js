@@ -386,26 +386,26 @@ window.Modals.ProductModal = function ProductModal({
 
     return React.createElement('div', {
         key: 'modal-container',
-        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+        className: 'fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4'
     }, [
         React.createElement('div', {
             key: 'modal',
-            className: 'bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col'
+            className: 'bg-white dark:bg-gray-900 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-gray-200 dark:border-gray-700'
         }, [
             // Header
-            React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b flex justify-between items-center' }, [
+            React.createElement('div', { key: 'header', className: 'px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800' }, [
                 React.createElement('h2', { key: 'header-title', className: 'text-xl font-bold text-gray-900 dark:text-white' },
                     product ? 'Edit Product' : 'Add New Product'
                 ),
                 React.createElement('button', {
                     onClick: onClose,
                     key: 'close-button',
-                    className: 'text-gray-400 hover:text-gray-600 transition-colors'
+                    className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors'
                 }, React.createElement(X, { size: 24 }))
             ]),
 
             // Tab Navigation
-            React.createElement('div', { key: 'tabs', className: 'px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700' }, [
+            React.createElement('div', { key: 'tabs', className: 'px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800' }, [
                 React.createElement('div', { key: 'tabs-container', className: 'flex gap-2' }, [
                     React.createElement(TabButton, {
                         key: 'basic',
@@ -444,19 +444,20 @@ window.Modals.ProductModal = function ProductModal({
             // Form Content
             React.createElement('div', {
                 key: 'content',
-                className: 'flex-1 overflow-y-auto p-6'
+                className: 'flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-900'
             }, [
                 // Basic Info Tab
                 activeTab === 'basic' && React.createElement('div', { key: 'basic-info', className: 'space-y-6' }, [
                     React.createElement('div', { key: 'basic-info-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, [
                         // Product Name
                         React.createElement('div', { key: 'product-name' }, [
-                            React.createElement('label', { key: 'product-name-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Product Name *'),
+                            React.createElement('label', { key: 'product-name-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Product Name *'),
                             React.createElement('input', {
+                                key: 'product-name-input',
                                 type: 'text',
                                 value: formData.name,
                                 onChange: (e) => handleInputChange('name', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'Enter product name',
                                 required: true
                             })
@@ -464,26 +465,28 @@ window.Modals.ProductModal = function ProductModal({
 
                         // SKU
                         React.createElement('div', { key: 'product-sku' }, [
-                            React.createElement('label', { key: 'product-sku-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'SKU'),
+                            React.createElement('label', { key: 'product-sku-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'SKU'),
                             React.createElement('input', {
+                                key: 'product-sku-input',
                                 type: 'text',
                                 value: formData.sku,
                                 onChange: (e) => handleInputChange('sku', e.target.value.toUpperCase()),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'Auto-generated if empty'
                             })
                         ]),
 
                         // Price
                         React.createElement('div', { key: 'product-price' }, [
-                            React.createElement('label', { key: 'product-price-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Price *'),
+                            React.createElement('label', { key: 'product-price-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Price *'),
                             React.createElement('input', {
+                                key: 'product-price-input',
                                 type: 'number',
                                 step: '0.01',
                                 min: '0',
                                 value: formData.price,
                                 onChange: (e) => handleInputChange('price', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: '0.00',
                                 required: true
                             })
@@ -491,13 +494,14 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Stock
                         React.createElement('div', { key: 'product-stock' }, [
-                            React.createElement('label', { key: 'product-stock-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Stock Quantity *'),
+                            React.createElement('label', { key: 'product-stock-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Stock Quantity *'),
                             React.createElement('input', {
+                                key: 'product-stock-input',
                                 type: 'number',
                                 min: '0',
                                 value: formData.stock,
                                 onChange: (e) => handleInputChange('stock', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: '0',
                                 required: true
                             })
@@ -505,12 +509,13 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Category
                         React.createElement('div', { key: 'product-category' }, [
-                            React.createElement('label', { key: 'product-category-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Category *'),
+                            React.createElement('label', { key: 'product-category-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Category *'),
                             React.createElement('input', {
+                                key: 'product-category-input',
                                 type: 'text',
                                 value: formData.category,
                                 onChange: (e) => handleInputChange('category', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'e.g., Luggage, Backpacks, Accessories',
                                 required: true
                             })
@@ -518,12 +523,12 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Product Type
                         React.createElement('div', { key: 'product-type' }, [
-                            React.createElement('label', { key: 'product-type-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Product Type'),
+                            React.createElement('label', { key: 'product-type-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Product Type'),
                             React.createElement('select', {
                                 value: formData.productType,
                                 onChange: (e) => handleInputChange('productType', e.target.value),
                                 disabled: loadingProductTypes,
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50'
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50'
                             }, [
                                 React.createElement('option', { key: 'empty', value: '' }, 
                                     loadingProductTypes ? 'Loading types...' : 'Select Type'
@@ -536,24 +541,26 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Brand
                         React.createElement('div', { key: 'brand' }, [
-                            React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Brand'),
+                            React.createElement('label', { key: 'brand-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Brand'),
                             React.createElement('input', {
+                                key: 'brand-input',
                                 type: 'text',
                                 value: formData.brand,
                                 onChange: (e) => handleInputChange('brand', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'e.g., TUMI, Samsonite'
                             })
                         ]),
 
                         // Collection
                         React.createElement('div', { key: 'collection' }, [
-                            React.createElement('label', { key: 'collection-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Collection'),
+                            React.createElement('label', { key: 'collection-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Collection'),
                             React.createElement('input', {
+                                key: 'collection-input',
                                 type: 'text',
                                 value: formData.collection,
                                 onChange: (e) => handleInputChange('collection', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'e.g., 19 Degree, Alpha, Voyageur'
                             })
                         ])
@@ -561,13 +568,13 @@ window.Modals.ProductModal = function ProductModal({
 
                     // Description
                     React.createElement('div', { key: 'description' }, [
-                        React.createElement('label', { key: 'description-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Description'),
+                        React.createElement('label', { key: 'description-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Description'),
                         React.createElement('textarea', {
                             key: 'description-textarea',
                             value: formData.description,
                             onChange: (e) => handleInputChange('description', e.target.value),
                             rows: 4,
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                            className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                             placeholder: 'Detailed product description...'
                         })
                     ]),
@@ -582,7 +589,7 @@ window.Modals.ProductModal = function ProductModal({
                                 onChange: (e) => handleInputChange('isActive', e.target.checked),
                                 className: 'w-4 h-4 text-blue-600 rounded'
                             }),
-                            React.createElement('span', { className: 'text-sm font-medium text-gray-700 dark:text-gray-300' }, 'Active Product')
+                            React.createElement('span', { className: 'text-sm font-medium text-gray-700 dark:text-gray-200' }, 'Active Product')
                         ]),
                         React.createElement('label', { key: 'featured-label', className: 'flex items-center gap-2' }, [
                             React.createElement('input', {
@@ -592,7 +599,7 @@ window.Modals.ProductModal = function ProductModal({
                                 onChange: (e) => handleInputChange('featured', e.target.checked),
                                 className: 'w-4 h-4 text-blue-600 rounded'
                             }),
-                            React.createElement('span', { className: 'text-sm font-medium text-gray-700 dark:text-gray-300' }, 'Featured Product')
+                            React.createElement('span', { className: 'text-sm font-medium text-gray-700 dark:text-gray-200' }, 'Featured Product')
                         ])
                     ])
                 ]),
@@ -602,26 +609,26 @@ window.Modals.ProductModal = function ProductModal({
                     React.createElement('div', { key: 'details-container', className: 'grid grid-cols-1 md:grid-cols-2 gap-6' }, [
                         // Material
                         React.createElement('div', { key: 'product-material' }, [
-                            React.createElement('label', { key: 'material-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Material'),
+                            React.createElement('label', { key: 'material-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Material'),
                             React.createElement('input', {
                                 key: 'material-input',
                                 type: 'text',
                                 value: formData.material,
                                 onChange: (e) => handleInputChange('material', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'e.g., Ballistic Nylon, Polycarbonate, Leather'
                             })
                         ]),
 
                         // Color
                         React.createElement('div', { key: 'product-color' }, [
-                            React.createElement('label', { key: 'color-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Color'),
+                            React.createElement('label', { key: 'color-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Color'),
                             React.createElement('input', {
                                 key: 'color-input',
                                 type: 'text',
                                 value: formData.color,
                                 onChange: (e) => handleInputChange('color', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'e.g., Black, Navy, Silver'
                             })
                         ]),
@@ -630,20 +637,20 @@ window.Modals.ProductModal = function ProductModal({
 
                         // Dimensions
                         React.createElement('div', { key: 'dimensions' }, [
-                            React.createElement('label', { key: 'dimensions-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Dimensions'),
+                            React.createElement('label', { key: 'dimensions-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Dimensions'),
                             React.createElement('input', {
                                 key: 'dimensions-input',
                                 type: 'text',
                                 value: formData.dimensions,
                                 onChange: (e) => handleInputChange('dimensions', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'e.g., 22" x 14" x 9"'
                             })
                         ]),
 
                         // Weight
                         React.createElement('div', { key: 'weight' }, [
-                            React.createElement('label', { key: 'weight-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Weight (lbs)'),
+                            React.createElement('label', { key: 'weight-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Weight (lbs)'),
                             React.createElement('input', {
                                 key: 'weight-input',
                                 type: 'number',
@@ -651,20 +658,20 @@ window.Modals.ProductModal = function ProductModal({
                                 min: '0',
                                 value: formData.weight,
                                 onChange: (e) => handleInputChange('weight', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: '0.0'
                             })
                         ]),
 
                         // Emoji Icon
                         React.createElement('div', { key: 'emoji' }, [
-                            React.createElement('label', { key: 'emoji-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Emoji Icon'),
+                            React.createElement('label', { key: 'emoji-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Emoji Icon'),
                             React.createElement('input', {
                                 key: 'emoji-input',
                                 type: 'text',
                                 value: formData.image,
                                 onChange: (e) => handleInputChange('image', e.target.value),
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: '📦'
                             })
                         ])
@@ -672,26 +679,26 @@ window.Modals.ProductModal = function ProductModal({
 
                     // Warranty Info
                     React.createElement('div', { key: 'warranty' }, [
-                        React.createElement('label', { key: 'warranty-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Warranty Information'),
+                        React.createElement('label', { key: 'warranty-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Warranty Information'),
                         React.createElement('textarea', {
                             key: 'warranty-textarea',
                             value: formData.warrantyInfo,
                             onChange: (e) => handleInputChange('warrantyInfo', e.target.value),
                             rows: 3,
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                            className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                             placeholder: 'e.g., 5-year warranty against manufacturing defects'
                         })
                     ]),
 
                     // Care Instructions
                     React.createElement('div', { key: 'care' }, [
-                        React.createElement('label', { key: 'care-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Care Instructions'),
+                        React.createElement('label', { key: 'care-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Care Instructions'),
                         React.createElement('textarea', {
                             key: 'care-textarea',
                             value: formData.careInstructions,
                             onChange: (e) => handleInputChange('careInstructions', e.target.value),
                             rows: 3,
-                                className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                            className: 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                             placeholder: 'Care and maintenance instructions...'
                         })
                     ])
@@ -701,14 +708,14 @@ window.Modals.ProductModal = function ProductModal({
                 activeTab === 'images' && React.createElement('div', { className: 'space-y-6' }, [
                     // Main Image URL
                     React.createElement('div', { key: 'main-image' }, [
-                        React.createElement('label', { key: 'main-image-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Main Image URL'),
+                        React.createElement('label', { key: 'main-image-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2' }, 'Main Image URL'),
                         React.createElement('div', { key: 'main-image-container', className: 'flex gap-2' }, [
                             React.createElement('input', {
                                 key: 'main-image-input',
                                 type: 'url',
                                 value: formData.mainImageUrl,
                                 onChange: (e) => handleInputChange('mainImageUrl', e.target.value),
-                                className: 'flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                className: 'flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'https://example.com/product-image.jpg'
                             }),
                             React.createElement('button', {
@@ -730,17 +737,17 @@ window.Modals.ProductModal = function ProductModal({
 
                     // Additional Images
                     React.createElement('div', { key: 'additional-images' }, [
-                        React.createElement('label', { key: 'additional-images-label',  className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4' }, 'Additional Images'),
+                        React.createElement('label', { key: 'additional-images-label',  className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-4' }, 'Additional Images'),
 
                         // Add new image form
-                        React.createElement('div', { key: 'additional-images-form', className: 'bg-gray-50 p-4 rounded-lg mb-4' }, [
+                        React.createElement('div', { key: 'additional-images-form', className: 'bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4' }, [
                             React.createElement('div', { key: 'additional-images-form-container', className: 'grid grid-cols-1 md:grid-cols-4 gap-4 mb-3' }, [
                                 React.createElement('input', {
                                     key: 'additional-images-form-input',
                                     type: 'url',
                                     value: newImage.url,
                                     onChange: (e) => setNewImage(prev => ({ ...prev, url: e.target.value })),
-                                    className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                    className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                     placeholder: 'Image URL'
                                 }),
                                 React.createElement('input', {
@@ -748,7 +755,7 @@ window.Modals.ProductModal = function ProductModal({
                                     type: 'text',
                                     value: newImage.alt,
                                     onChange: (e) => setNewImage(prev => ({ ...prev, alt: e.target.value })),
-                                    className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                    className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                     placeholder: 'Alt text'
                                 }),
                                 React.createElement('div', { key: 'additional-images-form-checkbox', className: 'flex items-center gap-2' }, [
@@ -760,7 +767,7 @@ window.Modals.ProductModal = function ProductModal({
                                             onChange: (e) => setNewImage(prev => ({ ...prev, isPrimary: e.target.checked })),
                                             className: 'w-4 h-4 text-blue-600 rounded'
                                         }),
-                                        React.createElement('span', { className: 'text-sm text-gray-700 dark:text-gray-300' }, 'Primary')
+                                        React.createElement('span', { className: 'text-sm text-gray-700 dark:text-gray-200' }, 'Primary')
                                     ])
                                 ]),
                                 React.createElement('button', {
@@ -794,22 +801,22 @@ window.Modals.ProductModal = function ProductModal({
                             formData.images.map((image, index) =>
                                 React.createElement('div', {
                                     key: `additional-images-list-${index}`,
-                                    className: 'flex items-center gap-4 p-3 border rounded-lg'
+                                    className: 'flex items-center gap-4 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800'
                                 }, [
-                                    React.createElement('div', { key: 'additional-images-list-preview', className: 'w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden' }, [
+                                    React.createElement('div', { key: 'additional-images-list-preview', className: 'w-16 h-16 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden' }, [
                                         image.url ? React.createElement('img', {
                                             key: `additional-images-list-preview-${index}`,
                                             src: image.url,
                                             alt: image.alt,
                                             className: 'w-full h-full object-cover'
-                                        }) : React.createElement(Image, { size: 24, className: 'text-gray-400' })
+                                        }) : React.createElement(Image, { size: 24, className: 'text-gray-400 dark:text-gray-600' })
                                     ]),
                                     React.createElement('div', { key: 'additional-images-list-info', className: 'flex-1' }, [
                                         React.createElement('div', { key: 'additional-images-list-info-alt', className: 'font-medium text-gray-900 dark:text-white' }, image.alt || 'No alt text'),
                                         React.createElement('div', { key: 'additional-images-list-info-url', className: 'text-sm text-gray-600 dark:text-gray-300 truncate' }, image.url),
                                         image.isPrimary && React.createElement('span', {
                                             key: 'additional-images-list-info-primary',
-                                            className: 'inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded mt-1'
+                                            className: 'inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded mt-1'
                                         }, 'Primary Image')
                                     ]),
                                     React.createElement('div', { key: 'additional-images-list-actions', className: 'flex gap-2' }, [
@@ -817,13 +824,13 @@ window.Modals.ProductModal = function ProductModal({
                                             key: 'additional-images-list-actions-set-primary',
                                             type: 'button',
                                             onClick: () => setPrimaryImage(index),
-                                            className: 'px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors'
+                                            className: 'px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors'
                                         }, 'Set Primary'),
                                         React.createElement('button', {
                                             type: 'button',
                                             onClick: () => removeImage(index),
                                             key: 'additional-images-list-actions-remove',
-                                            className: 'p-1 text-red-600 hover:bg-red-50 rounded transition-colors'
+                                            className: 'p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors'
                                         }, React.createElement(Trash2, { size: 16 }))
                                     ])
                                 ])
@@ -833,16 +840,16 @@ window.Modals.ProductModal = function ProductModal({
                 ]),
 
                 // Features Tab
-                    activeTab === 'features' && React.createElement('div', { key: 'features-tab', className: 'space-y-6' }, [
-                    React.createElement('div', { key: 'add-feature', className: 'bg-gray-50 p-4 rounded-lg' }, [
-                        React.createElement('label', { key: 'add-feature-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3' }, 'Add Feature'),
+                activeTab === 'features' && React.createElement('div', { key: 'features-tab', className: 'space-y-6' }, [
+                    React.createElement('div', { key: 'add-feature', className: 'bg-gray-50 dark:bg-gray-800 p-4 rounded-lg' }, [
+                        React.createElement('label', { key: 'add-feature-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3' }, 'Add Feature'),
                         React.createElement('div', { key: 'add-feature-form', className: 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-3' }, [
                             React.createElement('input', {
                                 key: 'add-feature-form-name',
                                 type: 'text',
                                 value: newFeature.name,
                                 onChange: (e) => setNewFeature(prev => ({ ...prev, name: e.target.value })),
-                                className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'Feature name (e.g., Water Resistant, USB Port)'
                             }),
                             React.createElement('input', {
@@ -850,7 +857,7 @@ window.Modals.ProductModal = function ProductModal({
                                 type: 'text',
                                 value: newFeature.value,
                                 onChange: (e) => setNewFeature(prev => ({ ...prev, value: e.target.value })),
-                                className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                                className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
                                 placeholder: 'Feature value (e.g., Yes, Integrated charging port)'
                             })
                         ]),
@@ -867,22 +874,22 @@ window.Modals.ProductModal = function ProductModal({
 
                     // Features list
                     formData.features.length > 0 && React.createElement('div', { key: 'features-list' }, [
-                        React.createElement('label', { key: 'features-list-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3' }, 'Product Features'),
+                        React.createElement('label', { key: 'features-list-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3' }, 'Product Features'),
                         React.createElement('div', { key: 'features-list-container', className: 'space-y-2' },
                             formData.features.map((feature, index) =>
                                 React.createElement('div', {
                                     key: index,
-                                    className: 'flex items-center justify-between p-3 border rounded-lg'
+                                    className: 'flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800'
                                 }, [
                                     React.createElement('div', { key: 'feature-info' }, [
-                                        React.createElement('span', { key: 'feature-info-name', className: 'font-medium' }, feature.name),
-                                        React.createElement('span', { key: 'feature-info-value', className: 'text-gray-600 ml-2' }, `: ${feature.value}`)
+                                        React.createElement('span', { key: 'feature-info-name', className: 'font-medium text-gray-900 dark:text-white' }, feature.name),
+                                        React.createElement('span', { key: 'feature-info-value', className: 'text-gray-600 dark:text-gray-300 ml-2' }, `: ${feature.value}`)
                                     ]),
                                     React.createElement('button', {
                                         key: 'feature-remove',
                                         type: 'button',
                                         onClick: () => removeFeature(index),
-                                        className: 'p-1 text-red-600 hover:bg-red-50 rounded transition-colors'
+                                        className: 'p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors'
                                     }, React.createElement(Trash2, { size: 16 }))
                                 ])
                             )
@@ -961,7 +968,7 @@ window.Modals.ProductModal = function ProductModal({
             ]),
 
             // Footer - Using the working button structure
-            React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex gap-3 justify-end' }, [
+            React.createElement('div', { key: 'footer', className: 'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex gap-3 justify-end' }, [
                 React.createElement('button', {
                     key: 'cancel-button',
                     type: 'button',
@@ -970,7 +977,7 @@ window.Modals.ProductModal = function ProductModal({
                         onClose();
                     },
                     disabled: loading,
-                    className: 'px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50'
+                    className: 'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-50 bg-white dark:bg-gray-800'
                 }, 'Cancel'),
                 React.createElement('button', {
                     key: 'submit-button',
@@ -993,16 +1000,16 @@ window.Modals.ProductModal = function ProductModal({
             // Salesforce Results Modal
             showSalesforceResultsModal && salesforceResults && React.createElement('div', {
                 key: 'salesforce-results-modal',
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+                className: 'fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4'
             }, [
                 React.createElement('div', {
                     key: 'modal-content',
-                    className: 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden'
+                    className: 'bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700'
                 }, [
                     // Modal Header
                     React.createElement('div', {
                         key: 'modal-header',
-                        className: 'flex items-center justify-between p-6 border-b dark:border-gray-700'
+                        className: 'flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
                     }, [
                         React.createElement('div', {
                             key: 'header-content',
@@ -1022,7 +1029,7 @@ window.Modals.ProductModal = function ProductModal({
                         React.createElement('button', {
                             key: 'close-btn',
                             onClick: () => setShowSalesforceResultsModal(false),
-                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                            className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors'
                         }, [
                             React.createElement('span', { key: 'close-icon', className: 'text-2xl' }, '×')
                         ])
@@ -1031,7 +1038,7 @@ window.Modals.ProductModal = function ProductModal({
                     // Modal Body
                     React.createElement('div', {
                         key: 'modal-body',
-                        className: 'p-6 space-y-6 max-h-[60vh] overflow-y-auto'
+                        className: 'p-6 space-y-6 max-h-[60vh] overflow-y-auto bg-white dark:bg-gray-900'
                     }, [
                         // Summary
                         React.createElement('div', {
@@ -1055,7 +1062,7 @@ window.Modals.ProductModal = function ProductModal({
                         }, [
                             React.createElement('div', {
                                 key: 'total-processed',
-                                className: 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center'
+                                className: 'bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center'
                             }, [
                                 React.createElement('div', {
                                     key: 'total-number',
@@ -1140,7 +1147,7 @@ window.Modals.ProductModal = function ProductModal({
                     // Modal Footer
                     React.createElement('div', {
                         key: 'modal-footer',
-                        className: 'flex justify-end p-6 border-t dark:border-gray-700'
+                        className: 'flex justify-end p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
                     }, [
                         React.createElement('button', {
                             key: 'close-button',

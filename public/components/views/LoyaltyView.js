@@ -20,7 +20,7 @@ window.Views.LoyaltyView= ({
 }) => {
     const { Award, Users, Plus, Edit, Trash2, Search, Eye, User } = window.Icons;
     
-    const [currentTab, setCurrentTab] = React.useState('search'); // 'search', 'manage', or 'vouchers'
+    const [currentTab, setCurrentTab] = React.useState('manage'); // 'search', 'manage', or 'vouchers'
     const [selectedCustomerForVouchers, setSelectedCustomerForVouchers] = React.useState(null);
     const [showVouchersModal, setShowVouchersModal] = React.useState(false);
     const [searchMode, setSearchMode] = React.useState('loyalty'); // 'loyalty' or 'general'
@@ -375,17 +375,17 @@ window.Views.LoyaltyView= ({
         React.createElement('div', { key: 'tabs', className: 'flex items-center justify-between mb-6' }, [
             React.createElement('div', { key: 'tab-buttons', className: 'flex gap-2' }, [
                 React.createElement(TabButton, { 
-                    key: 'search-tab',
-                    tab: 'search', 
-                    label: 'Customer Search', 
-                    active: currentTab === 'search' 
-                }),
-                React.createElement(TabButton, { 
                     key: 'manage-tab',
                     tab: 'manage', 
                     label: 'Manage Customers', 
                     active: currentTab === 'manage',
                     count: customers.length 
+                }),
+                React.createElement(TabButton, { 
+                    key: 'search-tab',
+                    tab: 'search', 
+                    label: 'Customer Search', 
+                    active: currentTab === 'search' 
                 })
             ]),
             
