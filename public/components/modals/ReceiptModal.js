@@ -43,10 +43,10 @@ window.Modals.ReceiptModal = function ReceiptModal({
                     React.createElement('div', { key: `voucher-${voucher.id}`, className: 'flex justify-between text-sm text-blue-700 dark:text-blue-300' }, [
                         React.createElement('span', { key: 'voucher-name' }, voucher.name),
                         React.createElement('span', { key: 'voucher-value' }, 
-                            voucher.voucher_type === 'Value' ? `-$${(voucher.applied_amount || voucher.remaining_value || 0).toFixed(2)}` :
+                            voucher.voucher_type === 'Value' ? `-$${(parseFloat(voucher.applied_amount || voucher.remaining_value || 0)).toFixed(2)}` :
                             voucher.voucher_type === 'Discount' ? `-${voucher.discount_percent}%` :
                             voucher.voucher_type === 'ProductSpecific' ? 
-                                (voucher.discount_percent ? `-${voucher.discount_percent}%` : `-$${(voucher.face_value || 0).toFixed(2)}`) :
+                                (voucher.discount_percent ? `-${voucher.discount_percent}%` : `-$${(parseFloat(voucher.face_value || 0)).toFixed(2)}`) :
                                 '-$0.00'
                         )
                     ])

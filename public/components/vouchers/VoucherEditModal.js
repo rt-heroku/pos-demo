@@ -30,7 +30,7 @@ window.Components.VoucherEditModal = function({
         if (isNaN(numValue) || numValue < 0) {
             setError('Amount must be a positive number');
         } else if (numValue > voucher.remaining_value) {
-            setError(`Amount cannot exceed remaining value of $${voucher.remaining_value.toFixed(2)}`);
+            setError(`Amount cannot exceed remaining value of $${parseFloat(voucher.remaining_value).toFixed(2)}`);
         }
     };
 
@@ -43,7 +43,7 @@ window.Components.VoucherEditModal = function({
         }
         
         if (numAmount > voucher.remaining_value) {
-            setError(`Amount cannot exceed remaining value of $${voucher.remaining_value.toFixed(2)}`);
+            setError(`Amount cannot exceed remaining value of $${parseFloat(voucher.remaining_value).toFixed(2)}`);
             return;
         }
         
@@ -125,7 +125,7 @@ window.Components.VoucherEditModal = function({
                     React.createElement('div', { 
                         key: 'remaining', 
                         className: 'text-sm text-gray-600 dark:text-gray-400 mt-1' 
-                    }, `Remaining: $${voucher.remaining_value?.toFixed(2) || '0.00'}`)
+                    }, `Remaining: $${voucher.remaining_value ? parseFloat(voucher.remaining_value).toFixed(2) : '0.00'}`)
                 ]),
 
                 // Amount Input

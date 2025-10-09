@@ -411,7 +411,7 @@ window.Components.CustomerVouchersModal = function({ customer, isOpen, onClose }
                                         React.createElement('div', { 
                                             key: 'progress-text', 
                                             className: 'text-center text-sm font-medium text-gray-700 dark:text-gray-300' 
-                                        }, `$${voucher.remaining_value?.toFixed(2) || '0.00'} remaining of $${voucher.face_value.toFixed(2)}`)
+                                        }, `$${voucher.remaining_value ? parseFloat(voucher.remaining_value).toFixed(2) : '0.00'} remaining of $${parseFloat(voucher.face_value).toFixed(2)}`)
                                     ])
                                 ])
                             ))

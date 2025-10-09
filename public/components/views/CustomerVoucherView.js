@@ -332,7 +332,7 @@ window.Views.CustomerVoucherView = function({ customer, onBack }) {
                                     React.createElement('div', { 
                                         key: 'progress-text', 
                                         className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' 
-                                    }, `$${voucher.remaining_value?.toFixed(2) || '0.00'} remaining of $${voucher.face_value.toFixed(2)}`)
+                                    }, `$${voucher.remaining_value ? parseFloat(voucher.remaining_value).toFixed(2) : '0.00'} remaining of $${parseFloat(voucher.face_value).toFixed(2)}`)
                                 ])
                             ])
                         ))
