@@ -704,7 +704,7 @@ window.Views.InventoryView = ({
         ]),
 
         // Products display
-        React.createElement('div', { key: 'products', className: 'h-[calc(100vh-20rem)]'}, [
+        React.createElement('div', { key: 'products', className: 'h-[calc(100vh-20rem)] overflow-hidden'}, [
             loading ? (
                 React.createElement('div', { key: 'loading-div', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center' }, [
                     React.createElement('div', { key: 'loading-spinner', className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4' }),
@@ -715,8 +715,8 @@ window.Views.InventoryView = ({
                 React.createElement(EmptyState, { key: 'empty-state' })
             ) : viewMode === 'grid' ? (
                 // Grid view
-                React.createElement('div', { key: 'grid-view', className: 'bg-white dark:bg-gray-800 rounded-t-xl rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-full' }, [
-                    React.createElement('div', { key: 'grid-header', className: 'p-6 border-b rounded-t-xl dark:bg-gray-700 dark:border-gray-600' }, [
+                React.createElement('div', { key: 'grid-view', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col' }, [
+                    React.createElement('div', { key: 'grid-header', className: 'p-6 border-b dark:bg-gray-700 dark:border-gray-600 flex-shrink-0' }, [
                         React.createElement('div', { key: 'grid-header-content', className: 'flex items-center justify-between mb-4' }, [
                             React.createElement('div', { key: 'grid-header-select', className: 'flex items-center gap-4' }, [
                                 React.createElement('label', { key: 'grid-header-select-label', className: 'flex items-center gap-2 cursor-pointer' }, [
@@ -735,7 +735,7 @@ window.Views.InventoryView = ({
                             )
                         ])
                     ]),
-                    React.createElement('div', { key: 'grid-body', className: 'p-6' }, [
+                    React.createElement('div', { key: 'grid-body', className: 'p-6 flex-1 overflow-y-auto' }, [
                         React.createElement('div', {
                             key: 'grid-body-content',
                             className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6'
@@ -747,9 +747,28 @@ window.Views.InventoryView = ({
             ) : (
                 // List view
                 React.createElement('div', { key: 'list-view', className: 'flex flex-col h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden' }, [
-                    React.createElement('div', { key: 'list-view-content', className: 'overflow-x-auto' }, [
+                    React.createElement('div', { key: 'list-view-header', className: 'p-4 border-b dark:bg-gray-700 dark:border-gray-600 flex-shrink-0' }, [
+                        React.createElement('div', { key: 'list-header-content', className: 'flex items-center justify-between' }, [
+                            React.createElement('div', { key: 'list-header-select', className: 'flex items-center gap-4' }, [
+                                React.createElement('label', { key: 'list-header-select-label', className: 'flex items-center gap-2 cursor-pointer' }, [
+                                    React.createElement('input', {
+                                        key: 'list-header-select-input',
+                                        type: 'checkbox',
+                                        checked: selectedProducts.length === sortedProducts.length && sortedProducts.length > 0,
+                                        onChange: (e) => onSelectAll(e.target.checked),
+                                        className: 'w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500'
+                                    }),
+                                    React.createElement('span', { key: 'list-header-select-span', className: 'text-sm font-medium text-gray-900 dark:text-white' }, 'Select All')
+                                ])
+                            ]),
+                            React.createElement('div', { key: 'list-header-count', className: 'text-sm text-gray-600 dark:text-gray-300' },
+                                `Showing ${sortedProducts.length} products`
+                            )
+                        ])
+                    ]),
+                    React.createElement('div', { key: 'list-view-content', className: 'flex-1 overflow-auto' }, [
                         React.createElement('table', { key: 'list-view-table', className: 'w-full min-w-[800px]' }, [
-                            React.createElement('thead', { key: 'thead', className: 'bg-white dark:bg-gray-700 border-b dark:border-gray-600' }, [
+                            React.createElement('thead', { key: 'thead', className: 'bg-white dark:bg-gray-700 border-b dark:border-gray-600 sticky top-0 z-10' }, [
                                 React.createElement('tr', { key: 'header-row' }, [
                                     React.createElement('th', { key: 'select', className: 'p-4 text-left w-16' }, [
                                         React.createElement('input', {
@@ -774,7 +793,7 @@ window.Views.InventoryView = ({
                             )
                         ])
                     ]),
-                    React.createElement('div', { key: 'list-view-footer', className: 'mt-auto p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-600 dark:text-gray-300' },
+                    React.createElement('div', { key: 'list-view-footer', className: 'p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-600 dark:text-gray-300 flex-shrink-0' },
                         `Showing ${sortedProducts.length} of ${products.length} products`
                     )
                 ])

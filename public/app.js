@@ -1537,7 +1537,7 @@ const POSApp = () => {
             //     loading
             // }),
             
-            currentView === 'loyalty' && React.createElement(window.Views.LoyaltyView, { 
+            currentView === 'loyalty' && window.Views.LoyaltyView && React.createElement(window.Views.LoyaltyView, { 
                 key: 'loyalty-view',
                 loyaltyNumber, 
                 setLoyaltyNumber,

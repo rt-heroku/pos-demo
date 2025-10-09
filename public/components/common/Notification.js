@@ -41,7 +41,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
             switch (type) {
                 case 'success':
                     return {
-                        bg: 'bg-green-900/20',
+                        bg: 'bg-green-900/80',
                         border: 'border-green-800',
                         icon: 'text-green-400',
                         title: 'text-green-100',
@@ -49,7 +49,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                     };
                 case 'error':
                     return {
-                        bg: 'bg-red-900/20',
+                        bg: 'bg-red-900/50',
                         border: 'border-red-800',
                         icon: 'text-red-400',
                         title: 'text-red-100',
@@ -77,7 +77,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
             switch (type) {
                 case 'success':
                     return {
-                        bg: 'bg-green-50',
+                        bg: 'bg-green-70',
                         border: 'border-green-200',
                         icon: 'text-green-600',
                         title: 'text-green-900',
@@ -85,7 +85,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                     };
                 case 'error':
                     return {
-                        bg: 'bg-red-50',
+                        bg: 'bg-red-70',
                         border: 'border-red-200',
                         icon: 'text-red-600',
                         title: 'text-red-900',
@@ -93,7 +93,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                     };
                 case 'warning':
                     return {
-                        bg: 'bg-yellow-50',
+                        bg: 'bg-yellow-70',
                         border: 'border-yellow-200',
                         icon: 'text-yellow-600',
                         title: 'text-yellow-900',
@@ -102,7 +102,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                 case 'info':
                 default:
                     return {
-                        bg: 'bg-blue-50',
+                        bg: 'bg-blue-70',
                         border: 'border-blue-200',
                         icon: 'text-blue-600',
                         title: 'text-blue-900',
@@ -115,22 +115,27 @@ window.Components.Notification = function({ type = 'info', title, message, durat
     const colors = getColors();
 
     return React.createElement('div', {
-        className: `fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ${
+        key: 'notification-container',
+        className: `fixed top-4 right-4 z-[9999] max-w-sm w-full transform transition-all duration-300 ${
             isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
         }`
     }, [
         React.createElement('div', {
+            key: 'notification-card',
             className: `${colors.bg} ${colors.border} border rounded-lg shadow-lg p-4`
         }, [
             React.createElement('div', {
+                key: 'notification-content',
                 className: 'flex items-start gap-3'
             }, [
                 React.createElement('div', {
+                    key: 'icon-container',
                     className: `flex-shrink-0 w-6 h-6 flex items-center justify-center ${colors.icon}`
                 }, [
                     React.createElement('span', { key: 'icon', className: 'text-lg' }, getIcon())
                 ]),
                 React.createElement('div', {
+                    key: 'text-content',
                     className: 'flex-1 min-w-0'
                 }, [
                     title && React.createElement('h4', {
@@ -143,6 +148,7 @@ window.Components.Notification = function({ type = 'info', title, message, durat
                     }, message)
                 ]),
                 React.createElement('button', {
+                    key: 'close-button',
                     onClick: handleClose,
                     className: `flex-shrink-0 ml-2 ${colors.icon} hover:opacity-70 transition-opacity`
                 }, [
@@ -221,7 +227,8 @@ window.Components.NotificationContainer = function() {
     }, []);
 
     return React.createElement('div', {
-        className: 'fixed top-4 right-4 z-50 space-y-2'
+        key: 'notification-container-wrapper',
+        className: 'fixed top-4 right-4 z-[9999] space-y-2'
     }, notifications.map(notification => 
         React.createElement(window.Components.Notification, {
             key: notification.id,
@@ -233,3 +240,37 @@ window.Components.NotificationContainer = function() {
         })
     ));
 };
+
+// Debug Helper Functions - Available in Console
+window.notification = {
+    success: function(message, title = 'Success', duration = 5000) {
+        return window.NotificationManager.success(title, message, duration);
+    },
+    
+    error: function(message, title = 'Error', duration = 5000) {
+        return window.NotificationManager.error(title, message, duration);
+    },
+    
+    warning: function(message, title = 'Warning', duration = 5000) {
+        return window.NotificationManager.warning(title, message, duration);
+    },
+    
+    info: function(message, title = 'Info', duration = 5000) {
+        return window.NotificationManager.info(title, message, duration);
+    },
+    
+    clear: function() {
+        window.NotificationManager.clear();
+    },
+    
+    // Test function to show all notification types
+    test: function() {
+        this.success('This is a success message!');
+        setTimeout(() => this.error('This is an error message!'), 1000);
+        setTimeout(() => this.warning('This is a warning message!'), 2000);
+        setTimeout(() => this.info('This is an info message!'), 3000);
+    }
+};
+
+// Make it available globally for easier access
+window.notify = window.notification;

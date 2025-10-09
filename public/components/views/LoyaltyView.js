@@ -56,7 +56,6 @@ window.Views.LoyaltyView= ({
                     [customerId]: data.avatar.image_data
                 }));
             } else if (response.status === 404) {
-                // Customer doesn't have an avatar - this is normal, don't log anything
                 return;
             } else {
                 console.warn('Error fetching avatar for customer', customerId, 'Status:', response.status);
@@ -80,7 +79,9 @@ window.Views.LoyaltyView= ({
         if (customers.length > 0) {
             customers.forEach(customer => {
                 if (!attemptedAvatars.current.has(customer.id)) {
-                    loadCustomerAvatar(customer.id);
+                    loadCustomerAvatar(customer.id).catch(error => {
+                        console.error('Error loading avatar for customer', customer.id, error);
+                    });
                 }
             });
         }
@@ -347,10 +348,10 @@ window.Views.LoyaltyView= ({
         ]);
     };
 
-            return React.createElement('div', { className: 'space-y-2 lg:space-y-3' }, [
+    return React.createElement('div', { className: 'space-y-2 lg:space-y-3' }, [
         // Header with tabs
         React.createElement('div', { key: 'header', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
-            React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between mb-6' }, [
+            React.createElement('div', { key: 'header-content', className: 'flex items-center justify-between mb-2' }, [
                 React.createElement('div', { key: 'title' }, [
                     React.createElement('h2', { key: 'title', className: 'text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3' }, [
                         React.createElement(Award, { key: 'icon', size: 28 }),
@@ -370,92 +371,149 @@ window.Views.LoyaltyView= ({
                 ])
             ]),
 
-        // Tab navigation
-        React.createElement('div', { key: 'tabs', className: 'flex gap-2 mb-6' }, [
-            React.createElement(TabButton, { 
-                key: 'search-tab',
-                tab: 'search', 
-                label: 'Customer Search', 
-                active: currentTab === 'search' 
-            }),
-            React.createElement(TabButton, { 
-                key: 'manage-tab',
-                tab: 'manage', 
-                label: 'Manage Customers', 
-                active: currentTab === 'manage',
-                count: customers.length 
-            })
-        ])
-        ]),
-
-        // Customer Search Tab
-        currentTab === 'search' && React.createElement('div', { key: 'search-content', className: 'space-y-6' }, [
-            React.createElement('div', { key: 'search-section', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
-                React.createElement('h3', { key: 'search-section-container', className: 'text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2' }, [
-                    React.createElement(Search, { key: 'icon', size: 20 }),
-                    'Find Customer'
+        // Tab navigation with search controls (when manage tab is active)
+        React.createElement('div', { key: 'tabs', className: 'flex items-center justify-between mb-6' }, [
+            React.createElement('div', { key: 'tab-buttons', className: 'flex gap-2' }, [
+                React.createElement(TabButton, { 
+                    key: 'search-tab',
+                    tab: 'search', 
+                    label: 'Customer Search', 
+                    active: currentTab === 'search' 
+                }),
+                React.createElement(TabButton, { 
+                    key: 'manage-tab',
+                    tab: 'manage', 
+                    label: 'Manage Customers', 
+                    active: currentTab === 'manage',
+                    count: customers.length 
+                })
+            ]),
+            
+            // Search controls (show when manage tab is active)
+            currentTab === 'manage' && React.createElement('div', { key: 'search-controls', className: 'flex items-center gap-4' }, [
+                React.createElement('div', { key: 'search-container', className: 'relative' }, [
+                    React.createElement(Search, { 
+                        key: 'search-icon',
+                        className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
+                        size: 20 
+                    }),
+                    React.createElement('input', {
+                        key: 'manage-search-input',
+                        type: 'text',
+                        value: loyaltySearchTerm,
+                        onChange: (e) => setLoyaltySearchTerm(e.target.value),
+                        placeholder: 'Search customers...',
+                        className: 'w-80 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                    })
                 ]),
                 
-                // Search mode toggle
-                React.createElement('div', { key: 'search-mode-toggle', className: 'flex gap-2 mb-4' }, [
+                // Sort controls
+                React.createElement('div', { key: 'sort', className: 'flex items-center gap-2' }, [
+                    React.createElement('select', {
+                        key: 'sort-select',
+                        value: sortBy,
+                        onChange: (e) => setSortBy(e.target.value),
+                        className: 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                    }, [
+                        React.createElement('option', { key: 'name', value: 'name' }, 'Name'),
+                        React.createElement('option', { key: 'loyalty', value: 'loyalty_number' }, 'Loyalty #'),
+                        React.createElement('option', { key: 'points', value: 'points' }, 'Points'),
+                        React.createElement('option', { key: 'spent', value: 'total_spent' }, 'Total Spent'),
+                        React.createElement('option', { key: 'visits', value: 'visit_count' }, 'Visit Count'),
+                        React.createElement('option', { key: 'created', value: 'created_at' }, 'Date Added')
+                    ]),
+                    React.createElement('button', {
+                        key: 'sort-order-btn',
+                        onClick: () => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'),
+                        className: 'p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                        title: `Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`
+                    }, sortOrder === 'asc' ? '↑' : '↓')
+                ]),
+                
+                // Filter
+                React.createElement('select', {
+                    key: 'filter',
+                    value: filterBy,
+                    onChange: (e) => setFilterBy(e.target.value),
+                    className: 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                }, [
+                    React.createElement('option', { key: 'all', value: 'all' }, 'All'),
+                    React.createElement('option', { key: 'active', value: 'active' }, 'Active'),
+                    React.createElement('option', { key: 'inactive', value: 'inactive' }, 'New')
+                ])
+            ]),
+            
+            // Search mode controls (show when search tab is active)
+            currentTab === 'search' && React.createElement('div', { key: 'search-mode-controls', className: 'flex items-center gap-3' }, [
+                // Search mode toggle buttons
+                React.createElement('div', { key: 'search-mode-buttons', className: 'flex gap-1 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-700' }, [
                     React.createElement('button', {
                         key: 'loyalty-search-btn',
                         onClick: () => setSearchMode('loyalty'),
-                        className: `px-4 py-2 text-sm rounded-lg transition-colors ${
+                        className: `px-3 py-2 text-xs transition-colors flex items-center gap-1 ${
                             searchMode === 'loyalty' 
-                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' 
-                                : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ? 'bg-blue-600 text-white' 
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                         }`
-                    }, 'Search by Loyalty #'),
+                    }, [
+                        React.createElement('span', { key: 'icon' }, '🔢'),
+                        'Loyalty #'
+                    ]),
                     React.createElement('button', {
                         key: 'general-search-btn',
                         onClick: () => setSearchMode('general'),
-                        className: `px-4 py-2 text-sm rounded-lg transition-colors ${
+                        className: `px-3 py-2 text-xs transition-colors flex items-center gap-1 ${
                             searchMode === 'general' 
-                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' 
-                                : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ? 'bg-blue-600 text-white' 
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                         }`
-                    }, 'Search by Name/Email')
+                    }, [
+                        React.createElement('span', { key: 'icon' }, '👤'),
+                        'Name'
+                    ])
                 ]),
                 
-                React.createElement('div', { key: 'search-forms', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
-                    // Loyalty number search
-                    searchMode === 'loyalty' && React.createElement('div', { key: 'loyalty-search' }, [
-                        React.createElement('label', { key: 'loyalty-search-label', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, 'Loyalty Number'),
-                        React.createElement('div', { key: 'loyalty-input-group', className: 'flex gap-2' }, [
-                            React.createElement('input', {
-                                key: 'loyalty-input',
-                                type: 'text',
-                                value: loyaltyNumber,
-                                onChange: (e) => setLoyaltyNumber(e.target.value.toUpperCase()),
-                                placeholder: 'LOY001',
-                                className: 'flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                            }),
-                            React.createElement('button', {
-                                key: 'loyalty-search-btn',
-                                onClick: () => onSearchByLoyalty(loyaltyNumber),
-                                disabled: !loyaltyNumber.trim() || loading,
-                                className: 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400 transition-colors'
-                            }, loading ? 'Searching...' : 'Search')
-                        ])
-                    ]),
-                    
-                    // General search
-                    searchMode === 'general' && React.createElement('div', { key: 'name-search' }, [
-                        React.createElement('label', { key: 'general-search-label', className: 'block text-sm font-medium mb-2' }, 'Name, Email, or Phone'),
+                // Search input
+                React.createElement('div', { key: 'search-input-container', className: 'relative' }, [
+                    React.createElement(Search, { 
+                        key: 'search-icon',
+                        className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
+                        size: 16 
+                    }),
+                    searchMode === 'loyalty' ? 
+                        React.createElement('input', {
+                            key: 'loyalty-search-input',
+                            type: 'text',
+                            value: loyaltyNumber,
+                            onChange: (e) => setLoyaltyNumber(e.target.value.toUpperCase()),
+                            placeholder: 'LOY001',
+                            className: 'w-48 pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                        }) :
                         React.createElement('input', {
                             key: 'general-search-input',
                             type: 'text',
                             value: loyaltySearchTerm,
                             onChange: (e) => setLoyaltySearchTerm(e.target.value),
-                            placeholder: 'Enter name, email, or phone',
-                            className: 'w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            placeholder: 'Search by name, email...',
+                            className: 'w-48 pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                         })
-                    ])
                 ]),
+                
+                // Search button
+                React.createElement('button', {
+                    key: 'search-execute-btn',
+                    onClick: () => searchMode === 'loyalty' ? onSearchByLoyalty(loyaltyNumber) : null,
+                    disabled: (searchMode === 'loyalty' && !loyaltyNumber.trim()) || loading,
+                    className: 'px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400 transition-colors'
+                }, loading ? '...' : 'Search')
+            ])
+        ])
+        ]),
 
-                // Search results
-                customerSearchResults.length > 0 && React.createElement('div', { key: 'search-results', className: 'mt-3' }, [
+        // Customer Search Tab
+        currentTab === 'search' && React.createElement('div', { key: 'search-content', className: 'space-y-6' }, [
+            // Search results
+            customerSearchResults.length > 0 && React.createElement('div', { key: 'search-results', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
                     React.createElement('h4', { key: 'search-results-title', className: 'font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2' }, [
                         React.createElement(Users, { key: 'search-results-icon', size: 18 }),
                         'Search Results'
@@ -569,82 +627,12 @@ window.Views.LoyaltyView= ({
                         )
                     )
                 ])
-            ])
-        ]),
+            ]),
 
         // Customer Management Tab
         currentTab === 'manage' && React.createElement('div', { key: 'manage-content', className: 'space-y-3' }, [
-            // Controls
-            React.createElement('div', { key: 'controls', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6' }, [
-                React.createElement('div', { key: 'controls-content', className: 'flex flex-col lg:flex-row lg:items-center gap-4' }, [
-                    // Search
-                    React.createElement('div', { key: 'search', className: 'relative flex-1' }, [
-                        React.createElement(Search, { 
-                            key: 'search-icon',
-                            className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
-                            size: 20 
-                        }),
-                        React.createElement('input', {
-                            key: 'manage-search-input',
-                            type: 'text',
-                            value: loyaltySearchTerm,
-                            onChange: (e) => setLoyaltySearchTerm(e.target.value),
-                            placeholder: 'Search customers by name, email, phone, or loyalty number...',
-                            className: 'w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                        })
-                    ]),
-                    
-                    // Sort controls
-                    React.createElement('div', { key: 'sort', className: 'flex items-center gap-2' }, [
-                        React.createElement('select', {
-                            key: 'sort-select',
-                            value: sortBy,
-                            onChange: (e) => setSortBy(e.target.value),
-                            className: 'px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                        }, [
-                            React.createElement('option', { key: 'name', value: 'name' }, 'Name'),
-                            React.createElement('option', { key: 'loyalty', value: 'loyalty_number' }, 'Loyalty #'),
-                            React.createElement('option', { key: 'points', value: 'points' }, 'Points'),
-                            React.createElement('option', { key: 'spent', value: 'total_spent' }, 'Total Spent'),
-                            React.createElement('option', { key: 'visits', value: 'visit_count' }, 'Visit Count'),
-                            React.createElement('option', { key: 'created', value: 'created_at' }, 'Date Added')
-                        ]),
-                        React.createElement('button', {
-                            key: 'sort-order-btn',
-                            onClick: () => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'),
-                            className: 'p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-                            title: `Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`
-                        }, sortOrder === 'asc' ? '↑' : '↓')
-                    ]),
-                    
-                    // Filter
-                    React.createElement('select', {
-                        key: 'filter',
-                        value: filterBy,
-                        onChange: (e) => setFilterBy(e.target.value),
-                        className: 'px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                    }, [
-                        React.createElement('option', { key: 'all', value: 'all' }, 'All Customers'),
-                        React.createElement('option', { key: 'active', value: 'active' }, 'Active (Has Purchases)'),
-                        React.createElement('option', { key: 'inactive', value: 'inactive' }, 'New (No Purchases)')
-                    ])
-                ])
-            ]),
-
             // Customer List
             React.createElement('div', { key: 'customer-list', className: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700' }, [
-                React.createElement('div', { key: 'list-header', className: 'p-6 border-b' }, [
-                    React.createElement('div', { key: 'list-header-content', className: 'flex items-center justify-between' }, [
-                        React.createElement('h3', { key: 'list-title', className: 'text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2' }, [
-                            React.createElement(Users, { key: 'icon', size: 20 }),
-                            'Customer Directory'
-                        ]),
-                        React.createElement('div', { key: 'list-count', className: 'text-sm text-gray-600 dark:text-gray-300' }, 
-                            `Showing ${sortedCustomers.length} of ${customers.length} customers`
-                        )
-                    ])
-                ]),
-                
                 React.createElement('div', { key: 'list-content', className: 'p-6' }, [
                     loading ? (
                         React.createElement('div', { className: 'text-center py-12' }, [
@@ -701,7 +689,7 @@ window.Views.LoyaltyView= ({
         ]),
 
         // Customer Vouchers Modal
-        React.createElement(window.Components.CustomerVouchersModal, {
+        window.Components.CustomerVouchersModal && React.createElement(window.Components.CustomerVouchersModal, {
             key: 'vouchers-modal',
             customer: selectedCustomerForVouchers,
             isOpen: showVouchersModal,
@@ -710,6 +698,5 @@ window.Views.LoyaltyView= ({
                 setSelectedCustomerForVouchers(null);
             }
         })
-
     ]);
 };
