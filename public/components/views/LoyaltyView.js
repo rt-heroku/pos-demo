@@ -56,15 +56,15 @@ window.Views.LoyaltyView= ({
                     [customerId]: data.avatar.image_data
                 }));
             } else if (response.status === 404) {
-                // Silently handle 404 - no avatar exists for this customer
+                // Customer doesn't have an avatar - this is normal, don't log anything
                 return;
             } else {
-                console.log('Error fetching avatar for customer', customerId, 'Status:', response.status);
+                console.warn('Error fetching avatar for customer', customerId, 'Status:', response.status);
             }
         } catch (error) {
-            // Only log non-network errors
-            if (error.name !== 'TypeError') {
-                console.log('Error loading avatar for customer', customerId, error.message);
+            // Only log unexpected errors, not network issues
+            if (error.name !== 'TypeError' && error.name !== 'NetworkError') {
+                console.warn('Error loading avatar for customer', customerId, error.message);
             }
         } finally {
             setLoadingAvatars(prev => {
