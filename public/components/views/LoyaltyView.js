@@ -56,7 +56,11 @@ window.Views.LoyaltyView= ({
         if (customers.length > 0) {
             customers.forEach(customer => {
                 if (!customerAvatars[customer.id]) {
-                    loadCustomerAvatar(customer.id);
+                    try{
+                        loadCustomerAvatar(customer.id);
+                    } catch (error) {
+                        console.log('Error loading customer avatar:', error);
+                    }
                 }
             });
         }
